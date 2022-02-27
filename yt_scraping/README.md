@@ -11,7 +11,7 @@ pip install yt-dlp
 ## Usage
 
 ```bash
-bash NUM_VIDEOS LENGTH scrap.bash
+bash scrap.bash NUM_VIDEOS LENGTH
 ```
 
 The script will download `NUM_VIDEOS` number of videos of length `LENGTH` seconds for each of the class labels present in the Kinetics-400 and Kinetics-600 in the corresponding directories named after labels.
