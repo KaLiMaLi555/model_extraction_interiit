@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+from tqdm import tqdm
 
 import numpy as np
 from PIL import Image
@@ -23,7 +24,7 @@ def main():
     out_path.mkdir(parents=True, exist_ok=True)
 
     # For each 'video' we need to generate
-    for video_id in range(n_videos):
+    for video_id in tqdm(range(n_videos)):
         # Create the video output directory
         img_folder_path = out_path / str(video_id)
         img_folder_path.mkdir(parents=True, exist_ok=True)
