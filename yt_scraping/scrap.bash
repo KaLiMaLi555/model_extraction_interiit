@@ -21,7 +21,7 @@ do
         # Create a directory named col2
         mkdir -p $KINETICS400_DIR/$col2
         # Download the videos
-        yt-dlp "ytsearch:$col2" --max-downloads $NUM_VIDEOS -P $KINETICS400_DIR/$col2 --match-filter "duration>15" --downloader ffmpeg --downloader-args "ffmpeg_i:-ss 00:00:00.00 -t 00:00:$LENGTH.00"
+        yt-dlp --max-downloads $NUM_VIDEOS -P $KINETICS400_DIR/$col2 --match-filter "duration>45" --downloader ffmpeg --downloader-args "ffmpeg_i:-ss 00:00:10 -t 00:00:10" "ytsearchall:$col2" 
     done
 done
 
@@ -34,7 +34,7 @@ do
         # Create a directory named col2
         mkdir -p $KINETICS600_DIR/$col2
         # Download the videos
-        yt-dlp "ytsearch:$col2" --max-downloads $NUM_VIDEOS -P $KINETICS600_DIR/$col2 --match-filter "duration>15" --downloader ffmpeg --downloader-args "ffmpeg_i:-ss 00:00:00.00 -t 00:00:$LENGTH.00"
+        yt-dlp --max-downloads $NUM_VIDEOS -P $KINETICS600_DIR/$col2 --match-filter "duration>45" --downloader ffmpeg --downloader-args "ffmpeg_i:-ss 00:00:10 -t 00:00:10" "ytsearchall:$col2" 
     done
 done
 

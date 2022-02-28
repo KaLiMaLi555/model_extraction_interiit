@@ -16,7 +16,7 @@ id,name
 14,assembling_computer
 15,attending_conference
 16,auctioning
-17,backflip_(human)
+17,backflip_human
 18,baking_cookies
 19,bandaging
 20,barbequing
@@ -81,7 +81,7 @@ id,name
 79,celebrating
 80,changing_gear_in_car
 81,changing_oil
-82,changing_wheel_(not_on_bike)
+82,changing_wheel_not_on_bike
 83,checking_tires
 84,cheerleading
 85,chewing_gum
@@ -108,7 +108,7 @@ id,name
 106,contorting
 107,cooking_egg
 108,cooking_on_campfire
-109,cooking_sausages_(not_on_barbeque)
+109,cooking_sausages_not_on_barbeque
 110,cooking_scallops
 111,cosplaying
 112,counting_money
@@ -121,7 +121,7 @@ id,name
 119,crossing_river
 120,crying
 121,cumbia
-122,curling_(sport)
+122,curling_sport
 123,curling_hair
 124,cutting_apple
 125,cutting_nails
@@ -176,7 +176,7 @@ id,name
 174,feeding_birds
 175,feeding_fish
 176,feeding_goats
-177,fencing_(sport)
+177,fencing_sport
 178,fidgeting
 179,finger_snapping
 180,fixing_bicycle
@@ -219,11 +219,11 @@ id,name
 217,hopscotch
 218,hoverboarding
 219,huddling
-220,hugging_(not_baby)
+220,hugging_not_baby
 221,hugging_baby
 222,hula_hooping
 223,hurdling
-224,hurling_(sport)
+224,hurling_sport
 225,ice_climbing
 226,ice_fishing
 227,ice_skating
@@ -292,13 +292,13 @@ id,name
 290,mopping_floor
 291,mosh_pit_dancing
 292,motorcycling
-293,mountain_climber_(exercise)
+293,mountain_climber_exercise
 294,moving_furniture
 295,mowing_lawn
 296,mushroom_foraging
 297,needle_felting
 298,news_anchoring
-299,opening_bottle_(not_wine)
+299,opening_bottle_not_wine
 300,opening_door
 301,opening_present
 302,opening_refrigerator
@@ -307,13 +307,13 @@ id,name
 305,paragliding
 306,parasailing
 307,parkour
-308,passing_American_football_(in_game)
-309,passing_american_football_(not_in_game)
+308,passing_American_football_in_game
+309,passing_american_football_not_in_game
 310,passing_soccer_ball
 311,peeling_apples
 312,peeling_potatoes
 313,person_collecting_garbage
-314,petting_animal_(not_cat)
+314,petting_animal_not_cat
 315,petting_cat
 316,photobombing
 317,photocopying
@@ -390,7 +390,7 @@ id,name
 388,pumping_fist
 389,pumping_gas
 390,punching_bag
-391,punching_person_(boxing)
+391,punching_person_boxing
 392,push_up
 393,pushing_car
 394,pushing_cart
@@ -450,7 +450,7 @@ id,name
 448,shining_flashlight
 449,shining_shoes
 450,shooting_basketball
-451,shooting_goal_(soccer)
+451,shooting_goal_soccer
 452,shopping
 453,shot_put
 454,shoveling_snow
@@ -527,7 +527,7 @@ id,name
 525,texting
 526,threading_needle
 527,throwing_axe
-528,throwing_ball_(not_baseball_or_American_football)
+528,throwing_ball_not_baseball_or_American_football
 529,throwing_discus
 530,throwing_knife
 531,throwing_snowballs
@@ -547,7 +547,7 @@ id,name
 545,triple_jump
 546,twiddling_fingers
 547,tying_bow_tie
-548,tying_knot_(not_on_a_tie)
+548,tying_knot_not_on_a_tie
 549,tying_necktie
 550,tying_shoe_laces
 551,unboxing
@@ -562,7 +562,7 @@ id,name
 560,using_circular_saw
 561,using_inhaler
 562,using_puppets
-563,using_remote_controller_(not_gaming)
+563,using_remote_controller_not_gaming
 564,using_segway
 565,vacuuming_floor
 566,visiting_the_zoo
@@ -591,7 +591,7 @@ id,name
 589,whistling
 590,windsurfing
 591,winking
-592,wood_burning_(art)
+592,wood_burning_art
 593,wrapping_present
 594,wrestling
 595,writing

@@ -160,7 +160,7 @@ id,name
 158,hugging
 159,hula_hooping
 160,hurdling
-161,hurling_(sport)
+161,hurling_sport
 162,ice_climbing
 163,ice_fishing
 164,ice_skating
@@ -207,11 +207,11 @@ id,name
 205,paragliding
 206,parasailing
 207,parkour
-208,passing_American_football_(in_game)
-209,passing_American_football_(not_in_game)
+208,passing_American_football_in_game
+209,passing_American_football_not_in_game
 210,peeling_apples
 211,peeling_potatoes
-212,petting_animal_(not_cat)
+212,petting_animal_not_cat
 213,petting_cat
 214,picking_fruit
 215,planting_trees
@@ -258,7 +258,7 @@ id,name
 256,pumping_fist
 257,pumping_gas
 258,punching_bag
-259,punching_person_(boxing)
+259,punching_person_boxing
 260,push_up
 261,pushing_car
 262,pushing_cart
@@ -296,7 +296,7 @@ id,name
 294,shearing_sheep
 295,shining_shoes
 296,shooting_basketball
-297,shooting_goal_(soccer)
+297,shooting_goal_soccer
 298,shot_put
 299,shoveling_snow
 300,shredding_paper
@@ -307,7 +307,7 @@ id,name
 305,situp
 306,skateboarding
 307,ski_jumping
-308,skiing_(not_slalom_or_crosscountry)
+308,skiing_not_slalom_or_crosscountry
 309,skiing_crosscountry
 310,skiing_slalom
 311,skipping_rope
@@ -368,12 +368,12 @@ id,name
 366,trimming_trees
 367,triple_jump
 368,tying_bow_tie
-369,tying_knot_(not_on_a_tie)
+369,tying_knot_not_on_a_tie
 370,tying_tie
 371,unboxing
 372,unloading_truck
 373,using_computer
-374,using_remote_controller_(not_gaming)
+374,using_remote_controller_not_gaming
 375,using_segway
 376,vault
 377,waiting_in_line
