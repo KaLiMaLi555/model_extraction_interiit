@@ -28,6 +28,9 @@ class Dataloader():
         self.instances = torch.stack(self.instances)
         self.num_instances = len(self.instances)
 
+        self.image_idx_mapping = {}
+        self.idx_image_mapping = {}
+        
         if self.is_random:
             self.create_labels()
         else:
