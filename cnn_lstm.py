@@ -16,11 +16,12 @@ import torchmetrics
 import torchvision
 from torchvision import transforms
 from tqdm import tqdm
-from env import set_seed
 from torch.utils.data import Dataset, DataLoader
 import pickle
 import torchvision.models as models
 import torchvision.transforms as transforms
+import numpy as np
+import os
 
 import argparse
 
@@ -30,8 +31,8 @@ parser.add_argument('--input_dir', type=str)
 
 args = parser.parse_args()
 
-input_dir = args["input_dir"]
-logits_file = args["logits_file"]
+input_dir = args.input_dir
+logits_file = args.logits_file
 
 # TODO: The class is implemented now for random, 
 # Do if we have both the actual images and labels
@@ -42,8 +43,6 @@ class VideoLogitDataset(Dataset):
         self.video_dir_path = video_dir_path
         self.instances = []     # Tensor of image frames
         self.logits = pickle.load(open(logits_file, 'rb'))
-
-        self.is_random = is_random
 
         self.videos = os.listdir(self.video_dir_path)
         self.get_frames()
@@ -70,7 +69,7 @@ class VideoLogitDataset(Dataset):
         return self.instances[idx], self.logits[idx]
 
     def __len__(self):
-        return len(instances)
+        return len(self.instances)
 
 class DecoderRNN(nn.Module):
     def __init__(self, CNN_embed_dim=300, h_RNN_layers=3, h_RNN=256, h_FC_dim=128, drop_p=0.3, num_classes=400):
@@ -120,6 +119,9 @@ class ResCNNEncoder(nn.Module):
 
         resnet = models.resnet50(pretrained=True)
         modules = list(resnet.children())[:-1]      # delete the last fc layer.
+        for module in modules[:-1]:
+          for param in module.parameters():
+            param.requires_grad = False
         self.resnet = nn.Sequential(*modules)
         self.fc1 = nn.Linear(resnet.fc.in_features, fc_hidden1)
         self.bn1 = nn.BatchNorm1d(fc_hidden1, momentum=0.01)
@@ -131,9 +133,10 @@ class ResCNNEncoder(nn.Module):
         cnn_embed_seq = []
         for t in range(x_3d.size(1)):
             # ResNet CNN
-            with torch.no_grad():
-                x = self.resnet(x_3d[:, t, :, :, :])  # ResNet
-                x = x.view(x.size(0), -1)             # flatten output of conv
+            x = x_3d[:, t, :, :, :]
+            x = x.reshape((-1, x.shape[3], x.shape[1], x.shape[2]))
+            x = self.resnet(x)  # ResNet
+            x = x.view(x.size(0), -1)             # flatten output of conv
 
             # FC layers
             x = self.bn1(self.fc1(x))
@@ -155,19 +158,18 @@ class ResCNNRNN(nn.Module):
 
     def __init__(self, fc_hidden1=512, fc_hidden2=512, drop_p=0.3, CNN_embed_dim=300, h_RNN_layers=3, h_RNN=256, h_FC_dim=128, num_classes=400):
         """Load the pretrained ResNet-152 and replace top fc layer."""
-        super(ResCNNEncoder, self).__init__()
+        super(ResCNNRNN, self).__init__()
 
         self.encoder = ResCNNEncoder(fc_hidden1=fc_hidden1, fc_hidden2=fc_hidden2, drop_p=drop_p, CNN_embed_dim=CNN_embed_dim)
         self.decoder = DecoderRNN(CNN_embed_dim=CNN_embed_dim, h_RNN_layers=h_RNN_layers, h_RNN=h_RNN, h_FC_dim=h_FC_dim, drop_p=drop_p, num_classes=num_classes)
         
     def forward(self, x_3d):
-        return DecoderRNN(ResCNNEncoder(x_3d))
+        return self.decoder(self.encoder(x_3d))
 
 class WrapperModel(pl.LightningModule):
-    def __init__(self, model, num_classes=400, learning_rate=1e-3):
+    def __init__(self, model, learning_rate=1e-3):
 
         super().__init__()        
-        self.num_classes = num_classes
         self.model = model
         self.learning_rate = learning_rate
     
@@ -177,15 +179,15 @@ class WrapperModel(pl.LightningModule):
     
     def training_step(self, batch, batch_idx):
         x, y = batch
-        logits = self.forward(x)
-        loss = F.kl_div(logits, y)
+        probs = F.softmax(self.forward(x), dim=1)
+        loss = F.kl_div(torch.log(probs), y, reduction="batchmean")
         self.log('train_loss', loss, on_step=True, on_epoch=True, logger=True)
         return loss
     
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        logits = self.forward(x)
-        loss = F.cross_entropy(logits, y)
+        probs = F.softmax(self.forward(x), dim=1)
+        loss = F.kl_div(torch.log(probs), y, reduction="batchmean")
         self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
@@ -199,11 +201,10 @@ if __name__ == "__main__":
     train_data, val_data = data.random_split(video_data, [train_size, len(video_data) - train_size])
     train_loader = DataLoader(train_data, batch_size=32, shuffle=True, drop_last=True, pin_memory=True, num_workers=2)
     val_loader = DataLoader(val_data, batch_size=32, shuffle=False, drop_last=False, num_workers=2)
-    model_internal = ResCNNRNN(num_classes=train_data[0][1].shape[1])
-    model = WrapperModel(model_internal, num_classes=num_classes)
+    model_internal = ResCNNRNN(num_classes=train_data[0][1].shape[0])
+    model = WrapperModel(model_internal)
     trainer = pl.Trainer(max_epochs=20,
                 progress_bar_refresh_rate=20, 
-                gpus=1,
-                logger=TensorBoard_Logger)
+                gpus=1)
 
     trainer.fit(model, train_loader, val_loader)
