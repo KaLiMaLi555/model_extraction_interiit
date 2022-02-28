@@ -37,6 +37,8 @@ class Dataloader():
         
         for video in tqdm(self.videos, position = 0, leave = True):
             
+            self.image_idx_mapping[video] = i
+            self.idx_image_mapping[i] = video
             image_frames = []
             video_dir = os.path.join(self.video_dir_path, video)
             images = os.listdir(video_dir)
