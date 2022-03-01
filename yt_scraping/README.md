@@ -41,7 +41,7 @@ data
             ...
 ```
 
-After downloading the raw videos, trim the videos into 10 seconds from the 11th to 110th seconds of the original video clip using the following command:
+After downloading the raw videos, trim the videos into 10 seconds clips from the 100th to 110th seconds of the original video clip using the following command:
 
 ```bash
 bash trim.bash MODE DATA_DIR
