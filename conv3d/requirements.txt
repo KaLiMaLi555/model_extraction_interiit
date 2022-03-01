@@ -1,0 +1,6 @@
+pytorch-lightning
+wandb
+pillow
+tqdm
+numpy
+pickle5
