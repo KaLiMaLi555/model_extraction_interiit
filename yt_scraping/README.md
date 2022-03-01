@@ -47,4 +47,4 @@ After downloading the raw videos, trim the videos into 10 seconds clips from the
 bash trim.bash MODE DATA_DIR START_TIME LENGTH
 ```
 
-Provide the appropriate MODE (`kinetics400` or `kinetics600`), `DATA_DIR` where the raw videos are present, START_TIME from which the videos are to be trimmed and `LENGTH` of which the videos must be trimmed. 
+Provide the appropriate `MODE` (`kinetics400` or `kinetics600`), `DATA_DIR` where the raw videos are present, `START_TIME` from which the videos are to be trimmed and `LENGTH` of which the videos must be trimmed.
