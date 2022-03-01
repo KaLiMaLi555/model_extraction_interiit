@@ -1,6 +1,8 @@
 #!/bin/bash
 MODE=$1
 DATA_DIR=$2
+START_TIME=$3
+LENGTH=$4
 DATA_DIR_10=${DATA_DIR}_10
 KINETICS400_DIR=$DATA_DIR/kinetics400
 KINETICS600_DIR=$DATA_DIR/kinetics600
@@ -25,7 +27,7 @@ if [ $MODE = "kinetics400" ]; then
                 do
                     out_name="${OUT_DATA_DIR}/${video##*/}"
                     if [ ! -f "${out_name}" ]; then
-                        ffmpeg -ss 100 -t 10 -i "${video}" "${out_name}"
+                        ffmpeg -ss $START_TIME -t $LENGTH -i "${video}" "${out_name}"
                     fi
                 done
         done
@@ -42,7 +44,7 @@ elif [ $MODE = "kinetics600" ]; then
                 do
                     out_name="${OUT_DATA_DIR}/${video##*/}"
                     if [ ! -f "${out_name}" ]; then
-                        ffmpeg -ss 100 -t 10 -i "${video}" "${out_name}"
+                        ffmpeg -ss $START_TIME -t $LENGTH -i "${video}" "${out_name}"
                     fi
                 done
         done
