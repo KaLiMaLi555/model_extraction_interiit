@@ -30,15 +30,6 @@ import argparse
 from dataloader import VideoLogitDataset, VideoLogitDatasetFromDisk
 from cnn_lstm import ResCNNRNN
 
-class TestCallback(Callback):
-    def __init__(self, test_loader):
-
-        super().__init__()  
-        self.test_loader = test_loader
-    
-    def on_validation_epoch_end(self, trainer, pl_module):
-        trainer.test(pl_module, dataloaders=test_loader)
-
 class WrapperModel(pl.LightningModule):
     def __init__(self, model, learning_rate=1e-3):
 
@@ -148,11 +139,10 @@ if __name__ == "__main__":
         print("Unknown attacker name")
         exit(-1)
     model = WrapperModel(model_internal, learning_rate=learning_rate)
-    test_callback = TestCallback(test_loader=test_loader)
     checkpoint_callback = ModelCheckpoint(monitor="val_loss", mode="min")
     trainer = pl.Trainer(max_epochs=args.epochs,
                 progress_bar_refresh_rate=20, 
-                gpus=1, logger=wandb_logger, callbacks=[checkpoint_callback, test_callback])
+                gpus=1, logger=wandb_logger, callbacks=[checkpoint_callback])
 
     trainer.fit(model, train_loader, val_loader)
     # test best val model
