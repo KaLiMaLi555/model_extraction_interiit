@@ -3,7 +3,7 @@ from PIL import Image
 from typing import Type, Any, Callable, Union, List, Optional
 from utils.config import process_config
 from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 
 
 ## PyTorch
