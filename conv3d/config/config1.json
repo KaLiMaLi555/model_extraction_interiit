@@ -1,0 +1,27 @@
+{
+    "architecture": "Conv3D",
+    "dataset": "Random_Noise",
+    "gpu_device": 0,
+    "epochs": 50,
+    "train_batch_size": 32,
+    "val_batch_size": 16,
+    "lr": 6e-4,
+    "wt_decay": 2e-4,
+    "save": true,
+    "input_dir": "",
+    "logits_file": "",
+
+    "criterion": "nn.CrossEntropyLoss(ignore_index = 19)",
+    "optimizer_func": "torch.optim.SGD",
+    "scheduler_func": "torch.optim.lr_scheduler.ExponentialLR",
+    "SMOOTH": 0.00000001, 
+
+    "wandb": true,
+    "wandb_project": "Enet",
+    "wandb_name": "CityScapes - 4x - No Data Augmentation",
+    "wandb_watch": true,
+    "wandb_watch_freq": 50,
+    "resume":true,
+    "wandb_id":"1t4vlidl",
+    "checkpoint_path": " "
+}

@@ -1,6 +1,11 @@
 # List of imports
 from PIL import Image
 from typing import Type, Any, Callable, Union, List, Optional
+from wandb_utils import init_wandb, wandb_save_summary
+from utils.config import process_config
+from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
+
 
 ## PyTorch
 import torch
@@ -25,19 +30,32 @@ import os
 
 import argparse
 
-parser = argparse.ArgumentParser(description='Process some integers.')
-parser.add_argument('--logits_file', type=str)
-parser.add_argument('--input_dir', type=str)
-parser.add_argument('--epochs', type=int)
-parser.add_argument('--batch_size', type=int)
+config = process_config("cofigs/config1.json")
 
+parser = argparse.ArgumentParser(description='Overwrite Config')
+
+parser.add_argument('--input_dir', type=str, default=config.input_dir)
+parser.add_argument('--logits_file', type=str, default=config.logits_file)
+parser.add_argument('--save', type=bool, default=config.save)
+
+parser.add_argument('--wandb_api_key', type=str)
+parser.add_argument('--wandb', type=bool, default=config.wandb)
+parser.add_argument('--wandb_project', type=str, default=config.wandb_project)
+parser.add_argument('--wandb_name', type=str, default=config.wandb_name)
+parser.add_argument('--wandb_id', type=str, default=config.wandb_id)
+parser.add_argument('--resume', type=int, default=config.resume)
+
+parser.add_argument('--epochs', type=int, default=config.epochs)
+parser.add_argument('--train_batch_size', type=int, default=config.train_batch_size)
+parser.add_argument('--val_batch_size', type=int, default=config.val_batch_size)
+parser.add_argument('--lr', type=float, default=config.lr)
+parser.add_argument('--wt_decay', type=float, default=config.wt_decay)
+parser.add_argument('--checkpoint_path', type=str, default=config.checkpoint_path)
 
 args = parser.parse_args()
 
-input_dir = args.input_dir
-logits_file = args.logits_file
-epochs = args.epochs
-batch_size = args.batch_size
+
+
 
 class VideoLogitDataset(Dataset):
 
@@ -162,10 +180,13 @@ class C3D(nn.Module):
 
 
 class WrapperModel(pl.LightningModule):
-    def __init__(self, model, learning_rate=1e-3):
+    def __init__(self, model, learning_rate=args.lr):
         super().__init__()        
         self.model = model
         self.learning_rate = learning_rate
+        # save hyper-parameters to self.hparams (auto-logged by W&B)
+        if args.wandb:
+            self.save_hyperparameters()
     
     def forward(self, x):
         x = self.model(x)
@@ -175,7 +196,6 @@ class WrapperModel(pl.LightningModule):
         x, y = batch
         logits = F.softmax(self.forward(x), dim=1)
         loss = F.binary_cross_entropy_with_logits(logits, F.softmax(y, dim=1))
-        # scheduler = LinearWarmupCosineAnnealingLR(optimizer, warmup_epochs=10, max_epochs=40)
         self.log('train_loss', loss, on_step=True, on_epoch=True, logger=True)
         return loss
     
@@ -192,16 +212,74 @@ class WrapperModel(pl.LightningModule):
 
 if __name__ == "__main__":    
 
-    video_data = VideoLogitDataset(input_dir, logits_file)
+    # WandB Setup
+    os.environ["WANDB_API_KEY"] = args.wandb_api_key
+    if args.wandb and args.wandb_resume:
+        wandb_logger = WandbLogger(
+            project=args.wandb_project,
+            name = args.wandb_name,
+            id=args.wandb_id,
+            log_model='all',  # log all new checkpoints during training
+            resume='allow'
+        )
 
+    else:
+        wandb_logger = WandbLogger(
+            project=args.wandb_project,
+            name = args.wandb_name,
+            log_model='all', # log all new checkpoints during training
+            resume=None
+        ) 
+
+    checkpoint_callback = ModelCheckpoint(
+        monitor='val_loss',
+        save_top_k =2,                 
+        mode='min',                    
+        every_n_epochs=1,             
+        save_on_train_epoch_end=True,
+        save_last = True    
+    )
+
+    lr_monitor = LearningRateMonitor(logging_interval='epoch')
+
+    video_data = VideoLogitDataset(input_dir, logits_file)
     train_size = int(len(video_data)*0.9)
     train_data, val_data = data.random_split(video_data, [train_size, len(video_data) - train_size])
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, drop_last=True, pin_memory=True, num_workers=2)
     val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False, drop_last=False, num_workers=2)
     model_internal = C3D(num_classes=train_data[0][1].shape[0])
     model = WrapperModel(model_internal)
+    
+    if config.wandb_watch:
+        wandb_logger.watch(
+            model,
+            log='all',
+            log_freq=config.wandb_watch_freq,
+            log_graph=True
+        )  # logs histogram of gradients and parameters
+
+    if args.resume:
+        run = wandb.init(project=args.wandb_project, resume=args.resume)
+        artifact = run.use_artifact(args.checkpoint_path, type='model')
+        artifact_dir = artifact.download()  #should change these lines so that user can specify path (now just for testing)
+        model =C3D.load_from_checkpoint(Path(artifact_dir) / "model.ckpt", num_classes=train_data[0][1].shape[0] )
+        resume_path = "artifacts/" + artifact_path + "/model.ckpt"
+        trainer = pl.Trainer(max_epochs=epochs,
+            progress_bar_refresh_rate=1, 
+            log_every_n_steps=1,
+            logger=wandb_logger,
+            callbacks=[checkpoint_callback, lr_monitor],
+            resume_from_checkpoint=args.checkpoint_path,
+            gpus=1)
+
+
     trainer = pl.Trainer(max_epochs=epochs,
                 progress_bar_refresh_rate=1, 
+                log_every_n_steps=1,
+                logger=wandb_logger,
+                callbacks=[checkpoint_callback, lr_monitor],
                 gpus=1)
 
     trainer.fit(model, train_loader, val_loader)
+    print("Run complete")
+    wandb.finish()
