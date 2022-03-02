@@ -12,6 +12,7 @@ import torch.optim as optim
 ## PyTorch lightning
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
 import torchmetrics
 # Torchvision
 import torchvision
@@ -62,6 +63,34 @@ class VideoLogitDataset(Dataset):
 
     def __len__(self):
         return len(self.instances)
+
+class VideoLogitDatasetFromDisk(Dataset):
+
+    def __init__(self, video_dir_path, logits_file):
+
+        self.video_dir_path = video_dir_path
+        self.logits = pickle.load(open(logits_file, 'rb'))
+
+        self.videos = os.listdir(self.video_dir_path)
+        self.num_instances = len(self.videos)
+
+    def get_frames(self, video_path):
+        images = os.listdir(video_path)
+        image_frames = []
+        
+        for image_name in images:
+            image = Image.open(os.path.join(video_path, image_name))
+            image = np.array(image, dtype = np.float32)
+            image_frames.append(torch.tensor(image))
+
+        return torch.stack(image_frames)
+
+    def __getitem__(self, idx):
+        video_path = os.path.join(self.video_dir_path, self.videos[idx])
+        return self.get_frames(video_path), self.logits[idx]
+
+    def __len__(self):
+        return self.num_instances
 
 class DecoderRNN(nn.Module):
     def __init__(self, CNN_embed_dim=300, h_RNN_layers=3, h_RNN=256, h_FC_dim=128, drop_p=0.3, num_classes=400):
@@ -208,6 +237,8 @@ if __name__ == "__main__":
     parser.add_argument('--epochs', type=int)
     parser.add_argument('--resnet_lstm_trainable_layers', type=int, default=None)
     parser.add_argument('--learning_rate', type=float, default=1e-3)
+    parser.add_argument('--load_train_from_disk', action='store_true')
+    parser.add_argument('--load_test_from_disk', action='store_true')
 
     args = parser.parse_args()
 
@@ -219,13 +250,21 @@ if __name__ == "__main__":
     victim_model_name = args.victim_model_name
     learning_rate = args.learning_rate
 
-    train_video_data = VideoLogitDataset(train_input_dir, train_logits_file)
+    if args.load_train_from_disk:
+        train_video_data = VideoLogitDatasetFromDisk(train_input_dir, train_logits_file)
+    else:
+        train_video_data = VideoLogitDataset(train_input_dir, train_logits_file)
+
     train_size = int(len(train_video_data)*0.9)
-    train_data, val_data = data.random_split(train_video_data, [train_size, len(video_data) - train_size])
+    train_data, val_data = data.random_split(train_video_data, [train_size, len(train_video_data) - train_size])
     train_loader = DataLoader(train_data, batch_size=32, shuffle=True, drop_last=True, pin_memory=True, num_workers=2)
     val_loader = DataLoader(val_data, batch_size=32, shuffle=False, drop_last=False, num_workers=2)
 
-    test_video_data = VideoLogitDataset(test_input_dir, test_logits_file)
+    if args.load_test_from_disk:
+        test_video_data = VideoLogitDatasetFromDisk(test_input_dir, test_logits_file)
+    else:
+        test_video_data = VideoLogitDataset(test_input_dir, test_logits_file)
+
     test_loader = DataLoader(test_video_data, batch_size=32, shuffle=False, drop_last=False, num_workers=2)
     
     if victim_model_name == 'swin-t':
@@ -257,7 +296,7 @@ if __name__ == "__main__":
         print("Unknown attacker name")
         exit(-1)
     model = WrapperModel(model_internal, learning_rate=learning_rate)
-    checkpoint_callback = ModelCheckpoint(monitor="val_accuracy", mode="max")
+    checkpoint_callback = ModelCheckpoint(monitor="val_loss", mode="min")
     trainer = pl.Trainer(max_epochs=args.epochs,
                 progress_bar_refresh_rate=20, 
                 gpus=1, logger=wandb_logger, callbacks=[checkpoint_callback])
