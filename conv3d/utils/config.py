@@ -34,12 +34,4 @@ def process_config(json_file):
     :return: config object(namespace)
     """
     config, _ = get_config_from_json(json_file)
-
-    # making sure that you have provided the exp_name.
-    try:
-        print(" The experiment name is {}".format(config.exp_name))
-    except AttributeError:
-        print("ERROR!!..Please provide the exp_name in json file..")
-        exit(-1)
-
     return config
