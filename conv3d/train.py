@@ -62,7 +62,7 @@ class VideoLogitDataset(Dataset):
 
         self.video_dir_path = video_dir_path
         self.instances = []     # Tensor of image frames
-        self.logits = list(pickle.load(open(logits_file, 'rb')))
+        self.logits = np.array(list(x[0] for x in pickle.load(open(logits_file, 'rb'))))
 
         self.videos = os.listdir(self.video_dir_path)
         self.get_frames()
