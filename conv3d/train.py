@@ -1,7 +1,6 @@
 # List of imports
 from PIL import Image
 from typing import Type, Any, Callable, Union, List, Optional
-from wandb_utils import init_wandb, wandb_save_summary
 from utils.config import process_config
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
