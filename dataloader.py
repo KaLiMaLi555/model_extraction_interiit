@@ -70,3 +70,67 @@ class Dataloader():
             self.labels[index] = c
 
         self.labels = torch.tensor(self.labels)
+
+
+class VideoLogitDataset(Dataset):
+
+    def __init__(self, video_dir_path, logits_file):
+
+        self.video_dir_path = video_dir_path
+        self.instances = []     # Tensor of image frames
+        self.logits = pickle.load(open(logits_file, 'rb'))
+
+        self.videos = os.listdir(self.video_dir_path)
+        self.get_frames()
+
+        self.instances = torch.stack(self.instances)
+        self.num_instances = len(self.instances)
+
+    def get_frames(self):
+        
+        for video in tqdm(self.videos, position = 0, leave = True):
+            
+            image_frames = []
+            video_dir = os.path.join(self.video_dir_path, video)
+            images = os.listdir(video_dir)
+            
+            for image_name in images:
+                image = Image.open(os.path.join(video_dir, image_name))
+                image = np.array(image, dtype = np.float32)
+                image_frames.append(torch.tensor(image))
+
+            self.instances.append(torch.stack(image_frames))
+
+    def __getitem__(self, idx):
+        return self.instances[idx], self.logits[idx]
+
+    def __len__(self):
+        return len(self.instances)
+
+class VideoLogitDatasetFromDisk(Dataset):
+
+    def __init__(self, video_dir_path, logits_file):
+
+        self.video_dir_path = video_dir_path
+        self.logits = pickle.load(open(logits_file, 'rb'))
+
+        self.videos = os.listdir(self.video_dir_path)
+        self.num_instances = len(self.videos)
+
+    def get_frames(self, video_path):
+        images = os.listdir(video_path)
+        image_frames = []
+        
+        for image_name in images:
+            image = Image.open(os.path.join(video_path, image_name))
+            image = np.array(image, dtype = np.float32)
+            image_frames.append(torch.tensor(image))
+
+        return torch.stack(image_frames)
+
+    def __getitem__(self, idx):
+        video_path = os.path.join(self.video_dir_path, self.videos[idx])
+        return self.get_frames(video_path), self.logits[idx]
+
+    def __len__(self):
+        return self.num_instances
