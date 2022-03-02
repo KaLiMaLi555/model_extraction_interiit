@@ -263,7 +263,7 @@ if __name__ == "__main__":
         artifact_dir = artifact.download()  #should change these lines so that user can specify path (now just for testing)
         model =C3D.load_from_checkpoint(Path(artifact_dir) / "model.ckpt", num_classes=train_data[0][1].shape[0] )
         resume_path = "artifacts/" + artifact_path + "/model.ckpt"
-        trainer = pl.Trainer(max_epochs=epochs,
+        trainer = pl.Trainer(max_epochs=args.epochs,
             progress_bar_refresh_rate=1, 
             log_every_n_steps=1,
             logger=wandb_logger,
@@ -272,7 +272,7 @@ if __name__ == "__main__":
             gpus=1)
 
 
-    trainer = pl.Trainer(max_epochs=epochs,
+    trainer = pl.Trainer(max_epochs=args.epochs,
                 progress_bar_refresh_rate=1, 
                 log_every_n_steps=1,
                 logger=wandb_logger,
