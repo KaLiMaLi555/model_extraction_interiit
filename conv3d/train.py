@@ -244,8 +244,8 @@ if __name__ == "__main__":
     video_data = VideoLogitDataset(args.input_dir, args.logits_file)
     train_size = int(len(video_data)*0.9)
     train_data, val_data = data.random_split(video_data, [train_size, len(video_data) - train_size])
-    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True, drop_last=True, pin_memory=True, num_workers=2)
-    val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=2)
+    train_loader = DataLoader(train_data, batch_size=args.train_batch_size, shuffle=True, drop_last=True, pin_memory=True, num_workers=2)
+    val_loader = DataLoader(val_data, batch_size=args.val_batch_size, shuffle=False, drop_last=False, num_workers=2)
     model_internal = C3D(num_classes=train_data[0][1].shape[0])
     model = WrapperModel(model_internal)
     
