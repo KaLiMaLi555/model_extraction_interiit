@@ -213,7 +213,7 @@ if __name__ == "__main__":
 
     # WandB Setup
     os.environ["WANDB_API_KEY"] = args.wandb_api_key
-    if args.wandb and args.wandb_resume:
+    if args.wandb and args.resume:
         wandb_logger = WandbLogger(
             project=args.wandb_project,
             name = args.wandb_name,
