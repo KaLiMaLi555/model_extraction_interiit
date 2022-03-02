@@ -21,7 +21,7 @@
     "wandb_name": "CityScapes - 4x - No Data Augmentation",
     "wandb_watch": true,
     "wandb_watch_freq": 50,
-    "resume":true,
+    "resume":false,
     "wandb_id":"1t4vlidl",
     "checkpoint_path": " "
 }
