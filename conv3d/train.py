@@ -29,7 +29,7 @@ import os
 
 import argparse
 
-config = process_config("cofigs/config1.json")
+config = process_config("config/config1.json")
 
 parser = argparse.ArgumentParser(description='Overwrite Config')
 
