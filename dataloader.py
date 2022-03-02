@@ -8,6 +8,7 @@ from PIL import Image
 from tqdm import tqdm
 from env import set_seed
 from torch.utils.data import Dataset, DataLoader
+import pickle
 
 # TODO: The class is implemented now for random, 
 # Do if we have both the actual images and labels
