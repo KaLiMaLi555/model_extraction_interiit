@@ -70,7 +70,7 @@ class VideoLogitDataset(Dataset):
         self.num_instances = len(self.instances)
 
     def get_frames(self):
-        k = 0
+        # k = 0
         for video in tqdm(self.videos, position=0, leave=True):
             # if k > 60:
 

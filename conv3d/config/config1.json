@@ -24,5 +24,5 @@
     "resume":false,
     "wandb_id":"1t4vlidl",
     "checkpoint_path": " ",
-    "num_workers": 8,
+    "num_workers": 8
 }
