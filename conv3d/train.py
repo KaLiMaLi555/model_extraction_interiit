@@ -255,7 +255,8 @@ if __name__ == "__main__":
 
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
 
-    video_data = VideoLogitDataset(args.input_dir, args.logits_file, transform=MyRotationTransform())
+    #video_data = VideoLogitDataset(args.input_dir, args.logits_file, transform=MyRotationTransform())
+    video_data = VideoLogitDataset(args.input_dir, args.logits_file)
     train_size = int(len(video_data) * 0.9)
     train_data, val_data = data.random_split(video_data, [train_size, len(video_data) - train_size])
     train_loader = DataLoader(train_data, batch_size=args.train_batch_size, shuffle=True, drop_last=True,

@@ -54,6 +54,7 @@ def get_preview(images, augmentationList, probability):
 
 
 def custom_rotate_transform(vid):
+    video_transform = []
     for image in vid:
         image = TF.to_tensor(image)
         if random.random() > 0.5:
