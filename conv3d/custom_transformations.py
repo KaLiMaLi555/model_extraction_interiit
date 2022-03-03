@@ -72,7 +72,6 @@ class MyRotationTransform:
     def __call__(self, vid):
         video_transform = []
         for image in vid:
-            image = TF.to_tensor(image)
             if random.random() > 0.5:
                 angle = random.randint(-30, 30)
                 image = TF.rotate(image, angle)
