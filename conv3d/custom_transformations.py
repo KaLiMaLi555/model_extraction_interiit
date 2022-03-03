@@ -62,7 +62,7 @@ def custom_rotate_transform(vid):
             image = TF.rotate(image, angle)
         video_transform.append(image)
     # more transforms ...
-    return video_transform
+    return TF.to_tensor(video_transform)
 
 
 class MyRotationTransform:
