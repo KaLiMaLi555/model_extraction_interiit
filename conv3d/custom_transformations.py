@@ -1,5 +1,6 @@
 import numpy as np
 import torchvision.transforms.functional as TF
+import torch
 import random
 import imgaug.augmenters as iaa
 
@@ -54,14 +55,15 @@ def get_preview(images, augmentationList, probability):
 
 
 def custom_rotate_transform(vid):
+    x = vid
     video_transform = []
-    for image in vid:
+    for i, image in enumerate(x):
         if random.random() > 0.5:
             angle = random.randint(-30, 30)
             image = TF.rotate(image, angle)
         video_transform.append(image)
     # more transforms ...
-    return (video_transform)
+    return torch.stack(video_transform)
 
 
 class MyRotationTransform:
