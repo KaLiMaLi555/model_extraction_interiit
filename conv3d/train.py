@@ -5,7 +5,6 @@ from utils.config import process_config
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 
-
 ## PyTorch
 import torch
 from torch import Tensor
@@ -55,14 +54,12 @@ parser.add_argument('--checkpoint_path', type=str, default=config.checkpoint_pat
 args = parser.parse_args()
 
 
-
-
 class VideoLogitDataset(Dataset):
 
     def __init__(self, video_dir_path, logits_file):
 
         self.video_dir_path = video_dir_path
-        self.instances = []     # Tensor of image frames
+        self.instances = []  # Tensor of image frames
         self.logits = np.array(list(x[0] for x in pickle.load(open(logits_file, 'rb'))))
 
         self.videos = os.listdir(self.video_dir_path)
@@ -72,36 +69,36 @@ class VideoLogitDataset(Dataset):
         self.num_instances = len(self.instances)
 
     def get_frames(self):
-        k=0
-        for video in tqdm(self.videos, position = 0, leave = True):
-          if k<60:
-            
-            image_frames = []
-            video_dir = os.path.join(self.video_dir_path, video)
-            images = os.listdir(video_dir)
-            
-            for image_name in images:
-                image = Image.open(os.path.join(video_dir, image_name))
-                image = np.array(image, dtype = np.float32)
-                image_frames.append(torch.tensor(image))
+        k = 0
+        for video in tqdm(self.videos, position=0, leave=True):
+            if k < 60:
 
-            self.instances.append(torch.stack(image_frames))
-            k=k+1
+                image_frames = []
+                video_dir = os.path.join(self.video_dir_path, video)
+                images = os.listdir(video_dir)
+
+                for image_name in images:
+                    image = Image.open(os.path.join(video_dir, image_name))
+                    image = np.array(image, dtype=np.float32)
+                    image_frames.append(torch.tensor(image))
+
+                self.instances.append(torch.stack(image_frames))
+                k = k + 1
 
     def __getitem__(self, idx):
-      #print(self.instances[idx].shape)
-      a = self.instances[idx]
-      a = a.swapaxes(0,3)
-      #print(a.shape)
-      return a, self.logits[idx]
-      #return self.instances[idx], self.logits[idx]
+        # print(self.instances[idx].shape)
+        a = self.instances[idx]
+        a = a.swapaxes(0, 3)
+        # print(a.shape)
+        return a, self.logits[idx]
+        # return self.instances[idx], self.logits[idx]
 
     def __len__(self):
         return len(self.instances)
 
 
 class C3D(nn.Module):
-    ''' The C3D network '''
+    """ The C3D network """
 
     def __init__(self, num_classes, pretrained=False):
         super(C3D, self).__init__()
@@ -163,7 +160,7 @@ class C3D(nn.Module):
         x = self.dropout(x)
         x = self.relu(self.fc7(x))
         x = self.dropout(x)
-        
+
         logits = self.fc8(x)
 
         return logits
@@ -180,44 +177,44 @@ class C3D(nn.Module):
 
 
 class WrapperModel(pl.LightningModule):
-    def __init__(self, model, learning_rate=args.lr):
-        super().__init__()        
+    def __init__(self, model: object, learning_rate=args.lr):
+        super().__init__()
         self.model = model
         self.learning_rate = learning_rate
-        # save hyper-parameters to self.hparams (auto-logged by W&B)
+        # save hyperparameters to self.hparams (auto-logged by W&B)
         if args.wandb:
             self.save_hyperparameters()
-    
+
     def forward(self, x):
         x = self.model(x)
         return x
-    
+
     def training_step(self, batch, batch_idx):
         x, y = batch
         logits = F.softmax(self.forward(x), dim=1)
         loss = F.binary_cross_entropy_with_logits(logits, F.softmax(y, dim=1))
         self.log('train_loss', loss, on_step=True, on_epoch=True, logger=True)
         return loss
-    
+
     def validation_step(self, batch, batch_idx):
         x, y = batch
         logits = F.softmax(self.forward(x), dim=1)
         loss = F.binary_cross_entropy_with_logits(logits, F.softmax(y, dim=1))
         self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
-    
+
     def configure_optimizers(self):
         return optim.SGD(self.parameters(), lr=self.learning_rate)
 
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
 
     # WandB Setup
     os.environ["WANDB_API_KEY"] = args.wandb_api_key
     if args.wandb and args.resume:
         wandb_logger = WandbLogger(
             project=args.wandb_project,
-            name = args.wandb_name,
+            name=args.wandb_name,
             id=args.wandb_id,
             log_model='all',  # log all new checkpoints during training
             resume='allow'
@@ -226,30 +223,31 @@ if __name__ == "__main__":
     else:
         wandb_logger = WandbLogger(
             project=args.wandb_project,
-            name = args.wandb_name,
-            log_model='all', # log all new checkpoints during training
+            name=args.wandb_name,
+            log_model='all',  # log all new checkpoints during training
             resume=None
-        ) 
+        )
 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
-        save_top_k =2,                 
-        mode='min',                    
-        every_n_epochs=1,             
+        save_top_k=2,
+        mode='min',
+        every_n_epochs=1,
         save_on_train_epoch_end=True,
-        save_last = True    
+        save_last=True
     )
 
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
 
     video_data = VideoLogitDataset(args.input_dir, args.logits_file)
-    train_size = int(len(video_data)*0.9)
+    train_size = int(len(video_data) * 0.9)
     train_data, val_data = data.random_split(video_data, [train_size, len(video_data) - train_size])
-    train_loader = DataLoader(train_data, batch_size=args.train_batch_size, shuffle=True, drop_last=True, pin_memory=True, num_workers=2)
+    train_loader = DataLoader(train_data, batch_size=args.train_batch_size, shuffle=True, drop_last=True,
+                              pin_memory=True, num_workers=2)
     val_loader = DataLoader(val_data, batch_size=args.val_batch_size, shuffle=False, drop_last=False, num_workers=2)
     model_internal = C3D(num_classes=train_data[0][1].shape[0])
     model = WrapperModel(model_internal)
-    
+
     if config.wandb_watch:
         wandb_logger.watch(
             model,
@@ -261,24 +259,23 @@ if __name__ == "__main__":
     if args.resume:
         run = wandb.init(project=args.wandb_project, resume=args.resume)
         artifact = run.use_artifact(args.checkpoint_path, type='model')
-        artifact_dir = artifact.download()  #should change these lines so that user can specify path (now just for testing)
-        model =C3D.load_from_checkpoint(Path(artifact_dir) / "model.ckpt", num_classes=train_data[0][1].shape[0] )
+        artifact_dir = artifact.download()
+        model = C3D.load_from_checkpoint(Path(artifact_dir) / "model.ckpt", num_classes=train_data[0][1].shape[0])
         resume_path = "artifacts/" + artifact_path + "/model.ckpt"
         trainer = pl.Trainer(max_epochs=args.epochs,
-            progress_bar_refresh_rate=1, 
-            log_every_n_steps=1,
-            logger=wandb_logger,
-            callbacks=[checkpoint_callback, lr_monitor],
-            resume_from_checkpoint=args.checkpoint_path,
-            gpus=1)
-
+                             progress_bar_refresh_rate=1,
+                             log_every_n_steps=1,
+                             logger=wandb_logger,
+                             callbacks=[checkpoint_callback, lr_monitor],
+                             resume_from_checkpoint=args.checkpoint_path,
+                             gpus=1)
 
     trainer = pl.Trainer(max_epochs=args.epochs,
-                progress_bar_refresh_rate=1, 
-                log_every_n_steps=1,
-                logger=wandb_logger,
-                callbacks=[checkpoint_callback, lr_monitor],
-                gpus=1)
+                         progress_bar_refresh_rate=1,
+                         log_every_n_steps=1,
+                         logger=wandb_logger,
+                         callbacks=[checkpoint_callback, lr_monitor],
+                         gpus=1)
 
     trainer.fit(model, train_loader, val_loader)
     print("Run complete")

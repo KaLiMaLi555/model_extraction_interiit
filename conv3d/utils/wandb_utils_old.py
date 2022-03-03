@@ -4,9 +4,6 @@ import numpy as np
 from sklearn.metrics import confusion_matrix
 
 
-
-
-
 def init_wandb(model, args=None) -> None:
     """
     Initialize project on Weights & Biases
@@ -46,7 +43,6 @@ def wandb_log(train_loss: float, val_loss: float, train_acc: float, val_acc: flo
         'Training Accuracy': train_acc,
         'Validation Accuracy': val_acc
     }, step=epoch)
-
 
 
 def wandb_save_summary(test_acc: float, test_f1: float, test_precision: float, test_recall: float):

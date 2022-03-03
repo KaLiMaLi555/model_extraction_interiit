@@ -3,6 +3,7 @@ import os
 import json
 from easydict import EasyDict
 
+
 def get_config_from_json(json_file):
     """
     Get the config from a json file
