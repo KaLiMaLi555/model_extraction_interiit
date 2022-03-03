@@ -12,6 +12,7 @@ import torch.utils.data as data
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import torchmetrics
 ## PyTorch lightning
 import pytorch_lightning as pl
 import torchmetrics
@@ -50,7 +51,7 @@ parser.add_argument('--val_batch_size', type=int, default=config.val_batch_size)
 parser.add_argument('--lr', type=float, default=config.lr)
 parser.add_argument('--wt_decay', type=float, default=config.wt_decay)
 parser.add_argument('--checkpoint_path', type=str, default=config.checkpoint_path)
-
+parser.add_argument('--num_workers', type=int, default=config.num_workers)
 args = parser.parse_args()
 
 
@@ -181,6 +182,7 @@ class WrapperModel(pl.LightningModule):
         super().__init__()
         self.model = model
         self.learning_rate = learning_rate
+        self.accuracy = torchmetrics.Accuracy()
         # save hyperparameters to self.hparams (auto-logged by W&B)
         if args.wandb:
             self.save_hyperparameters()
@@ -193,6 +195,8 @@ class WrapperModel(pl.LightningModule):
         x, y = batch
         logits = F.softmax(self.forward(x), dim=1)
         loss = F.binary_cross_entropy_with_logits(logits, F.softmax(y, dim=1))
+        self.accuracy(logits, y)
+        self.log('train_acc', self.accuracy, on_step=True, on_epoch=True, logger=True)
         self.log('train_loss', loss, on_step=True, on_epoch=True, logger=True)
         return loss
 
@@ -200,7 +204,9 @@ class WrapperModel(pl.LightningModule):
         x, y = batch
         logits = F.softmax(self.forward(x), dim=1)
         loss = F.binary_cross_entropy_with_logits(logits, F.softmax(y, dim=1))
-        self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.accuracy(logits, y)
+        self.log('val_acc', self.accuracy, on_step=True, on_epoch=True, logger=True)
+        self.log('val_accuracy', self.accuracy)
         return loss
 
     def configure_optimizers(self):
@@ -243,8 +249,8 @@ if __name__ == "__main__":
     train_size = int(len(video_data) * 0.9)
     train_data, val_data = data.random_split(video_data, [train_size, len(video_data) - train_size])
     train_loader = DataLoader(train_data, batch_size=args.train_batch_size, shuffle=True, drop_last=True,
-                              pin_memory=True, num_workers=2)
-    val_loader = DataLoader(val_data, batch_size=args.val_batch_size, shuffle=False, drop_last=False, num_workers=2)
+                              pin_memory=True, num_workers=args.num_workers)
+    val_loader = DataLoader(val_data, batch_size=args.val_batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
     model_internal = C3D(num_classes=train_data[0][1].shape[0])
     model = WrapperModel(model_internal)
 

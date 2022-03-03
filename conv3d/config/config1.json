@@ -23,5 +23,6 @@
     "wandb_watch_freq": 50,
     "resume":false,
     "wandb_id":"1t4vlidl",
-    "checkpoint_path": " "
+    "checkpoint_path": " ",
+    "num_workers": 8,
 }
