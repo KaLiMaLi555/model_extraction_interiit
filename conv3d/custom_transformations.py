@@ -54,32 +54,25 @@ def get_preview(images, augmentationList, probability):
     return images_augmented
 
 
-def custom_rotate_transform(vid):
-    x = vid
-    video_transform = []
-    for i, image in enumerate(x):
-        if random.random() > 0.5:
-            angle = random.randint(-30, 30)
-            image = TF.rotate(image, angle)
-        video_transform.append(image)
-    # more transforms ...
-    return torch.stack(video_transform)
-
-
-class MyRotationTransform:
-    """Rotate by one of the given angles."""
+class CustomTransform:
 
     def __init__(self):
         pass
 
-    def __call__(self, vid):
+    def custom_rotate_transform(vid):
+        x = vid
         video_transform = []
-        for image in vid:
+        for i, image in enumerate(x):
             if random.random() > 0.5:
                 angle = random.randint(-30, 30)
                 image = TF.rotate(image, angle)
             video_transform.append(image)
-        return np.array(video_transform)
+        # more transforms ...
+        return torch.stack(video_transform)
+
+    def __call__(self, vid):
+        vid = self.custom_rotate_transform(vid)  # Rotate by one of the given angles.
+        return vid
 
 
-rotation_transform = MyRotationTransform()
+rotation_transform = CustomTransform()

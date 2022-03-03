@@ -3,7 +3,7 @@ from PIL import Image
 from utils.config import process_config
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
-from custom_transformations import custom_rotate_transform, MyRotationTransform
+from custom_transformations import CustomTransform
 import torchvision.transforms.functional as TF
 # PyTorch
 import torch
@@ -11,8 +11,6 @@ import torch.utils.data as data
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-
-
 
 # PyTorch lightning
 import pytorch_lightning as pl
@@ -25,7 +23,6 @@ import pickle
 import numpy as np
 import os
 import wandb
-
 
 import argparse
 
@@ -69,8 +66,6 @@ class VideoLogitDataset(Dataset):
         self.num_instances = len(self.instances)
         self.transform = transform
 
-
-
     def get_frames(self):
         for video in tqdm(self.videos, position=0, leave=True):
             image_frames = []
@@ -87,7 +82,7 @@ class VideoLogitDataset(Dataset):
     def __getitem__(self, idx):
         vid = self.instances[idx]
         vid = vid.swapaxes(0, 3)
-        vid = custom_rotate_transform(vid)
+        # vid = custom_rotate_transform(vid)
         if self.transform:
             vid = TF.to_tensor(self.transform(vid))
         return vid, self.logits[idx]
@@ -255,8 +250,8 @@ if __name__ == "__main__":
 
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
 
-    #video_data = VideoLogitDataset(args.input_dir, args.logits_file, transform=MyRotationTransform())
-    video_data = VideoLogitDataset(args.input_dir, args.logits_file)
+    video_data = VideoLogitDataset(args.input_dir, args.logits_file, transform=CustomTransform())
+    # video_data = VideoLogitDataset(args.input_dir, args.logits_file)
     train_size = int(len(video_data) * 0.9)
     train_data, val_data = data.random_split(video_data, [train_size, len(video_data) - train_size])
     train_loader = DataLoader(train_data, batch_size=args.train_batch_size, shuffle=True, drop_last=True,
