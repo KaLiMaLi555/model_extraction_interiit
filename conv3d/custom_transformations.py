@@ -76,7 +76,7 @@ class MyRotationTransform:
                 angle = random.randint(-30, 30)
                 image = TF.rotate(image, angle)
             video_transform.append(image)
-        return video_transform
+        return TF.to_tensor(video_transform)
 
 
 rotation_transform = MyRotationTransform()
