@@ -87,12 +87,9 @@ class VideoLogitDataset(Dataset):
             # k = k + 1
 
     def __getitem__(self, idx):
-        # print(self.instances[idx].shape)
         a = self.instances[idx]
         a = a.swapaxes(0, 3)
-        # print(a.shape)
         return a, self.logits[idx]
-        # return self.instances[idx], self.logits[idx]
 
     def __len__(self):
         return len(self.instances)
@@ -193,21 +190,33 @@ class WrapperModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        logits = F.softmax(self.forward(x), dim=1)
+        logits = self.forward(x)
         loss = F.binary_cross_entropy_with_logits(logits, F.softmax(y, dim=1))
-        self.accuracy(logits, y)
-        self.log('train_acc', self.accuracy, on_step=True, on_epoch=True, logger=True)
-        self.log('train_loss', loss, on_step=True, on_epoch=True, logger=True)
-        return loss
+        accuracy = self.accuracy(torch.argmax(logits, dim=1), torch.argmax(y, dim=1))
+        self.log('train_loss', loss, on_step=True, on_epoch=True, logger=True, prog_bar=True)
+        self.log('train_accuracy', accuracy, on_step=True, on_epoch=True, logger=True, prog_bar=True)
+        return {"loss": loss, "other_stuff": logits}
+
+    # def training_epoch_end(self, training_step_outputs):
+    #     # update and log
+    #     all_preds = torch.stack(training_step_outputs)
+    #     logits, y = training_step_outputs
+    #     self.accuracy(logits, y)
+    #     self.log('train_acc', self.accuracy, on_step=True, on_epoch=True, logger=True)
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        logits = F.softmax(self.forward(x), dim=1)
+        logits = self.forward(x)
         loss = F.binary_cross_entropy_with_logits(logits, F.softmax(y, dim=1))
-        self.accuracy(logits, y)
-        self.log('val_acc', self.accuracy, on_step=True, on_epoch=True, logger=True)
-        self.log('val_accuracy', self.accuracy)
+        accuracy = self.accuracy(torch.argmax(logits, dim=1), torch.argmax(y, dim=1))
+        self.log('val_loss', loss, on_step=True, on_epoch=True, logger=True, prog_bar=True)
+        self.log('val_accuracy', accuracy, on_step=True, on_epoch=True, logger=True, prog_bar=True)
         return loss
+
+    # def validation_epoch_end(self, logits, y):
+    #     # update and log
+    #     self.accuracy(logits, y)
+    #     self.log('train_acc', self.accuracy, on_step=True, on_epoch=True, logger=True)
 
     def configure_optimizers(self):
         return optim.SGD(self.parameters(), lr=self.learning_rate)
@@ -250,7 +259,8 @@ if __name__ == "__main__":
     train_data, val_data = data.random_split(video_data, [train_size, len(video_data) - train_size])
     train_loader = DataLoader(train_data, batch_size=args.train_batch_size, shuffle=True, drop_last=True,
                               pin_memory=True, num_workers=args.num_workers)
-    val_loader = DataLoader(val_data, batch_size=args.val_batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
+    val_loader = DataLoader(val_data, batch_size=args.val_batch_size, shuffle=False, drop_last=False,
+                            num_workers=args.num_workers)
     model_internal = C3D(num_classes=train_data[0][1].shape[0])
     model = WrapperModel(model_internal)
 
