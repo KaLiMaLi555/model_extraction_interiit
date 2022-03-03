@@ -54,15 +54,15 @@ def get_preview(images, augmentationList, probability):
     return images_augmented
 
 
-def custom_rotate_transform(vid):
+def custom_rotate_transform(vid, angle=None):
     x = vid
     video_transform = []
     for i, image in enumerate(x):
         if random.random() > 0.5:
-            angle = random.randint(-30, 30)
+            if angle is not None:
+                angle = random.randint(-30, 30)
             image = TF.rotate(image, angle)
-        video_transform.append(image)
-    # more transforms ...
+            video_transform.append(image)
     return torch.stack(video_transform)
 
 
