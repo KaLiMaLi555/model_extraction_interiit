@@ -71,19 +71,19 @@ class VideoLogitDataset(Dataset):
     def get_frames(self):
         k = 0
         for video in tqdm(self.videos, position=0, leave=True):
-            if k < 60:
+            # if k > 60:
 
-                image_frames = []
-                video_dir = os.path.join(self.video_dir_path, video)
-                images = os.listdir(video_dir)
+            image_frames = []
+            video_dir = os.path.join(self.video_dir_path, video)
+            images = os.listdir(video_dir)
 
-                for image_name in images:
-                    image = Image.open(os.path.join(video_dir, image_name))
-                    image = np.array(image, dtype=np.float32)
-                    image_frames.append(torch.tensor(image))
+            for image_name in images:
+                image = Image.open(os.path.join(video_dir, image_name))
+                image = np.array(image, dtype=np.float32)
+                image_frames.append(torch.tensor(image))
 
-                self.instances.append(torch.stack(image_frames))
-                k = k + 1
+            self.instances.append(torch.stack(image_frames))
+            # k = k + 1
 
     def __getitem__(self, idx):
         # print(self.instances[idx].shape)
