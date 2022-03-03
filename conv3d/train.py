@@ -1,32 +1,31 @@
 # List of imports
 from PIL import Image
-from typing import Type, Any, Callable, Union, List, Optional
 from utils.config import process_config
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
+from custom_transformations import custom_rotate_transform, MyRotationTransform
 
-## PyTorch
+# PyTorch
 import torch
-from torch import Tensor
 import torch.utils.data as data
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import torchmetrics
-## PyTorch lightning
+
+
+
+# PyTorch lightning
 import pytorch_lightning as pl
 import torchmetrics
+
 # Torchvision
-import torchvision
-from torchvision import transforms
 from tqdm.notebook import tqdm
 from torch.utils.data import Dataset, DataLoader
 import pickle
-import torchvision.models as models
-import torchvision.transforms as transforms
 import numpy as np
 import os
 import wandb
+
 
 import argparse
 
@@ -57,7 +56,7 @@ args = parser.parse_args()
 
 class VideoLogitDataset(Dataset):
 
-    def __init__(self, video_dir_path, logits_file):
+    def __init__(self, video_dir_path, logits_file, transform=None):
 
         self.video_dir_path = video_dir_path
         self.instances = []  # Tensor of image frames
@@ -68,12 +67,12 @@ class VideoLogitDataset(Dataset):
 
         self.instances = torch.stack(self.instances)
         self.num_instances = len(self.instances)
+        self.transform = transform
+
+
 
     def get_frames(self):
-        # k = 0
         for video in tqdm(self.videos, position=0, leave=True):
-            # if k > 60:
-
             image_frames = []
             video_dir = os.path.join(self.video_dir_path, video)
             images = os.listdir(video_dir)
@@ -84,12 +83,14 @@ class VideoLogitDataset(Dataset):
                 image_frames.append(torch.tensor(image))
 
             self.instances.append(torch.stack(image_frames))
-            # k = k + 1
 
     def __getitem__(self, idx):
-        a = self.instances[idx]
-        a = a.swapaxes(0, 3)
-        return a, self.logits[idx]
+        vid = self.instances[idx]
+        vid = vid.swapaxes(0, 3)
+        # vid = custom_rotate_transform(vid)
+        if self.transform:
+            vid = self.transform(vid)
+        return vid, self.logits[idx]
 
     def __len__(self):
         return len(self.instances)
@@ -254,7 +255,7 @@ if __name__ == "__main__":
 
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
 
-    video_data = VideoLogitDataset(args.input_dir, args.logits_file)
+    video_data = VideoLogitDataset(args.input_dir, args.logits_file, transform=MyRotationTransform())
     train_size = int(len(video_data) * 0.9)
     train_data, val_data = data.random_split(video_data, [train_size, len(video_data) - train_size])
     train_loader = DataLoader(train_data, batch_size=args.train_batch_size, shuffle=True, drop_last=True,
