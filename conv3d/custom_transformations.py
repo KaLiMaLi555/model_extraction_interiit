@@ -56,13 +56,12 @@ def get_preview(images, augmentationList, probability):
 def custom_rotate_transform(vid):
     video_transform = []
     for image in vid:
-        image = TF.to_tensor(image)
         if random.random() > 0.5:
             angle = random.randint(-30, 30)
             image = TF.rotate(image, angle)
         video_transform.append(image)
     # more transforms ...
-    return video_transform
+    return TF.to_tensor(video_transform)
 
 
 class MyRotationTransform:
