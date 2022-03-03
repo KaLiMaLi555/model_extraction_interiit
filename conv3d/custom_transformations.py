@@ -1,3 +1,4 @@
+import numpy as np
 import torchvision.transforms.functional as TF
 import random
 import imgaug.augmenters as iaa
@@ -76,7 +77,7 @@ class MyRotationTransform:
                 angle = random.randint(-30, 30)
                 image = TF.rotate(image, angle)
             video_transform.append(image)
-        return TF.to_tensor(video_transform)
+        return np.array(video_transform)
 
 
 rotation_transform = MyRotationTransform()

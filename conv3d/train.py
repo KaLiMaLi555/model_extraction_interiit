@@ -4,7 +4,7 @@ from utils.config import process_config
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from custom_transformations import custom_rotate_transform, MyRotationTransform
-
+import torchvision.transforms.functional as TF
 # PyTorch
 import torch
 import torch.utils.data as data
@@ -89,7 +89,7 @@ class VideoLogitDataset(Dataset):
         vid = vid.swapaxes(0, 3)
         # vid = custom_rotate_transform(vid)
         if self.transform:
-            vid = self.transform(vid)
+            vid = TF.to_tensor(self.transform(vid))
         return vid, self.logits[idx]
 
     def __len__(self):
