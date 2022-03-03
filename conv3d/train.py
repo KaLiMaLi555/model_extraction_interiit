@@ -84,7 +84,7 @@ class VideoLogitDataset(Dataset):
         vid = vid.swapaxes(0, 3)
         # vid = custom_rotate_transform(vid)
         if self.transform:
-            vid = TF.to_tensor(self.transform(vid))
+            vid = self.transform(vid)
         return vid, self.logits[idx]
 
     def __len__(self):
