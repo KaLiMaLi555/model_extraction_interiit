@@ -59,7 +59,7 @@ def custom_rotate_transform(vid, angle=None):
     video_transform = []
     for i, image in enumerate(x):
         if random.random() > 0.5:
-            if angle is not None:
+            if angle is None:
                 angle = random.randint(-30, 30)
             image = TF.rotate(image, angle)
             video_transform.append(image)
