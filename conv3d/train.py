@@ -1,33 +1,31 @@
 # List of imports
+import argparse
+import os
+import pickle
+
+import numpy as np
+import wandb
 from PIL import Image
-from utils.config import process_config
-from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
-from custom_transformations import CustomTransform
-import torchvision.transforms.functional as TF
+from tqdm.notebook import tqdm
+
 # PyTorch
 import torch
-import torch.utils.data as data
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import torch.utils.data as data
 
 # PyTorch lightning
 import pytorch_lightning as pl
 import torchmetrics
+from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
+from pytorch_lightning.loggers import WandbLogger
+from torch.utils.data import DataLoader, Dataset
 
-# Torchvision
-from tqdm.notebook import tqdm
-from torch.utils.data import Dataset, DataLoader
-import pickle
-import numpy as np
-import os
-import wandb
-
-import argparse
+from custom_transformations import CustomTransform
+from utils.config import process_config
 
 config = process_config("config/config1.json")
-
 parser = argparse.ArgumentParser(description='Overwrite Config')
 
 parser.add_argument('--input_dir', type=str, default=config.input_dir)
