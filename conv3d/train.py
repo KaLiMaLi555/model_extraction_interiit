@@ -2,6 +2,7 @@
 import argparse
 import os
 import pickle
+from pathlib import Path
 
 import numpy as np
 import wandb
@@ -38,6 +39,7 @@ parser.add_argument('--wandb_project', type=str, default=config.wandb_project)
 parser.add_argument('--wandb_name', type=str, default=config.wandb_name)
 parser.add_argument('--wandb_id', type=str, default=config.wandb_id)
 parser.add_argument('--resume', type=int, default=config.resume)
+parser.add_argument('--artifact_path', type=str, default='')
 
 parser.add_argument('--epochs', type=int, default=config.epochs)
 parser.add_argument('--train_batch_size', type=int, default=config.train_batch_size)
@@ -216,6 +218,17 @@ class WrapperModel(pl.LightningModule):
         return optim.SGD(self.parameters(), lr=self.learning_rate)
 
 
+def log_data_split(train_data, val_data):
+    train_classes, val_classes = [0] * 600, [0] * 600
+    for _, y, in train_data:
+        train_classes[np.argmax(y)] += 1
+    for _, y in val_data:
+        val_classes[np.argmax(y)] += 1
+
+    wandb.config['train_distribution'] = train_classes
+    wandb.config['val_distribution'] = val_classes
+
+
 if __name__ == "__main__":
 
     # WandB Setup
@@ -272,7 +285,7 @@ if __name__ == "__main__":
         artifact = run.use_artifact(args.checkpoint_path, type='model')
         artifact_dir = artifact.download()
         model = C3D.load_from_checkpoint(Path(artifact_dir) / "model.ckpt", num_classes=train_data[0][1].shape[0])
-        resume_path = "artifacts/" + artifact_path + "/model.ckpt"
+        resume_path = "artifacts/" + args.artifact_path + "/model.ckpt"
         trainer = pl.Trainer(max_epochs=args.epochs,
                              progress_bar_refresh_rate=1,
                              log_every_n_steps=1,
@@ -288,6 +301,7 @@ if __name__ == "__main__":
                          callbacks=[checkpoint_callback, lr_monitor],
                          gpus=1)
 
+    log_data_split(train_data, val_data)
     trainer.fit(model, train_loader, val_loader)
     print("Run complete")
     wandb.finish()
