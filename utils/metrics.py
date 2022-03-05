@@ -51,10 +51,10 @@ def train_step_log(logger, loss, accuracy):
     """
     Log training metrics, given the logger object, use this to maintain uniformity in logging
     """
-    logger.log(
+    logger(
         "train_loss", loss, on_step=True, on_epoch=True, logger=True, prog_bar=True
     )
-    logger.log(
+    logger(
         "train_accuracy",
         accuracy,
         on_step=True,
@@ -68,10 +68,10 @@ def validation_step_log(logger, loss, accuracy):
     """
     Log validation metrics, given the logger object, use this to maintain uniformity in logging
     """
-    logger.log(
+    logger(
         "validation_loss", loss, on_step=True, on_epoch=True, logger=True, prog_bar=True
     )
-    logger.log(
+    logger(
         "validation_accuracy",
         accuracy,
         on_step=True,
@@ -85,10 +85,10 @@ def test_step_log(logger, loss, accuracy):
     """
     Log test metrics, given the logger object, use this to maintain uniformity in logging
     """
-    logger.log(
+    logger(
         "test_loss", loss, on_step=True, on_epoch=True, logger=True, prog_bar=False
     )
-    logger.log(
+    logger(
         "test_accuracy",
         accuracy,
         on_step=True,
