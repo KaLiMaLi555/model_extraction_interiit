@@ -162,7 +162,7 @@ if __name__ == "__main__":
         print("Unknown attacker name")
         exit(-1)
     model = WrapperModel(model_internal, learning_rate=learning_rate)
-    checkpoint_callback = ModelCheckpoint(monitor="validation_loss", mode="min")
+    checkpoint_callback = ModelCheckpoint(monitor="val_loss", mode="min")
     trainer = pl.Trainer(max_epochs=args.epochs,
                 progress_bar_refresh_rate=20, 
                 gpus=1, logger=wandb_logger, callbacks=[checkpoint_callback])

@@ -40,7 +40,7 @@ def train_step_log(logger, loss, accuracy_top1, accuracy_top5):
         "train_loss", loss, on_step=True, on_epoch=True, logger=True, prog_bar=True
     )
     logger.log(
-        "train_accuracy_top1",
+        "train_acc_top1",
         accuracy_top1,
         on_step=True,
         on_epoch=True,
@@ -48,7 +48,7 @@ def train_step_log(logger, loss, accuracy_top1, accuracy_top5):
         prog_bar=True,
     )
     logger.log(
-        "train_accuracy_top5",
+        "train_acc_top5",
         accuracy_top5,
         on_step=True,
         on_epoch=True,
@@ -65,7 +65,7 @@ def validation_step_log(logger, loss, accuracy_top1, accuracy_top5):
         "val_loss", loss, on_step=True, on_epoch=True, logger=True, prog_bar=True
     )
     logger.log(
-        "val_accuracy_top1",
+        "val_acc_top1",
         accuracy_top1,
         on_step=True,
         on_epoch=True,
@@ -73,7 +73,7 @@ def validation_step_log(logger, loss, accuracy_top1, accuracy_top5):
         prog_bar=True,
     )
     logger.log(
-        "val_accuracy_top5",
+        "val_acc_top5",
         accuracy_top5,
         on_step=True,
         on_epoch=True,
@@ -90,7 +90,7 @@ def test_step_log(logger, loss, accuracy_top1, accuracy_top5):
         "test_loss", loss, on_step=True, on_epoch=True, logger=True, prog_bar=True
     )
     logger.log(
-        "test_accuracy_top1",
+        "test_acc_top1",
         accuracy_top1,
         on_step=True,
         on_epoch=True,
@@ -98,7 +98,7 @@ def test_step_log(logger, loss, accuracy_top1, accuracy_top5):
         prog_bar=True,
     )
     logger.log(
-        "test_accuracy_top5",
+        "test_acc_top5",
         accuracy_top5,
         on_step=True,
         on_epoch=True,
