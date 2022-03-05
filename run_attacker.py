@@ -49,8 +49,7 @@ class WrapperModel(pl.LightningModule):
         loss = metrics.KLDiv(probs, y)
         true_preds = torch.argmax(y, dim=1)
         accuracy = metrics.topk_accuracy(probs, true_preds, k=5)
-        self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.log('train_accuracy', accuracy, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        metrics.train_step_log(self, loss, accuracy)
         return loss
     
     def validation_step(self, batch, batch_idx):
@@ -59,8 +58,7 @@ class WrapperModel(pl.LightningModule):
         loss = metrics.KLDiv(probs, y)
         true_preds = torch.argmax(y, dim=1)
         accuracy = metrics.topk_accuracy(probs, true_preds, k=5)
-        self.log('validation_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.log('validation_accuracy', accuracy, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        metrics.validation_step_log(self, loss, accuracy)
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -69,8 +67,9 @@ class WrapperModel(pl.LightningModule):
         loss = metrics.KLDiv(probs, y)
         true_preds = torch.argmax(y, dim=1)
         accuracy = metrics.topk_accuracy(probs, true_preds, k=5)
-        self.log('test_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.log('test_accuracy', accuracy, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        metrics.test_step_log(self, loss, accuracy)
+        # self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        # self.log('test_acc', accuracy, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
     def configure_optimizers(self):
@@ -160,7 +159,7 @@ if __name__ == "__main__":
         print("Unknown attacker name")
         exit(-1)
     model = WrapperModel(model_internal, learning_rate=learning_rate)
-    checkpoint_callback = ModelCheckpoint(monitor="val_loss", mode="min")
+    checkpoint_callback = ModelCheckpoint(monitor="validation_loss", mode="min")
     trainer = pl.Trainer(max_epochs=args.epochs,
                 progress_bar_refresh_rate=20, 
                 gpus=1, logger=wandb_logger, callbacks=[checkpoint_callback])
