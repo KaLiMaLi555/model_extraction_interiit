@@ -71,11 +71,8 @@ class ResCNNEncoder(nn.Module):
         self.fc_hidden1, self.fc_hidden2 = fc_hidden1, fc_hidden2
         self.drop_p = drop_p
 
-        resnet = models.resnet50(pretrained=True)
+        resnet = models.resnet50(pretrained=False)
         modules = list(resnet.children())[:-1]      # delete the last fc layer.
-        for module in modules[:-1]:
-          for param in module.parameters():
-            param.requires_grad = False
         self.resnet = nn.Sequential(*modules)
         self.fc1 = nn.Linear(resnet.fc.in_features, fc_hidden1)
         self.bn1 = nn.BatchNorm1d(fc_hidden1, momentum=0.01)

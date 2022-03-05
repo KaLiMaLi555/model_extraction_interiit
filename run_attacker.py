@@ -86,7 +86,7 @@ if __name__ == "__main__":
     parser.add_argument('--attacker_model_name', type=str)
     parser.add_argument('--victim_model_name', type=str)
     parser.add_argument('--epochs', type=int)
-    parser.add_argument('--resnet_lstm_trainable_layers', type=int, default=None)
+    # parser.add_argument('--resnet_lstm_trainable_layers', type=int, default=None)
     parser.add_argument('--learning_rate', type=float, default=1e-3)
     parser.add_argument('--load_train_from_disk', action='store_true')
     parser.add_argument('--load_val_from_disk', action='store_true')
@@ -154,9 +154,6 @@ if __name__ == "__main__":
     })
     if attacker_model_name == 'resnet-lstm':
         model_internal = ResCNNRNN(num_classes=num_classes)
-        wandb_logger.log_hyperparams({
-            "resnet_lstm_trainable_layers": args.resnet_lstm_trainable_layers
-        })
     else:
         print("Unknown attacker name")
         exit(-1)
