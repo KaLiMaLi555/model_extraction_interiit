@@ -24,7 +24,7 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 import numpy as np
 import os
-from util import metrics
+from utils import metrics
 from env import seed_all
 
 import argparse

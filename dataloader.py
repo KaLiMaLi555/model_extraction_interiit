@@ -143,6 +143,8 @@ class VideoLogitDatasetFromDisk(Dataset):
         self.videos = sorted([x for x in os.listdir(self.video_dir_path) if os.path.isdir(os.path.join(self.video_dir_path, x))])
         self.num_instances = len(self.videos)
 
+        self.transform = CustomResizeTransform()
+
     def get_frames(self, video_path):
         images = os.listdir(video_path)
         image_frames = []
