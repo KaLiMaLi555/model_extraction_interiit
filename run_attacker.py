@@ -25,6 +25,7 @@ import torchvision.transforms as transforms
 import numpy as np
 import os
 from util import metrics
+from env import seed_all
 
 import argparse
 
@@ -103,6 +104,8 @@ if __name__ == "__main__":
     victim_model_name = args.victim_model_name
     learning_rate = args.learning_rate
 
+    seed_all()
+
     if args.load_train_from_disk:
         train_video_data = VideoLogitDatasetFromDisk(train_input_dir, train_logits_file)
     else:
@@ -162,7 +165,8 @@ if __name__ == "__main__":
     trainer = pl.Trainer(max_epochs=args.epochs,
                 progress_bar_refresh_rate=20, 
                 gpus=1, logger=wandb_logger, callbacks=[checkpoint_callback])
-
+    
+    seed_all()
     trainer.fit(model, train_loader, val_loader)
     # test best val model
     trainer.test(dataloaders=test_loader)
