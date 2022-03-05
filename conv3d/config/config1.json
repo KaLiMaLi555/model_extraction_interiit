@@ -24,5 +24,10 @@
     "resume":false,
     "wandb_id": "",
     "checkpoint_path": " ",
-    "num_workers": 8
+    "num_workers": 8,
+
+    "val_data_dir": " ",
+    "val_classes_file": " ",
+    "val_labels_file": " ",
+    "val_num_classes": 400
 }

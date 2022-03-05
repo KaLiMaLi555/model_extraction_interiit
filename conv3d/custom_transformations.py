@@ -81,8 +81,27 @@ class CustomTransform:
         pass
 
     def __call__(self, vid):
-        vid = custom_resize_transform(vid) # Resize
+        vid = custom_resize_transform(vid)  # Resize
         return vid
 
 
 rotation_transform = CustomTransform()
+
+
+class CustomResizeTransform:
+
+    def __init__(self, size=224):
+        self.size = size
+
+    def custom_resize_transform(self, vid):
+        x = vid
+        video_transform = []
+        for i, image in enumerate(list(x)):
+            image = TF.resize(image, self.size + 32)
+            image = TF.center_crop(image, (self.size, self.size))
+            video_transform.append(image)
+        return torch.stack(video_transform)
+
+    def __call__(self, vid):
+        vid = self.custom_resize_transform(vid)  # Resize
+        return vid

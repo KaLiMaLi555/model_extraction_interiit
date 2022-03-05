@@ -23,7 +23,8 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 from torch.utils.data import DataLoader, Dataset
 
-from custom_transformations import CustomTransform
+from custom_transformations import CustomResizeTransform
+from Dataloader import ValDataset
 from utils.config import process_config
 
 config = process_config("config/config1.json")
@@ -31,6 +32,11 @@ parser = argparse.ArgumentParser(description='Overwrite Config')
 
 parser.add_argument('--input_dir', type=str, default=config.input_dir)
 parser.add_argument('--logits_file', type=str, default=config.logits_file)
+parser.add_argument('--val_data_dir', type=str, default=config.val_data_dir)
+parser.add_argument('--val_classes_file', type=str, default=config.val_classes_file)
+parser.add_argument('--val_labels_file', type=str, default=config.val_labels_file)
+parser.add_argument('--val_num_classes', type=int, default=config.val_num_classes)
+
 parser.add_argument('--save', type=bool, default=config.save)
 
 parser.add_argument('--wandb_api_key', type=str)
@@ -261,9 +267,11 @@ if __name__ == "__main__":
 
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
 
-    # video_data = VideoLogitDataset(args.input_dir, args.logits_file, transform=CustomTransform())
     video_data = VideoLogitDataset(args.input_dir, args.logits_file)
-    train_size = int(len(video_data) * 0.9)
+    train_size = int(len(video_data))
+    train_data = video_data
+    val_data = ValDataset(args.val_data_dir, args.val_classes_file, args.val_labels_file, args.val_num_classes,
+                          transform=CustomResizeTransform())
     train_data, val_data = data.random_split(video_data, [train_size, len(video_data) - train_size])
     train_loader = DataLoader(train_data, batch_size=args.train_batch_size, shuffle=True, drop_last=True,
                               pin_memory=True, num_workers=args.num_workers)
