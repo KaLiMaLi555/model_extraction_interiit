@@ -209,6 +209,8 @@ class WrapperModel(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         x, y = batch
         logits = self.forward(x)
+        print(y.shape)
+        print(logits.shape)
         loss = F.binary_cross_entropy_with_logits(logits, F.softmax(y, dim=1))
         accuracy = self.accuracy(torch.argmax(logits, dim=1), torch.argmax(y, dim=1))
         self.log('val_loss', loss, on_step=True, on_epoch=True, logger=True, prog_bar=True)
