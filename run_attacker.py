@@ -145,7 +145,7 @@ if __name__ == "__main__":
         "val_logits_file": val_logits_file,
         "test_logits_file": test_logits_file,
         "train_input_dir": train_input_dir,
-        "val_input_dir": val_input_dir
+        "val_input_dir": val_input_dir,
         "test_input_dir": test_input_dir,
         "attacker_model_name": attacker_model_name,
         "victim_model_name": victim_model_name,

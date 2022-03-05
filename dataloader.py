@@ -6,12 +6,30 @@ import argparse
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
-from env import set_seed
+# from env import set_seed
 from torch.utils.data import Dataset, DataLoader
 import pickle
 
 # TODO: The class is implemented now for random, 
 # Do if we have both the actual images and labels
+class CustomResizeTransform:
+
+    def __init__(self):
+        pass
+
+    def custom_resize_transform(self, vid, size=224):
+      x = vid
+      video_transform = []
+      for i, image in enumerate(list(x)):
+          image = TF.resize(image, size+32)
+          image = TF.center_crop(image, (size, size))
+          video_transform.append(image)
+      return torch.stack(video_transform)
+
+    def __call__(self, vid):
+        vid = self.custom_resize_transform(vid) # Resize
+        return vid
+
 class Dataloader():
 
     def __init__(self, video_dir_path, num_classes = 5, is_random = True):
@@ -84,6 +102,8 @@ class VideoLogitDataset(Dataset):
         self.videos = sorted([x for x in os.listdir(self.video_dir_path) if os.path.isdir(os.path.join(self.video_dir_path, x))])
         self.get_frames()
 
+        self.transform = CustomResizeTransform()
+
         self.instances = torch.stack(self.instances)
         self.num_instances = len(self.instances)
 
@@ -99,8 +119,13 @@ class VideoLogitDataset(Dataset):
                 image = Image.open(os.path.join(video_dir, image_name))
                 image = np.array(image, dtype = np.float32)
                 image_frames.append(torch.tensor(image))
+            
+            if self.transform:
+                image_frames = self.transform(
+                  torch.stack(image_frames).permute(0, 3, 1, 2)
+                  ).permute(0, 2, 3, 1)
 
-            self.instances.append(torch.stack(image_frames))
+            self.instances.append(image_frames)
 
     def __getitem__(self, idx):
         return self.instances[idx], self.logits[idx]
@@ -131,7 +156,12 @@ class VideoLogitDatasetFromDisk(Dataset):
 
     def __getitem__(self, idx):
         video_path = os.path.join(self.video_dir_path, self.videos[idx])
-        return self.get_frames(video_path), self.logits[idx]
+        vid = self.get_frames(video_path)
+        if self.transform:
+            vid = vid.permute(0, 3, 1, 2)
+            vid = self.transform(vid)
+            vid = vid.permute(0, 2, 3, 1)
+        return vid, self.logits[idx]
 
     def __len__(self):
         return self.num_instances
