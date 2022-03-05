@@ -1,4 +1,6 @@
 # List of imports
+
+### train loop using generic metrics and callbacks for C3D, look at https://github.com/anime-sh/model_extraction_interiit/tree/example_train from the working verison###
 import argparse
 import os
 import pickle
