@@ -44,7 +44,7 @@ def train_step_log(logger, loss, accuracy):
         on_step=True,
         on_epoch=True,
         logger=True,
-        prog_bar=False,
+        prog_bar=True,
     )
 
 
@@ -61,7 +61,7 @@ def validation_step_log(logger, loss, accuracy):
         on_step=True,
         on_epoch=True,
         logger=True,
-        prog_bar=False,
+        prog_bar=True,
     )
 
 
@@ -70,7 +70,7 @@ def test_step_log(logger, loss, accuracy):
     Log test metrics, given the logger object, use this to maintain uniformity in logging
     """
     logger.log(
-        "test_loss", loss, on_step=True, on_epoch=True, logger=True, prog_bar=False
+        "test_loss", loss, on_step=True, on_epoch=True, logger=True, prog_bar=True
     )
     logger.log(
         "test_accuracy",

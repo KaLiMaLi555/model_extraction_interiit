@@ -81,7 +81,7 @@ class VideoLogitDataset(Dataset):
         self.instances = []     # Tensor of image frames
         self.logits = pickle.load(open(logits_file, 'rb'))
 
-        self.videos = os.listdir(self.video_dir_path)
+        self.videos = sorted([x for x in os.listdir(self.video_dir_path) if os.path.isdir(os.path.join(self.video_dir_path, x))])
         self.get_frames()
 
         self.instances = torch.stack(self.instances)
@@ -115,7 +115,7 @@ class VideoLogitDatasetFromDisk(Dataset):
         self.video_dir_path = video_dir_path
         self.logits = pickle.load(open(logits_file, 'rb'))
 
-        self.videos = os.listdir(self.video_dir_path)
+        self.videos = sorted([x for x in os.listdir(self.video_dir_path) if os.path.isdir(os.path.join(self.video_dir_path, x))])
         self.num_instances = len(self.videos)
 
     def get_frames(self, video_path):

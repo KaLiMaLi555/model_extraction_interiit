@@ -24,6 +24,7 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 import numpy as np
 import os
+from util import metrics
 
 import argparse
 
@@ -44,26 +45,30 @@ class WrapperModel(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         probs = F.softmax(self.forward(x), dim=1)
-        loss = F.kl_div(torch.log(probs), y, reduction="batchmean")
-        self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        loss = metrics.KLDiv(probs, y)
+        true_preds = torch.argmax(y, dim=1)
+        accuracy = metrics.topk_accuracy(probs, true_preds, k=5)
+        metrics.train_step_log(self, loss, accuracy)
         return loss
     
     def validation_step(self, batch, batch_idx):
         x, y = batch
         probs = F.softmax(self.forward(x), dim=1)
-        loss = F.kl_div(torch.log(probs), y, reduction="batchmean")
-        self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        loss = metrics.KLDiv(probs, y)
+        true_preds = torch.argmax(y, dim=1)
+        accuracy = metrics.topk_accuracy(probs, true_preds, k=5)
+        metrics.validation_step_log(self, loss, accuracy)
         return loss
 
     def test_step(self, batch, batch_idx):
         x, y = batch
         probs = F.softmax(self.forward(x), dim=1)
-        loss = F.kl_div(torch.log(probs), y, reduction="batchmean")
-        preds = torch.argmax(probs, dim=1)
+        loss = metrics.KLDiv(probs, y)
         true_preds = torch.argmax(y, dim=1)
-        accuracy = torch.sum(torch.where(preds == true_preds, 1, 0))/preds.shape[0]
-        self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-        self.log('test_acc', accuracy, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        accuracy = metrics.topk_accuracy(probs, true_preds, k=5)
+        metrics.test_step_log(self, loss, accuracy)
+        # self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        # self.log('test_acc', accuracy, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
     def configure_optimizers(self):
@@ -72,8 +77,10 @@ class WrapperModel(pl.LightningModule):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Arguments for training')
     parser.add_argument('--train_logits_file', type=str)
+    parser.add_argument('--val_logits_file', type=str)
     parser.add_argument('--test_logits_file', type=str)
     parser.add_argument('--train_input_dir', type=str)
+    parser.add_argument('--val_input_dir', type=str)
     parser.add_argument('--test_input_dir', type=str)
     parser.add_argument('--attacker_model_name', type=str)
     parser.add_argument('--victim_model_name', type=str)
@@ -81,13 +88,16 @@ if __name__ == "__main__":
     parser.add_argument('--resnet_lstm_trainable_layers', type=int, default=None)
     parser.add_argument('--learning_rate', type=float, default=1e-3)
     parser.add_argument('--load_train_from_disk', action='store_true')
+    parser.add_argument('--load_val_from_disk', action='store_true')
     parser.add_argument('--load_test_from_disk', action='store_true')
 
     args = parser.parse_args()
 
     train_input_dir = args.train_input_dir
+    val_input_dir = args.val_input_dir
     test_input_dir = args.test_input_dir
     train_logits_file = args.train_logits_file
+    val_logits_file = args.val_logits_file
     test_logits_file = args.test_logits_file
     attacker_model_name = args.attacker_model_name
     victim_model_name = args.victim_model_name
@@ -99,7 +109,14 @@ if __name__ == "__main__":
         train_video_data = VideoLogitDataset(train_input_dir, train_logits_file)
 
     train_size = int(len(train_video_data)*0.9)
-    train_data, val_data = data.random_split(train_video_data, [train_size, len(train_video_data) - train_size])
+    if val_input_dir:
+        train_data = train_video_data
+        if args.load_val_from_disk:
+            val_data = VideoLogitDatasetFromDisk(val_input_dir, val_logits_file)
+        else:
+            val_data = VideoLogitDataset(val_input_dir, val_logits_file)
+    else:
+        train_data, val_data = data.random_split(train_video_data, [train_size, len(train_video_data) - train_size])
     train_loader = DataLoader(train_data, batch_size=32, shuffle=True, drop_last=True, pin_memory=True, num_workers=2)
     val_loader = DataLoader(val_data, batch_size=32, shuffle=False, drop_last=False, num_workers=2)
 
@@ -122,8 +139,10 @@ if __name__ == "__main__":
     wandb_logger = WandbLogger(project="model_extraction", log_model="all")
     wandb_logger.log_hyperparams({
         "train_logits_file": train_logits_file,
+        "val_logits_file": val_logits_file,
         "test_logits_file": test_logits_file,
         "train_input_dir": train_input_dir,
+        "val_input_dir": val_input_dir
         "test_input_dir": test_input_dir,
         "attacker_model_name": attacker_model_name,
         "victim_model_name": victim_model_name,
