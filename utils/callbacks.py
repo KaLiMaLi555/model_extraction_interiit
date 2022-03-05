@@ -48,14 +48,14 @@ def init_model_checkpoint(checkpoint_path=None):
     pass path for directory
     '''
     return ModelCheckpoint(
-        dirpath=checkpoint_path
+        dirpath=checkpoint_path,
         monitor='val_loss',
         save_top_k=2,
         mode='min',
         every_n_epochs=1,
         save_on_train_epoch_end=True,
         save_last=True,
-        filename='{epoch}-{val_loss:.2f}-{val_accuracy:.2f}'
+        filename='{epoch}-{val_loss:.2f}-{val_accuracy:.2f}',   
         auto_insert_metric_name=True,
     )
 
@@ -66,7 +66,7 @@ def load_from_wandb_artifact(project,resume,checkpoint_path,ModelClass,num_class
     model = ModelClass.load_from_checkpoint(Path(artifact_dir) / "model.ckpt", num_classes=num_classes)
     return model
 
-def get_trainer(resume,epochs,logger,num_gpus,lr_monitor,checkpoint_callback,checkpoint_path=None)
+def get_trainer(resume,epochs,logger,num_gpus,lr_monitor,checkpoint_callback,checkpoint_path=None):
     if resume:
         return pl.Trainer(
             max_epochs=epochs,
