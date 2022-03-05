@@ -8,7 +8,7 @@
     "lr": 1e-3,
     "wt_decay": 2e-4,
     "save": true,
-    "input_dir": "/content/data",
+    "train_data_dir": "/content/data",
     "logits_file": "/content/logits.pkl",
 
     "criterion": "nn.CrossEntropyLoss(ignore_index = 19)",

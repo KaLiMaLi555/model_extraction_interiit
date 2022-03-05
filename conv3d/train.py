@@ -30,7 +30,7 @@ from utils.config import process_config
 config = process_config("config/config1.json")
 parser = argparse.ArgumentParser(description='Overwrite Config')
 
-parser.add_argument('--input_dir', type=str, default=config.input_dir)
+parser.add_argument('--train_data_dir', type=str, default=config.train_data_dir)
 parser.add_argument('--logits_file', type=str, default=config.logits_file)
 parser.add_argument('--val_data_dir', type=str, default=config.val_data_dir)
 parser.add_argument('--val_classes_file', type=str, default=config.val_classes_file)
@@ -267,7 +267,7 @@ if __name__ == "__main__":
 
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
 
-    video_data = VideoLogitDataset(args.input_dir, args.logits_file)
+    video_data = VideoLogitDataset(args.train_data_dir, args.logits_file)
     train_size = int(len(video_data))
     train_data = video_data
     val_data = ValDataset(args.val_data_dir, args.val_classes_file, args.val_labels_file, args.val_num_classes,
