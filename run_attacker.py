@@ -91,6 +91,7 @@ if __name__ == "__main__":
     parser.add_argument('--load_train_from_disk', action='store_true')
     parser.add_argument('--load_val_from_disk', action='store_true')
     parser.add_argument('--load_test_from_disk', action='store_true')
+    parser.add_argument('--wandb_name', type=str, default=None)
 
     args = parser.parse_args()
 
@@ -139,7 +140,7 @@ if __name__ == "__main__":
         exit(-1)
     
 
-    wandb_logger = WandbLogger(project="model_extraction", log_model="all")
+    wandb_logger = WandbLogger(project="model_extraction", log_model="all", name=args.wandb_name)
     wandb_logger.log_hyperparams({
         "train_logits_file": train_logits_file,
         "val_logits_file": val_logits_file,
