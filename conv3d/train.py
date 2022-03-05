@@ -193,7 +193,10 @@ class WrapperModel(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         logits = self.forward(x)
-        loss = F.binary_cross_entropy_with_logits(logits, y)
+        print(logits.shape)
+        print(y.shape)
+
+        loss = F.binary_cross_entropy(logits, y)
         accuracy = self.accuracy(torch.argmax(logits, dim=1), torch.argmax(y, dim=1))
         self.log('train_loss', loss, on_step=True, on_epoch=True, logger=True, prog_bar=True)
         self.log('train_accuracy', accuracy, on_step=True, on_epoch=True, logger=True, prog_bar=True)
