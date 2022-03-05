@@ -26,8 +26,8 @@
     "checkpoint_path": " ",
     "num_workers": 8,
 
-    "val_data_dir": "/content/val_data",
-    "val_classes_file": "/content/val_data/classes.csv",
-    "val_labels_file": "/content/val_data/labels.csv",
+    "val_data_dir": "/content/val_data/k400_16_frames_uniform",
+    "val_classes_file": "/content/val_data/k400_16_frames_uniform/classes.csv",
+    "val_labels_file": "/content/val_data/k400_16_frames_uniform/labels.csv",
     "val_num_classes": 400
 }
