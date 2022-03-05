@@ -277,7 +277,7 @@ if __name__ == "__main__":
                               pin_memory=True, num_workers=args.num_workers)
     val_loader = DataLoader(val_data, batch_size=args.val_batch_size, shuffle=False, drop_last=False,
                             num_workers=args.num_workers)
-    model_internal = C3D(num_classes=args.num_classes)
+    model_internal = C3D(num_classes=args.val_num_classes)
     model = WrapperModel(model_internal)
 
     if config.wandb_watch:
