@@ -32,7 +32,7 @@ def KLDiv(logits, y):
     return F.kl_div(torch.log(logits), y, reduction="batchmean")
 
 
-def train_step_log(logger, loss, accuracy):
+def train_step_log(logger, loss, accuracy_top1, accuracy_top5):
     """
     Log training metrics, given the logger object, use this to maintain uniformity in logging
     """
@@ -40,8 +40,16 @@ def train_step_log(logger, loss, accuracy):
         "train_loss", loss, on_step=True, on_epoch=True, logger=True, prog_bar=True
     )
     logger.log(
-        "train_accuracy",
-        accuracy,
+        "train_accuracy_top1",
+        accuracy_top1,
+        on_step=True,
+        on_epoch=True,
+        logger=True,
+        prog_bar=True,
+    )
+    logger.log(
+        "train_accuracy_top5",
+        accuracy_top5,
         on_step=True,
         on_epoch=True,
         logger=True,
@@ -49,16 +57,24 @@ def train_step_log(logger, loss, accuracy):
     )
 
 
-def validation_step_log(logger, loss, accuracy):
+def validation_step_log(logger, loss, accuracy_top1, accuracy_top5):
     """
     Log validation metrics, given the logger object, use this to maintain uniformity in logging
     """
     logger.log(
-        "validation_loss", loss, on_step=True, on_epoch=True, logger=True, prog_bar=True
+        "val_loss", loss, on_step=True, on_epoch=True, logger=True, prog_bar=True
     )
     logger.log(
-        "validation_accuracy",
-        accuracy,
+        "val_accuracy_top1",
+        accuracy_top1,
+        on_step=True,
+        on_epoch=True,
+        logger=True,
+        prog_bar=True,
+    )
+    logger.log(
+        "val_accuracy_top5",
+        accuracy_top5,
         on_step=True,
         on_epoch=True,
         logger=True,
@@ -66,7 +82,7 @@ def validation_step_log(logger, loss, accuracy):
     )
 
 
-def test_step_log(logger, loss, accuracy):
+def test_step_log(logger, loss, accuracy_top1, accuracy_top5):
     """
     Log test metrics, given the logger object, use this to maintain uniformity in logging
     """
@@ -74,8 +90,16 @@ def test_step_log(logger, loss, accuracy):
         "test_loss", loss, on_step=True, on_epoch=True, logger=True, prog_bar=True
     )
     logger.log(
-        "test_accuracy",
-        accuracy,
+        "test_accuracy_top1",
+        accuracy_top1,
+        on_step=True,
+        on_epoch=True,
+        logger=True,
+        prog_bar=True,
+    )
+    logger.log(
+        "test_accuracy_top5",
+        accuracy_top5,
         on_step=True,
         on_epoch=True,
         logger=True,
