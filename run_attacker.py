@@ -50,7 +50,7 @@ class WrapperModel(pl.LightningModule):
         true_preds = torch.argmax(y, dim=1)
         accuracy_top1 = metrics.topk_accuracy(probs, true_preds, k=1)
         accuracy_top5 = metrics.topk_accuracy(probs, true_preds, k=5)
-        metrics.validation_step_log(self, loss, accuracy_top1, accuracy_top5)
+        metrics.train_step_log(self, loss, accuracy_top1, accuracy_top5)
         return loss
     
     def validation_step(self, batch, batch_idx):
@@ -70,7 +70,7 @@ class WrapperModel(pl.LightningModule):
         true_preds = torch.argmax(y, dim=1)
         accuracy_top1 = metrics.topk_accuracy(probs, true_preds, k=1)
         accuracy_top5 = metrics.topk_accuracy(probs, true_preds, k=5)
-        metrics.validation_step_log(self, loss, accuracy_top1, accuracy_top5)
+        metrics.test_step_log(self, loss, accuracy_top1, accuracy_top5)
         # self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         # self.log('test_acc', accuracy, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
