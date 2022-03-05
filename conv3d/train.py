@@ -309,7 +309,7 @@ if __name__ == "__main__":
                          callbacks=[checkpoint_callback, lr_monitor],
                          gpus=1)
 
-    log_data_split(train_data, val_data)
+    # log_data_split(train_data, val_data)
     trainer.fit(model, train_loader, val_loader)
     print("Run complete")
     wandb.finish()

@@ -9,7 +9,7 @@ import csv
 
 class ValDataset(Dataset):
 
-    def __init__(self, video_dir_path, classes_file, labels_file, num_classes, transform=CustomResizeTransform()):
+    def __init__(self, video_dir_path, classes_file, labels_file, num_classes, transform=None):
 
         self.video_dir_path = video_dir_path
         self.classes_file = classes_file

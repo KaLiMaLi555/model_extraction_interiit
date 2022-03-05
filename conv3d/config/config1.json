@@ -26,8 +26,8 @@
     "checkpoint_path": " ",
     "num_workers": 8,
 
-    "val_data_dir": " ",
-    "val_classes_file": " ",
-    "val_labels_file": " ",
+    "val_data_dir": "/content/val_data",
+    "val_classes_file": "/content/val_data/classes.csv",
+    "val_labels_file": "/content/val_data/labels.csv",
     "val_num_classes": 400
 }
