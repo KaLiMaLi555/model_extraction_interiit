@@ -69,10 +69,10 @@ def validation_step_log(logger, loss, accuracy):
     Log validation metrics, given the logger object, use this to maintain uniformity in logging
     """
     logger(
-        "validation_loss", loss, on_step=True, on_epoch=True, logger=True, prog_bar=True
+        "val_loss", loss, on_step=True, on_epoch=True, logger=True, prog_bar=True
     )
     logger(
-        "validation_accuracy",
+        "val_accuracy",
         accuracy,
         on_step=True,
         on_epoch=True,
