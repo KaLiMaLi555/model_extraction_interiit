@@ -211,7 +211,7 @@ class WrapperModel(pl.LightningModule):
         logits = self.forward(x)
         print(y.shape)
         print(logits.shape)
-        loss = F.binary_cross_entropy_with_logits(logits, F.softmax(y, dim=1))
+        loss = F.binary_cross_entropy_with_logits(logits, y)
         accuracy = self.accuracy(torch.argmax(logits, dim=1), torch.argmax(y, dim=1))
         self.log('val_loss', loss, on_step=True, on_epoch=True, logger=True, prog_bar=True)
         self.log('val_accuracy', accuracy, on_step=True, on_epoch=True, logger=True, prog_bar=True)
