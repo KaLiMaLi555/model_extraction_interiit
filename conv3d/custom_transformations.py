@@ -66,13 +66,22 @@ def custom_rotate_transform(vid, angle=None):
     return torch.stack(video_transform)
 
 
+def custom_resize_transform(vid, size=224):
+    x = vid
+    video_transform = []
+    for i, image in enumerate(x):
+        image = TF.resize(image, (size, size))
+        video_transform.append(image)
+    return torch.stack(video_transform)
+
+
 class CustomTransform:
 
     def __init__(self):
         pass
 
     def __call__(self, vid):
-        vid = custom_rotate_transform(vid)  # Rotate by one of the given angles.
+        vid = custom_resize_transform(vid) # Resize
         return vid
 
 
