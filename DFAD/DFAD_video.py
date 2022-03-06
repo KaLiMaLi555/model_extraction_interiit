@@ -17,7 +17,7 @@ from mmcv import Config
 from mmaction.models import build_model
 from mmcv.runner import load_checkpoint
 from utils.wandb_utils import *
-from utils.config import process_config
+
 
 
 
