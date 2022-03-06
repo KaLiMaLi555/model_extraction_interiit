@@ -131,7 +131,7 @@ def main():
     parser.add_argument('--wandb_resume', action="store_true")
     parser.add_argument('--wandb_watch', action="store_true")
     parser.add_argument('--checkpoint_base', type=str, default="/content")
-    parser.add_argument('--checkpoint_path', type=str, default="/gdrive/MyDrive/DFAD_video_ckpts")
+    parser.add_argument('--checkpoint_path', type=str, default="/contnet/checkpoints")
     parser.add_argument('--wandb_save', action="store_true")
 
 

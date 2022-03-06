@@ -91,7 +91,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             # 'criterion': criterion.state_dict()
         }
 
-        if args.wandb_save:
+        if hp.save:
             save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
         
 
@@ -131,7 +131,7 @@ def main():
     parser.add_argument('--wandb_resume', action="store_true")
     parser.add_argument('--wandb_watch', action="store_true")
     parser.add_argument('--checkpoint_base', type=str, default="/content")
-    parser.add_argument('--checkpoint_path', type=str, default="/gdrive/MyDrive/DFAD_video_ckpts")
+    parser.add_argument('--checkpoint_path', type=str, default="/contnet/checkpoints")
     parser.add_argument('--wandb_save', action="store_true")
 
 

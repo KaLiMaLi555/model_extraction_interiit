@@ -2,7 +2,7 @@ import wandb
 import os
 import numpy as np
 from sklearn.metrics import confusion_matrix
-
+import torch
 
 def init_wandb(model, wandb_api_key, wandb_resume, wandb_name, wandb_project, wandb_run_id, wandb_watch):
     os.environ["WANDB_API_KEY"] = wandb_api_key
@@ -78,13 +78,13 @@ def save_model_wandb(save_path):
     wandb.save(os.path.abspath(save_path))
 
 
-def save_ckp(state, epoch, checkpoint_path, checkpoint_base, wandb):
+def save_ckp(state, epoch, checkpoint_path, checkpoint_base, wandb_save):
     """
     state: checkpoint we want to save
     checkpoint_path: path to save checkpoint
     """
-    f_path = checkpoint_path + "Epoch_" + str(epoch) + '.pth'
+    f_path = os.path.join(checkpoint_path, "Epoch_" + str(epoch) + '.pth')
     # save checkpoint data to the path given, checkpoint_path
     torch.save(state, f_path)
-    if wandb:
+    if wandb_save:
         wandb.save(f_path, base_path=checkpoint_base, policy='live')
