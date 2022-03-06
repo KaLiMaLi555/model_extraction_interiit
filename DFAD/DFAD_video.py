@@ -17,7 +17,7 @@ import torch.nn.functional as F
 from mmcv import Config
 from mmaction.models import build_model
 from mmcv.runner import load_checkpoint
-from utils.wandb_utils import *
+from utils.wandb_utils import init_wandb, save_ckp
 
 
 def train(args, teacher, student, generator, device, optimizer, epoch):
@@ -124,14 +124,15 @@ def main():
     
 
     parser.add_argument('--wandb_api_key', type=str)
-    parser.add_argument('--wandb', type=bool, default=True)
+    parser.add_argument('--wandb', action="store_true")
     parser.add_argument('--wandb_project', type=str, default="model_extraction")
     parser.add_argument('--wandb_name', type=str)
-    parser.add_argument('--wandb_id', type=str, default=None)
+    parser.add_argument('--wandb_run_id', type=str, default=None)
     parser.add_argument('--resume', type=int, default=False)
+    parser.add_argument('--wandb_watch', action="store_true")
     parser.add_argument('--checkpoint_base', type=str, default="/content")
     parser.add_argument('--checkpoint_path', type=str, default="/contnet/checkpoints")
-    parser.add_argument('--wandb_save', type=bool, default=True)
+    parser.add_argument('--wandb_save', action="store_true")
 
 
 
