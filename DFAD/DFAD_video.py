@@ -91,7 +91,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             # 'criterion': criterion.state_dict()
         }
 
-        if hp.save:
+        if args.wandb_save:
             save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
         
 
