@@ -16,6 +16,11 @@ import torch.nn.functional as F
 from mmcv import Config
 from mmaction.models import build_model
 from mmcv.runner import load_checkpoint
+from utils.wandb_utils import *
+from utils.config import process_config
+
+
+
 
 def train(args, teacher, student, generator, device, optimizer, epoch):
 
@@ -47,7 +52,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
 
             loss_S = F.l1_loss(s_logit, t_logit)
             total_loss_S += loss_S.item()
-            
+            wandb.log({'Loss_S': total_loss_S,}, step=epoch)           
             loss_S.backward()
             optimizer_S.step()
 
@@ -68,6 +73,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         total_loss_G += loss_G.item()
 
         print("Loss on Generator model: ", total_loss_G / (i+1))
+        wandb.log({'Loss_G': total_loss_G,}, step=epoch)
 
         loss_G.backward()
         optimizer_G.step()
@@ -75,6 +81,21 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         if args.verbose and i % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tG_Loss: {:.6f} S_loss: {:.6f}'.format(
                 epoch, i, args.epoch_itrs, 100*float(i)/float(args.epoch_itrs), loss_G.item(), loss_S.item()))
+
+        checkpoint = {
+            'outer_epoch': epoch,
+            'inner_epoch': i+1,
+            'optimizer_S': optimizer_S.state_dict(),
+            'optimizer_G': optimizer_G.state_dict(),
+            'generator': generator.state_dict(),
+            'student': student.state_dict(),
+            # 'scheduler':scheduler.state_dict(),
+            # 'criterion': criterion.state_dict()
+        }
+
+        if hp.save:
+            save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
+        
 
 def main():
 
@@ -102,6 +123,19 @@ def main():
     parser.add_argument('--scheduler', action='store_true', default=False)
     parser.add_argument('--verbose', action='store_true', default=False)
     parser.add_argument('--image_size', default = 32, type = int)
+    
+
+    parser.add_argument('--wandb_api_key', type=str)
+    parser.add_argument('--wandb', type=bool, default=True)
+    parser.add_argument('--wandb_project', type=str, default="model_extraction")
+    parser.add_argument('--wandb_name', type=str)
+    parser.add_argument('--wandb_id', type=str)
+    parser.add_argument('--resume', type=int, default=False)
+    parser.add_argument('--checkpoint_base', type=str, default="/content")
+    parser.add_argument('--checkpoint_path', type=str, default="/contnet/checkpoints")
+    parser.add_argument('--wandb_save', type=bool, default=True)
+
+
 
     print("\nArguments are as follows:\n")
 
@@ -128,10 +162,16 @@ def main():
         teacher = build_model(cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))
         load_checkpoint(teacher, checkpoint, map_location=device)
 
+    
+
+
     student = network.models.ResCNNRNN()
     print("\nLoaded student and teacher")
     generator = network.models.VideoGAN(zdim = args.nz)
     print("Loaded student, generator and teacher\n")
+
+    if args.wandb:
+        init_wandb(student, args.wandb_api_key, args.wandb_resume, args.wandb_name, args.wandb_project, args.wandb_run_id, args.wandb_watch)
 
     teacher = teacher.to(device)
     student = student.to(device)
