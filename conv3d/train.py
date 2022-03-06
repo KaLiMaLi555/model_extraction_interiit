@@ -197,7 +197,7 @@ class WrapperModel(pl.LightningModule):
         print()
         print(y.shape, logits.shape)
         if y.shape[-1] != 400:
-            y = F.one_hot(y, 400)
+            y = F.one_hot(y.to(torch.int32), 400)
         loss = F.kl_div(torch.log(F.softmax(logits, dim=1)), y, reduction="batchmean")
 
         accuracy = self.accuracy(torch.argmax(logits, dim=1), torch.argmax(y, dim=1))
@@ -219,7 +219,7 @@ class WrapperModel(pl.LightningModule):
         print()
         print(y.shape, logits.shape)
         if y.shape[-1] != 400:
-            y = F.one_hot(y, 400)
+            y = F.one_hot(y.to(torch.int32), 400)
 
         loss = F.kl_div(torch.log(F.softmax(logits, dim=1)), y, reduction="batchmean")
         accuracy = self.accuracy(torch.argmax(logits, dim=1), torch.argmax(y, dim=1))
