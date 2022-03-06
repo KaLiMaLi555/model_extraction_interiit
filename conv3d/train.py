@@ -151,7 +151,7 @@ class WrapperModel(pl.LightningModule):
         x, y = batch
         logits = self.forward(x)
 
-        loss = F.binary_cross_entropy_with_logits(logits, y)
+        loss = F.binary_cross_entropy_with_logits(logits, y.float())
         # loss = F.kl_div(torch.log(F.softmax(logits, dim=1)), y, reduction="batchmean")
         accuracy = self.accuracy(torch.argmax(logits, dim=1), torch.argmax(y, dim=1))
         self.log('train_loss', loss, on_step=True, on_epoch=True, logger=True, prog_bar=True)
@@ -169,7 +169,7 @@ class WrapperModel(pl.LightningModule):
         x, y = batch
         logits = self.forward(x)
 
-        loss = F.binary_cross_entropy_with_logits(logits, y)
+        loss = F.binary_cross_entropy_with_logits(logits, y.float())
         # loss = F.kl_div(torch.log(F.softmax(logits, dim=1)), y, reduction="batchmean")
         accuracy = self.accuracy(torch.argmax(logits, dim=1), torch.argmax(y, dim=1))
         self.log('val_loss', loss, on_step=True, on_epoch=True, logger=True, prog_bar=True)
