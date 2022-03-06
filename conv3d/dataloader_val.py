@@ -1,12 +1,15 @@
-import torch
-import numpy as np
-import pickle
-from PIL import Image
-from torch.utils.data import DataLoader, Dataset
-from torch.nn import functional as F
+# List of imports
 import os
-import csv
+
+import numpy as np
 import pandas as pd
+
+# PyTorch
+import torch
+import torch.nn.functional as F
+from torch.utils.data import Dataset
+
+from PIL import Image
 
 
 class ValDataset(Dataset):

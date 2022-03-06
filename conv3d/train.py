@@ -1,30 +1,27 @@
 # List of imports
 import argparse
 import os
-import pickle
 from pathlib import Path
 
 import numpy as np
 import wandb
-from PIL import Image
-from tqdm.notebook import tqdm
 
 # PyTorch
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import torch.utils.data as data
+from torch.utils.data import DataLoader, Dataset
 
 # PyTorch lightning
 import pytorch_lightning as pl
 import torchmetrics
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
-from torch.utils.data import DataLoader, Dataset
 
 from custom_transformations import CustomResizeTransform
-from Dataloader import ValDataset
+from dataloader_train import VideoLogitDataset
+from dataloader_val import ValDataset
 from utils.config import process_config
 
 config = process_config("config/config1.json")
@@ -55,47 +52,6 @@ parser.add_argument('--wt_decay', type=float, default=config.wt_decay)
 parser.add_argument('--checkpoint_path', type=str, default=config.checkpoint_path)
 parser.add_argument('--num_workers', type=int, default=config.num_workers)
 args = parser.parse_args()
-
-
-class VideoLogitDataset(Dataset):
-
-    def __init__(self, video_dir_path, logits_file, transform=None):
-
-        self.video_dir_path = video_dir_path
-        self.instances = []  # Tensor of image frames
-        # self.logits = np.array(list(x[0] for x in pickle.load(open(logits_file, 'rb'))))
-        self.logits = pickle.load(open(logits_file, 'rb'))
-
-        self.videos = os.listdir(self.video_dir_path)
-        self.get_frames()
-
-        self.instances = torch.stack(self.instances)
-        self.num_instances = len(self.instances)
-        self.transform = transform
-
-    def get_frames(self):
-        for video in tqdm(self.videos, position=0, leave=True):
-            image_frames = []
-            video_dir = os.path.join(self.video_dir_path, video)
-            images = os.listdir(video_dir)
-
-            for image_name in images:
-                image = Image.open(os.path.join(video_dir, image_name))
-                image = np.array(image, dtype=np.float32)
-                image_frames.append(torch.tensor(image))
-
-            self.instances.append(torch.stack(image_frames))
-
-    def __getitem__(self, idx):
-        vid = self.instances[idx]
-        vid = vid.swapaxes(0, 3)
-        # vid = custom_rotate_transform(vid)
-        if self.transform:
-            vid = self.transform(vid)
-        return vid, self.logits[idx]
-
-    def __len__(self):
-        return len(self.instances)
 
 
 class C3D(nn.Module):
@@ -196,7 +152,6 @@ class WrapperModel(pl.LightningModule):
         logits = self.forward(x)
 
         loss = F.kl_div(torch.log(F.softmax(logits, dim=1)), y, reduction="batchmean")
-        # loss = F.binary_cross_entropy_with_logits(logits, F.softmax(y, dim=1))
         accuracy = self.accuracy(torch.argmax(logits, dim=1), torch.argmax(y, dim=1))
         self.log('train_loss', loss, on_step=True, on_epoch=True, logger=True, prog_bar=True)
         self.log('train_accuracy', accuracy, on_step=True, on_epoch=True, logger=True, prog_bar=True)
@@ -213,12 +168,6 @@ class WrapperModel(pl.LightningModule):
         x, y = batch
         logits = self.forward(x)
 
-        print()
-        print(y.shape, logits.shape)
-        if y.shape[-1] != 400:
-            print(y)
-            y = F.one_hot(y.to(torch.int32), 400)
-
         loss = F.kl_div(torch.log(F.softmax(logits, dim=1)), y, reduction="batchmean")
         accuracy = self.accuracy(torch.argmax(logits, dim=1), torch.argmax(y, dim=1))
         self.log('val_loss', loss, on_step=True, on_epoch=True, logger=True, prog_bar=True)
@@ -234,8 +183,11 @@ class WrapperModel(pl.LightningModule):
         return optim.SGD(self.parameters(), lr=self.learning_rate)
 
 
-def log_data_split(train_data, val_data):
-    train_classes, val_classes = [0] * 600, [0] * 600
+def util_log_data_split(train_data, val_data):
+    # Util to log the class distribution of datasets in wandb
+    # Note: Input is tensors/np.arrays of dims (n_examples, n_classes)
+    n_classes = len(train_data[0])
+    train_classes, val_classes = [0] * n_classes, [0] * n_classes
     for _, y, in train_data:
         train_classes[np.argmax(y)] += 1
     for _, y in val_data:
