@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
+from torch.nn import functional as F
 import os
 import csv
 import pandas as pd
@@ -53,9 +54,10 @@ class ValDataset(Dataset):
         video_name = self.videos[idx]
         video_id = self.get_id(video_name)
         label = self.new_classes_dict[video_id]
-        one_hot = np.zeros(self.num_classes)
-        one_hot[int(label)] = 1
-        one_hot = torch.from_numpy(one_hot)
+        print(f'\nget_label {str(idx)}: {label}, {self.num_classes}')
+        one_hot = F.one_hot(label, self.num_classes)
+        print(one_hot.shape)
+        print(one_hot)
         return one_hot
 
     def get_frames(self, video_path):
