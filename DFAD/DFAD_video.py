@@ -129,7 +129,7 @@ def main():
     parser.add_argument('--wandb', type=bool, default=True)
     parser.add_argument('--wandb_project', type=str, default="model_extraction")
     parser.add_argument('--wandb_name', type=str)
-    parser.add_argument('--wandb_id', type=str)
+    parser.add_argument('--wandb_id', type=str, default=None)
     parser.add_argument('--resume', type=int, default=False)
     parser.add_argument('--checkpoint_base', type=str, default="/content")
     parser.add_argument('--checkpoint_path', type=str, default="/contnet/checkpoints")
