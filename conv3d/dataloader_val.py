@@ -22,7 +22,7 @@ class ValDataset(Dataset):
         self.labels_file = labels_file
         self.transform = transform
 
-        self.videos = sorted([x.resolve() for x in Path(self.video_dir_path).iterdir() if x.is_dir()])
+        self.videos = sorted([str(x.resolve()) for x in Path(self.video_dir_path).iterdir() if x.is_dir()])
         self.num_instances = len(self.videos)
         self.num_classes = num_classes
 
