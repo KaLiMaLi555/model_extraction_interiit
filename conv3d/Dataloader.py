@@ -55,7 +55,7 @@ class ValDataset(Dataset):
         video_id = self.get_id(video_name)
         label = self.new_classes_dict[video_id]
         print(f'\nget_label {str(idx)}: {label}, {self.num_classes}')
-        one_hot = F.one_hot(label, self.num_classes)
+        one_hot = F.one_hot(torch.tensor(int(label)), self.num_classes)
         print(one_hot.shape)
         print(one_hot)
         return one_hot
