@@ -1,5 +1,6 @@
 # List of imports
 import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -21,7 +22,7 @@ class ValDataset(Dataset):
         self.labels_file = labels_file
         self.transform = transform
 
-        self.videos = sorted(os.listdir(self.video_dir_path))
+        self.videos = sorted([x for x in Path(self.video_dir_path).iterdir() if x.is_dir()])
         self.num_instances = len(self.videos)
         self.num_classes = num_classes
 
