@@ -193,6 +193,17 @@ class WrapperModel(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         logits = self.forward(x)
+        print()
+        print(x.shape)
+        print(y.shape)
+        print(logits.shape)
+        print()
+        print(y)
+        print()
+        print(logits.shape)
+        print()
+        print(F.softmax(logits, dim=1))
+        print()
 
         loss = F.kl_div(torch.log(F.softmax(logits, dim=1)), y, reduction="batchmean")
         # loss = F.binary_cross_entropy_with_logits(logits, F.softmax(y, dim=1))
