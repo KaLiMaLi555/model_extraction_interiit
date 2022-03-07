@@ -56,14 +56,14 @@ class DecoderRNN(nn.Module):
 
 
 ####
-#         pretrained=args.pretrained    ----> False
-#         num_classes=args.nb_classes   ----> num classes
-#         drop_rate=args.drop           ----> Dropout rate (default: 0.)
-#         drop_path_rate=args.drop_path ----> Drop path rate (default: 0.1)
-#         drop_block_rate=args.drop_block ---> Drop block rate (default: None)
-#         local_up_to_layer=args.local_up_to_layer --> number of GPSA layers (default 10)
-#         locality_strength=args.locality_strength --> Determines how focused each head is around its attention center (default: 1.0)
-#         embed_dim = args.embed_dim               --> embedding dimension per head (default: 48)
+#         pretrained=args.pretrained                    ----> False
+#         num_classes=args.nb_classes                   ----> num classes
+#         drop_rate=args.drop                           ----> Dropout rate (default: 0.)
+#         drop_path_rate=args.drop_path                 ----> Drop path rate (default: 0.1)
+#         drop_block_rate=args.drop_block               ----> Drop block rate (default: None)
+#         local_up_to_layer=args.local_up_to_layer      ----> number of GPSA layers (default 10)
+#         locality_strength=args.locality_strength      ----> Determines how focused each head is around its attention center (default: 1.0)
+#         embed_dim = args.embed_dim                    ----> embedding dimension per head (default: 48)
 ####
 
 
@@ -87,10 +87,8 @@ def convit_small(pretrained=False, **kwargs):
 class ConViTRNN(nn.Module):
     def __init__(
         self,
-        fc_hidden1=512,
-        fc_hidden2=512,
-        drop_p=0.3,
-        CNN_embed_dim=300,
+        drop_p=0.2,
+        # CNN_embed_dim=300,
         h_RNN_layers=3,
         h_RNN=256,
         h_FC_dim=128,
@@ -101,9 +99,17 @@ class ConViTRNN(nn.Module):
 
         self.encoder = convit_small(
             pretrained=False,
+            num_classes=num_classes,
+            drop_rate=drop_p,  ## original paper has 0 but I am setting this to 0.2
+            drop_path_rate=0.1,
+            drop_block_rate=None,
+            local_up_to_layer=10,
+            locality_strength=1,
+            embed_dim=48,
         )
+
         self.decoder = DecoderRNN(
-            CNN_embed_dim=CNN_embed_dim,
+            CNN_embed_dim=48 * 9,  ## 9 heads
             h_RNN_layers=h_RNN_layers,
             h_RNN=h_RNN,
             h_FC_dim=h_FC_dim,
