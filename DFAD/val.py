@@ -1,12 +1,12 @@
 import argparse
-from dataloader_val import ValDataset
-from ..network import models
-from utils import metrics
+
 import torch
 from torch.utils.data import DataLoader
-from utils.custom_transformations import CustomResizeTransform
-import numpy as np
-import random
+
+from model_extraction_interiit.DFAD.network import models
+from val_utils import metrics
+from val_utils.custom_transformations import CustomResizeTransform
+from val_utils.dataloader_val import ValDataset
 
 # Note: Not seeding here since importing metrics.py already seeds.
 # Add seeding if not using metrics
