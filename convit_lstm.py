@@ -102,7 +102,7 @@ class ConViTRNN(nn.Module):
             num_classes=num_classes,
             drop_rate=drop_p,  ## original paper has 0 but I am setting this to 0.2
             drop_path_rate=0.1,
-            drop_block_rate=None,
+            # drop_block_rate=None,
             local_up_to_layer=10,
             locality_strength=1,
             embed_dim=48,      ### 48*9 is less than number of classes so might want to change this 

@@ -506,7 +506,14 @@ class VisionTransformer(nn.Module):
         x = self.norm(x)
         return x[:, 0]
 
-    def forward(self, x):
-        x = self.forward_features(x)
-        # x = self.head(x)
-        return x
+    def forward(self, x_3d):
+        convit_embed_seq = []
+        for t in range(x_3d.size(1)):
+            # ResNet CNN
+            x = x_3d[:, t, :, :, :]
+            x = x.reshape((-1, x.shape[3], x.shape[1], x.shape[2]))
+            x = self.forward_features(x)  # ViT
+            convit_embed_seq.append(x)
+        convit_embed_seq = torch.stack(convit_embed_seq, dim=0).transpose_(0, 1)
+
+        return convit_embed_seq
