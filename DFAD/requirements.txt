@@ -1,0 +1,9 @@
+torch>=1.2
+torchvision
+torchmetrics
+pytorch_lightning
+tqdm
+visdom
+numpy
+pillow
+scikit-learn

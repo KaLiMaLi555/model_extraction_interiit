@@ -1,0 +1,32 @@
+{
+    "os": "Linux-5.4.144+-x86_64-with-Ubuntu-18.04-bionic",
+    "python": "3.7.12",
+    "heartbeatAt": "2022-03-06T17:48:25.765549",
+    "startedAt": "2022-03-06T17:48:21.661597",
+    "docker": null,
+    "gpu": "Tesla P100-PCIE-16GB",
+    "gpu_count": 1,
+    "cpu_count": 2,
+    "cuda": null,
+    "args": [
+        "--wandb_api_key",
+        "5e3e5810a102939f20929d2151ad1ff25edac441",
+        "--wandb",
+        "--wandb_watch",
+        "--wandb_save",
+        "--wandb_name",
+        "dfad_video"
+    ],
+    "state": "running",
+    "program": "DFAD/DFAD_video.py",
+    "codePath": "DFAD/DFAD_video.py",
+    "git": {
+        "remote": "https://github.com/Sohanpatnaik106/model_extraction_interiit/",
+        "commit": "bccb2a7614bbd2e0a9534272b24dab590ac3d084"
+    },
+    "email": null,
+    "root": "/content/model_extraction_interiit",
+    "host": "391c3747e916",
+    "username": "root",
+    "executable": "/usr/bin/python3"
+}
