@@ -3,7 +3,7 @@ import argparse
 import torch
 from torch.utils.data import DataLoader
 
-from model_extraction_interiit.DFAD.network import models
+from network import models
 from val_utils import metrics
 from val_utils.custom_transformations import CustomResizeTransform
 from val_utils.dataloader_val import ValDataset
