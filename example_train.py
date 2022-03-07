@@ -212,24 +212,27 @@ class WrapperModel(pl.LightningModule):
         x, y = batch
         logits = self.forward(x)
         loss = bce_logits(logits, y)
-        accuracy = self.accuracy(logits, y)
-        train_step_log(logger=self.log, loss=loss, accuracy=accuracy)
+        accuracy_1 = self.accuracy(logits, y,k=1)
+        accuracy_5 = self.accuracy(logits, y,k=5)
+        train_step_log(logger=self.log, loss=loss, accuracy_top1=accuracy_1,accuracy_top5=accuracy_5)
         return {"loss": loss, "other_stuff": logits}
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         logits = self.forward(x)
         loss = bce_logits(logits, y)
-        accuracy = self.accuracy(logits, y)
-        validation_step_log(logger=self.log, loss=loss, accuracy=accuracy)
+        accuracy_1 = self.accuracy(logits, y,k=1)
+        accuracy_5 = self.accuracy(logits, y,k=5)
+        validation_step_log(logger=self.log, loss=loss, accuracy_top1=accuracy_1,accuracy_top5=accuracy_5)
         return loss
 
     def test_step(self, batch, batch_idx):
         x, y = batch
         logits = self.forward(x)
         loss = bce_logits(logits, y)
-        accuracy = self.accuracy(logits, y)
-        test_step_log(logger=self.log, loss=loss, accuracy=accuracy)
+        accuracy_1 = self.accuracy(logits, y,k=1)
+        accuracy_5 = self.accuracy(logits, y,k=5)
+        test_step_log(logger=self.log, loss=loss, accuracy_top1=accuracy_1,accuracy_top5=accuracy_5)
         return loss
 
     def configure_optimizers(self):
