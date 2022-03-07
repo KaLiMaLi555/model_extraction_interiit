@@ -95,5 +95,5 @@ if __name__ == "__main__":
 
     print("\n######################## Getting Logits ########################\n")
     logits, labels = get_logits(model, args.model_name, tensor_dataloader, device)
-    combined = zip(logits, labels)
-    pickle.dump(combined, open(os.path.join(args.logit_dir, args.model_name + "_" + args.dataset_type + ".pkl"), "wb"))
+    # combined = zip(logits, labels)
+    pickle.dump(logits, open(os.path.join(args.logit_dir, args.model_name + "_logits_" + args.dataset_type + ".pkl"), "wb"))

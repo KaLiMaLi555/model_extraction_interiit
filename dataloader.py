@@ -6,11 +6,31 @@ import argparse
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
-from env import set_seed
+# from env import set_seed
 from torch.utils.data import Dataset, DataLoader
+import torchvision.transforms.functional as TF
+import pickle
 
 # TODO: The class is implemented now for random, 
 # Do if we have both the actual images and labels
+class CustomResizeTransform:
+
+    def __init__(self):
+        pass
+
+    def custom_resize_transform(self, vid, size=224):
+      x = vid
+      video_transform = []
+      for i, image in enumerate(list(x)):
+          image = TF.resize(image, size+32)
+          image = TF.center_crop(image, (size, size))
+          video_transform.append(image)
+      return torch.stack(video_transform)
+
+    def __call__(self, vid):
+        vid = self.custom_resize_transform(vid) # Resize
+        return vid
+
 class Dataloader():
 
     def __init__(self, video_dir_path, num_classes = 5, is_random = True):
@@ -70,3 +90,78 @@ class Dataloader():
             self.labels[index] = c
 
         self.labels = torch.tensor(self.labels)
+
+
+class VideoLogitDataset(Dataset):
+
+    def __init__(self, video_dir_path, logits_file):
+
+        self.video_dir_path = video_dir_path
+        self.instances = []     # Tensor of image frames
+        self.logits = pickle.load(open(logits_file, 'rb'))
+        self.transform = CustomResizeTransform()
+
+        self.videos = sorted([x for x in os.listdir(self.video_dir_path) if os.path.isdir(os.path.join(self.video_dir_path, x))])
+        self.get_frames()
+
+
+        self.instances = torch.stack(self.instances)
+        self.num_instances = len(self.instances)
+
+    def get_frames(self):
+        
+        for video in tqdm(self.videos, position = 0, leave = True):
+            
+            image_frames = []
+            video_dir = os.path.join(self.video_dir_path, video)
+            images = os.listdir(video_dir)
+            
+            for image_name in images:
+                image = Image.open(os.path.join(video_dir, image_name))
+                image = np.array(image, dtype = np.float32)
+                image_frames.append(torch.tensor(image))
+            
+            image_frames = self.transform(
+              torch.stack(image_frames).permute(0, 3, 1, 2)
+              ).permute(0, 2, 3, 1)
+
+            self.instances.append(image_frames)
+
+    def __getitem__(self, idx):
+        return self.instances[idx], self.logits[idx]
+
+    def __len__(self):
+        return len(self.instances)
+
+class VideoLogitDatasetFromDisk(Dataset):
+
+    def __init__(self, video_dir_path, logits_file):
+
+        self.video_dir_path = video_dir_path
+        self.logits = pickle.load(open(logits_file, 'rb'))
+        self.transform = CustomResizeTransform()
+
+        self.videos = sorted([x for x in os.listdir(self.video_dir_path) if os.path.isdir(os.path.join(self.video_dir_path, x))])
+        self.num_instances = len(self.videos)
+
+    def get_frames(self, video_path):
+        images = os.listdir(video_path)
+        image_frames = []
+        
+        for image_name in images:
+            image = Image.open(os.path.join(video_path, image_name))
+            image = np.array(image, dtype = np.float32)
+            image_frames.append(torch.tensor(image))
+
+        return torch.stack(image_frames)
+
+    def __getitem__(self, idx):
+        video_path = os.path.join(self.video_dir_path, self.videos[idx])
+        vid = self.get_frames(video_path)
+        vid = vid.permute(0, 3, 1, 2)
+        vid = self.transform(vid)
+        vid = vid.permute(0, 2, 3, 1)
+        return vid, self.logits[idx]
+
+    def __len__(self):
+        return self.num_instances
