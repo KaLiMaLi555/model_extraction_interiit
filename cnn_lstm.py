@@ -65,7 +65,7 @@ class DecoderRNN(nn.Module):
 # 2D CNN encoder using ResNet-152 pretrained
 class ResCNNEncoder(nn.Module):
     def __init__(self, fc_hidden1=512, fc_hidden2=512, drop_p=0.3, CNN_embed_dim=300):
-        """Load the pretrained ResNet-152 and replace top fc layer."""
+        """Load the untrained ResNet-152 and replace top fc layer."""
         super(ResCNNEncoder, self).__init__()
 
         self.fc_hidden1, self.fc_hidden2 = fc_hidden1, fc_hidden2
