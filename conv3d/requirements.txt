@@ -1,0 +1,11 @@
+pytorch-lightning
+wandb
+pillow
+tqdm
+numpy
+pickle5
+sklearn
+easydict
+torchmetrics
+pandas
+
