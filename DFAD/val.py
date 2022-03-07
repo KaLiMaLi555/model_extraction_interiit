@@ -19,7 +19,7 @@ parser.add_argument('--val_classes_file', type=str, default='/content/val_data/k
 parser.add_argument('--val_labels_file', type=str, default='/content/val_data/k400_16_frames_uniform/labels.csv')
 parser.add_argument('--val_num_classes', type=int, default=400)
 
-parser.add_argument('--batch_size', type=int, default=16)
+parser.add_argument('--val_batch_size', type=int, default=16)
 parser.add_argument('--checkpoint_path', type=str, default='/content/model.pth')
 parser.add_argument('--num_workers', type=int, default=8)
 args = parser.parse_args()
