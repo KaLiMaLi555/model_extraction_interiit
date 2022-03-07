@@ -31,7 +31,7 @@ import argparse
 
 from dataloader import VideoLogitDataset, VideoLogitDatasetFromDisk
 from cnn_lstm import ResCNNRNN
-
+from convit_lstm import ConViTRNN
 class WrapperModel(pl.LightningModule):
     def __init__(self, model, learning_rate=1e-3):
 
@@ -71,8 +71,6 @@ class WrapperModel(pl.LightningModule):
         accuracy_top1 = metrics.topk_accuracy(probs, true_preds, k=1)
         accuracy_top5 = metrics.topk_accuracy(probs, true_preds, k=5)
         metrics.test_step_log(self, loss, accuracy_top1, accuracy_top5)
-        # self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-        # self.log('test_acc', accuracy, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
     def configure_optimizers(self):
@@ -158,6 +156,8 @@ if __name__ == "__main__":
     })
     if attacker_model_name == 'resnet-lstm':
         model_internal = ResCNNRNN(num_classes=num_classes)
+    elif attacker_model_name == 'convit-lstm':
+        model_internal = ConViTRNN(num_classes=num_classes)
     else:
         print("Unknown attacker name")
         exit(-1)
