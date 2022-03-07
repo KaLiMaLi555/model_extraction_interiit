@@ -28,7 +28,7 @@ args = parser.parse_args()
 
 def val(student, dataloader, device):
     accuracy_1, accuracy_5 = [], []
-    for (x, y) in tqdm(dataloader):
+    for (x, y) in tqdm(dataloader, total=len(dataloader)):
         x, y = x.to(device), y.to(device)
         x_shape = x.shape
         x = x.view(x_shape[0], x_shape[4], x_shape[1], x_shape[2], x_shape[3])
@@ -56,7 +56,7 @@ def main():
                             shuffle=False, drop_last=False,
                             num_workers=args.num_workers)
     accuracy_1, accuracy_5 = val(student, val_loader, device)
-    print(accuracy_1, accuracy_5)
+    print(accuracy_1.numpy(), accuracy_5.numpy())
 
 
 if __name__ == '__main__':
