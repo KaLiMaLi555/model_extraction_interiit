@@ -105,7 +105,7 @@ class ConViTRNN(nn.Module):
             drop_block_rate=None,
             local_up_to_layer=10,
             locality_strength=1,
-            embed_dim=48,
+            embed_dim=48,      ### 48*9 is less than number of classes so might want to change this 
         )
 
         self.decoder = DecoderRNN(
