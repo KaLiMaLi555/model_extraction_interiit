@@ -2,6 +2,7 @@ import argparse
 
 import torch
 from torch.utils.data import DataLoader
+from tqdm.notebook import tqdm
 
 from network import models
 from val_utils import metrics
@@ -27,7 +28,7 @@ args = parser.parse_args()
 
 def val(student, dataloader):
     accuracy_1, accuracy_5 = [], []
-    for (x, y) in dataloader:
+    for (x, y) in tqdm(dataloader):
         logits = student(x)
         accuracy_1.append(metrics.topk_accuracy(logits, y, 1))
         accuracy_5.append(metrics.topk_accuracy(logits, y, 5))
