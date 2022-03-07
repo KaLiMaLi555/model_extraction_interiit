@@ -36,8 +36,8 @@ def val(student, dataloader):
 
 
 def main():
-    checkpoint = torch.load(args.checkpoint_path)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    checkpoint = torch.load(args.checkpoint_path, map_location=device)
 
     student = models.ResCNNRNN()
     student.load_state_dict(checkpoint['student'])

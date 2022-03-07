@@ -1,5 +1,7 @@
 torch>=1.2
 torchvision
+torchmetrics
+pytorch_lightning
 visdom
 numpy
 pillow
