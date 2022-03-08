@@ -75,7 +75,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         loss_S.backward()
         optimizer_S.step()
 
-        print("Loss on Student model:", total_loss_S / (5 * (i+1)))
+        print("Loss on Student model:", total_loss_S / (i+1)))
 
 
         if args.verbose and i % args.log_interval == 0:
