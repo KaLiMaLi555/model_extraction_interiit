@@ -53,8 +53,8 @@ def main():
                           args.val_labels_file, args.val_num_classes,
                           transform=CustomResizeTransform())
     print('starting')
-    for _ in val_data:
-        pass
+    for i in range(1849):
+        val_data.get_label(i)
     # val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
     #                         shuffle=False, drop_last=False,
     #                         num_workers=args.num_workers)

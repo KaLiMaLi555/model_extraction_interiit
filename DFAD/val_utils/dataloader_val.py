@@ -60,6 +60,7 @@ class ValDataset(Dataset):
         video_id = self.get_id(video_name)
         label = self.new_classes_dict[video_id]
         one_hot = F.one_hot(torch.tensor(int(label)), self.num_classes)
+        self.distribution_debug[int(label)] += 1
         return one_hot
 
     def get_frames(self, video_path):
@@ -82,9 +83,7 @@ class ValDataset(Dataset):
             vid = self.transform(vid)
             vid = vid.permute(0, 2, 3, 1)
         vid = vid.swapaxes(0, 3)  # <C3D Transform>
-        label = self.get_label(idx)
-        self.distribution_debug[np.argmax(label)] += 1
-        return vid, label
+        return vid, self.get_label(idx)
 
     def __len__(self):
         return self.num_instances
