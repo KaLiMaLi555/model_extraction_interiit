@@ -83,7 +83,7 @@ class ValDataset(Dataset):
             vid = vid.permute(0, 2, 3, 1)
         vid = vid.swapaxes(0, 3)  # <C3D Transform>
         label = self.get_label(idx)
-        self.distribution_debug[label] += 1
+        self.distribution_debug[np.argmax(label)] += 1
         return vid, label
 
     def __len__(self):
