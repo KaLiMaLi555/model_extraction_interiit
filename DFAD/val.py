@@ -41,13 +41,13 @@ def val(student, dataloader, device):
 
 
 def main():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    checkpoint = torch.load(args.checkpoint_path, map_location=device)
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # checkpoint = torch.load(args.checkpoint_path, map_location=device)
 
-    student = models.ResCNNRNN()
-    student.load_state_dict(checkpoint['student'])
-    student = student.to(device)
-    student.eval()
+    # student = models.ResCNNRNN()
+    # student.load_state_dict(checkpoint['student'])
+    # student = student.to(device)
+    # student.eval()
 
     val_data = ValDataset(args.val_data_dir, args.val_classes_file,
                           args.val_labels_file, args.val_num_classes,
