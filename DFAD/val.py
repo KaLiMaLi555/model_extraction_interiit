@@ -57,6 +57,8 @@ def main():
                             num_workers=args.num_workers)
     accuracy_1, accuracy_5 = val(student, val_loader, device)
     print(accuracy_1.detach().cpu().numpy(), accuracy_5.detach().cpu().numpy())
+    print(val_data.distribution_debug)
+    print(max(val_data.distribution_debug), min(val_data.distribution_debug))
 
 
 if __name__ == '__main__':

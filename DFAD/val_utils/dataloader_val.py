@@ -37,8 +37,9 @@ class ValDataset(Dataset):
             if index == 0:
                 continue
             self.new_classes_dict[id] = self.label_dict[label]
-        print(self.new_classes_dict)
-        print(len(self.new_classes_dict))
+        self.distribution_debug = [0] * 400
+        # print(self.new_classes_dict)
+        # print(len(self.new_classes_dict))
 
     def get_id(self, video_name):
         k = 0
@@ -81,7 +82,9 @@ class ValDataset(Dataset):
             vid = self.transform(vid)
             vid = vid.permute(0, 2, 3, 1)
         vid = vid.swapaxes(0, 3)  # <C3D Transform>
-        return vid, self.get_label(idx)
+        label = self.get_label(idx)
+        self.distribution_debug[label] += 1
+        return vid, label
 
     def __len__(self):
         return self.num_instances
