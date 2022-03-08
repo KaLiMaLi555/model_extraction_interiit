@@ -52,11 +52,13 @@ def main():
     val_data = ValDataset(args.val_data_dir, args.val_classes_file,
                           args.val_labels_file, args.val_num_classes,
                           transform=CustomResizeTransform())
-    val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
-                            shuffle=False, drop_last=False,
-                            num_workers=args.num_workers)
-    accuracy_1, accuracy_5 = val(student, val_loader, device)
-    print(accuracy_1.detach().cpu().numpy(), accuracy_5.detach().cpu().numpy())
+    for _ in val_data:
+        pass
+    # val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
+    #                         shuffle=False, drop_last=False,
+    #                         num_workers=args.num_workers)
+    # accuracy_1, accuracy_5 = val(student, val_loader, device)
+    # print(accuracy_1.detach().cpu().numpy(), accuracy_5.detach().cpu().numpy())
     print(val_data.distribution_debug)
     print(max(val_data.distribution_debug), min(val_data.distribution_debug))
 
