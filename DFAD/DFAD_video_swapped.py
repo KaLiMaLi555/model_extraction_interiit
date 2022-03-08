@@ -25,7 +25,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
     teacher.eval()
     student.train()
     generator.train()
-    
+
     optimizer_S, optimizer_G = optimizer
 
     for i in tqdm(range( args.epoch_itrs), position = 0, leave = True):
@@ -34,9 +34,9 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
 
         total_loss_S = 0
         total_loss_G = 0
-        
+
         for k in tqdm(range(5), position = 0, leave = True):
-          
+
           z = torch.randn( (args.batch_size, args.nz) ).to(device)
           optimizer_G.zero_grad()
           generator.train()
@@ -45,10 +45,10 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
 
           t_logit = torch.tensor(teacher(fake)).to(device)
 
-          fake = fake.view(fake_shape[0], fake_shape[2], fake_shape[1], fake_shape[3], fake_shape[4]) 
+          fake = fake.view(fake_shape[0], fake_shape[2], fake_shape[1], fake_shape[3], fake_shape[4])
           s_logit = student(fake).to(device)
 
-          loss_G = - F.l1_loss( s_logit, t_logit ) 
+          loss_G = - F.l1_loss( s_logit, t_logit )
           total_loss_G += loss_G.item()
 
           print("Loss on Generator model: ", total_loss_G / (i+1))
@@ -56,7 +56,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
 
           loss_G.backward()
           optimizer_G.step()
-        
+
 
         z = torch.randn( (args.batch_size, args.nz) ).to(device)
         optimizer_S.zero_grad()
@@ -71,11 +71,11 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
 
         loss_S = F.l1_loss(s_logit, t_logit)
         total_loss_S += loss_S.item()
-        wandb.log({'Loss_S': total_loss_S,}, step=epoch)           
+        wandb.log({'Loss_S': total_loss_S,}, step=epoch)
         loss_S.backward()
         optimizer_S.step()
 
-        print("Loss on Student model:", total_loss_S / (i+1)))
+        print("Loss on Student model:", total_loss_S / (i+1))
 
 
         if args.verbose and i % args.log_interval == 0:
@@ -95,7 +95,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
 
         if args.wandb_save:
             save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
-        
+
 
 def main():
 
@@ -123,7 +123,7 @@ def main():
     parser.add_argument('--scheduler', action='store_true', default=False)
     parser.add_argument('--verbose', action='store_true', default=False)
     parser.add_argument('--image_size', default = 32, type = int)
-    
+
 
     parser.add_argument('--wandb_api_key', type=str)
     parser.add_argument('--wandb', action="store_true")
@@ -151,10 +151,10 @@ def main():
     random.seed(args.seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    
+
     device = torch.device("cuda" if use_cuda else "cpu")
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
-    
+
     if args.model_name == "swin-t":
         print()
         config = "./VST/configs/_base_/models/swin/swin_tiny.py"
@@ -163,7 +163,7 @@ def main():
         teacher = build_model(cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))
         load_checkpoint(teacher, checkpoint, map_location=device)
 
-    
+
 
 
     student = network.models.ResCNNRNN()
@@ -180,7 +180,7 @@ def main():
 
     optimizer_S = optim.SGD( student.parameters(), lr=args.lr_S, weight_decay=args.weight_decay, momentum=0.9 )
     optimizer_G = optim.Adam( generator.parameters(), lr=args.lr_G )
-    
+
     if args.scheduler:
         scheduler_S = optim.lr_scheduler.StepLR(optimizer_S, args.step_size, 0.1)
         scheduler_G = optim.lr_scheduler.StepLR(optimizer_G, args.step_size, 0.1)
@@ -193,7 +193,7 @@ def main():
 
         print("################### Training Student and Generator Models ###################\n")
         train(args, teacher=teacher, student=student, generator=generator, device=device, optimizer=[optimizer_S, optimizer_G], epoch=epoch)
-        
+
         # Test
         # TODO: Validate after we get the sample validation set
 
