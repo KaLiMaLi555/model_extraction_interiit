@@ -41,13 +41,13 @@ def val(student, dataloader, device):
 
 
 def main():
-    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # checkpoint = torch.load(args.checkpoint_path, map_location=device)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    checkpoint = torch.load(args.checkpoint_path, map_location=device)
 
-    # student = models.ResCNNRNN()
-    # student.load_state_dict(checkpoint['student'])
-    # student = student.to(device)
-    # student.eval()
+    student = models.ResCNNRNN()
+    student.load_state_dict(checkpoint['student'])
+    student = student.to(device)
+    student.eval()
 
     val_data = ValDataset(args.val_data_dir, args.val_classes_file,
                           args.val_labels_file, args.val_num_classes,
@@ -55,11 +55,11 @@ def main():
     print('starting')
     for i in range(1849):
         val_data.get_label(i)
-    # val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
-    #                         shuffle=False, drop_last=False,
-    #                         num_workers=args.num_workers)
-    # accuracy_1, accuracy_5 = val(student, val_loader, device)
-    # print(accuracy_1.detach().cpu().numpy(), accuracy_5.detach().cpu().numpy())
+    val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
+                            shuffle=False, drop_last=False,
+                            num_workers=args.num_workers)
+    accuracy_1, accuracy_5 = val(student, val_loader, device)
+    print(accuracy_1.detach().cpu().numpy(), accuracy_5.detach().cpu().numpy())
     print(val_data.distribution_debug)
     print(max(val_data.distribution_debug), min(val_data.distribution_debug))
 
