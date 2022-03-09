@@ -42,7 +42,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
 
             fake_tf = fake.view(fake_shape[0], fake_shape[2], fake_shape[3], fake_shape[4], fake_shape[1])
             with tf.device(device_tf):
-                tf_tensor = tf.convert_to_tensor(fake_tf.numpy())
+                tf_tensor = tf.convert_to_tensor(fake_tf.cpu().numpy())
                 t_logit = teacher(tf_tensor).numpy()
                 t_logit = torch.tensor(t_logit).to(device)
 
