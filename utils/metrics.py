@@ -120,3 +120,10 @@ def test_step_log(logger, loss, accuracy_top1, accuracy_top5):
         logger=True,
         prog_bar=True,
     )
+
+
+def neg_sampling_test():
+    logits=torch.ones(64,20)
+    logits=F.softmax(logits,dim=1)
+    print(logits)
+    logits_neg=neg_sampling_softmax(logits,5)
