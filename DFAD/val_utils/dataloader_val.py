@@ -37,9 +37,8 @@ class ValDataset(Dataset):
             if index == 0:
                 continue
             self.new_classes_dict[id] = self.label_dict[label]
-        self.distribution_debug = [0] * 400
         # print(self.new_classes_dict)
-        # print(len(self.new_classes_dict))
+        # print(self.num_instances, len(self.new_classes_dict))
 
     def get_id(self, video_name):
         k = 0
@@ -60,7 +59,6 @@ class ValDataset(Dataset):
         video_id = self.get_id(video_name)
         label = self.new_classes_dict[video_id]
         one_hot = F.one_hot(torch.tensor(int(label)), self.num_classes)
-        self.distribution_debug[int(label)] += 1
         return one_hot
 
     def get_frames(self, video_path):
