@@ -32,6 +32,21 @@ def KLDiv(logits, y):
     return F.kl_div(torch.log(logits), y, reduction="batchmean")
 
 
+def neg_sampling_softmax(logits,window):
+    '''
+    implements neg sampling
+    '''
+    num_class=logits.shape[1]
+    start=torch.randint(0, num_class-window, (1,))
+    print(num_class)
+    print(start)
+    summed_tensor=F.avg_pool1d(input, kernel_size=window, stride=1)*window
+    print(summed_tensor)
+    ret=logits/summed_tensor[start]
+    print(ret)
+    return 
+
+
 def train_step_log(logger, loss, accuracy_top1, accuracy_top5):
     """
     Log training metrics, given the logger object, use this to maintain uniformity in logging
