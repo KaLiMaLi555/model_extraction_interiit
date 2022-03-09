@@ -16,6 +16,10 @@ from utils.wandb_utils import init_wandb, save_ckp
 
 
 def train(args, teacher, student, generator, device, optimizer, epoch):
+    device_tf = tf.test.gpu_device_name()
+    if device_tf != '/device:GPU:0':
+        print('GPU not found!')
+        device_tf = '/device:CPU:0'
     student.train()
     generator.train()
 
@@ -37,7 +41,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             fake_shape = fake.shape
 
             fake_tf = fake.view(fake_shape[0], fake_shape[2], fake_shape[3], fake_shape[4], fake_shape[1])
-            with tf.device(device):
+            with tf.device(device_tf):
                 tf_tensor = tf.convert_to_tensor(fake_tf.numpy())
                 t_logit = teacher(tf_tensor).numpy()
                 t_logit = torch.tensor(t_logit).to(device)
@@ -147,9 +151,6 @@ def main():
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
     if args.model_name == "movinet":
-        device_name = tf.test.gpu_device_name()
-        if device_name != '/device:GPU:0':
-            print('GPU not found!')
         print("\n######################## Loading Model ########################\n")
         hub_url = "https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3"
 

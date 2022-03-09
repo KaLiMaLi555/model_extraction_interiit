@@ -4,3 +4,4 @@ visdom
 numpy
 pillow
 scikit-learn
+wandb
