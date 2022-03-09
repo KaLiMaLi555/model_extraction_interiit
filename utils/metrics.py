@@ -32,19 +32,16 @@ def KLDiv(logits, y):
     return F.kl_div(torch.log(logits), y, reduction="batchmean")
 
 
-def neg_sampling_softmax(logits,window):
-    '''
+def neg_sampling_softmax(logits, window):
+    """
     implements neg sampling
-    '''
-    num_class=logits.shape[1]
-    start=torch.randint(0, num_class-window, (1,))
-    print(num_class)
-    print(start)
-    summed_tensor=F.avg_pool1d(input, kernel_size=window, stride=1)*window
-    print(summed_tensor)
-    ret=logits/summed_tensor[start]
-    print(ret)
-    return 
+    logits -- (batch, num_classes)
+    """
+    summed_tensor = F.avg_pool1d(logits, kernel_size=window, stride=1) * window
+    ret = logits / (
+        logits + summed_tensor[:, torch.randint(0, logits.shape[1] - window, (1,))]
+    )
+    return ret
 
 
 def train_step_log(logger, loss, accuracy_top1, accuracy_top5):
@@ -123,7 +120,8 @@ def test_step_log(logger, loss, accuracy_top1, accuracy_top5):
 
 
 def neg_sampling_test():
-    logits=torch.ones(64,20)
-    logits=F.softmax(logits,dim=1)
+    logits = torch.ones(4, 20).cuda()
+    logits = F.softmax(logits, dim=1)
     print(logits)
-    logits_neg=neg_sampling_softmax(logits,5)
+    logits_neg = neg_sampling_softmax(logits, 5)
+    print(logits_neg)
