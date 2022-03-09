@@ -63,9 +63,9 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         fake = generator(z)
         fake_shape = fake.shape
 
-        fake_tf = fake.clone()
-        fake_tf.requires_grad = False
-        fake_tf = fake_tf.detach()
+        # fake_tf = fake.clone()
+        fake_tf = torch.empty_like(fake).copy_(fake)
+        # fake_tf = fake_tf.detach()
         fake_tf = fake_tf.view(fake_shape[0], fake_shape[2], fake_shape[3], fake_shape[4], fake_shape[1])
         with tf.device(device_tf):
             tf_tensor = tf.convert_to_tensor(fake_tf.cpu().numpy())
