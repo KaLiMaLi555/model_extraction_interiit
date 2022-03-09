@@ -161,7 +161,7 @@ def main():
         outputs = encoder(dict(image=inputs))
         model = tf.keras.Model(inputs, outputs, name='movinet')
 
-    student = network.models.ResCNNRNN()
+    student = network.models.ResCNNRNN(num_classes=600)
     print("\nLoaded student and teacher")
     generator = network.models.VideoGAN(zdim=args.nz)
     print("Loaded student, generator and teacher\n")
