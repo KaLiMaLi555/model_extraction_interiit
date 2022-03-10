@@ -52,12 +52,13 @@ def main():
     val_data = ValDataset(args.val_data_dir, args.val_classes_file,
                           args.val_labels_file, args.val_num_classes,
                           transform=CustomResizeTransform())
-    
+
     val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
                             shuffle=False, drop_last=False,
                             num_workers=args.num_workers)
     accuracy_1, accuracy_5 = val(student, val_loader, device)
-    print(accuracy_1.detach().cpu().numpy(), accuracy_5.detach().cpu().numpy())
+    print(f'{str(100 * accuracy_1.detach().cpu().numpy())}%')
+    print(f'{str(100 * accuracy_5.detach().cpu().numpy())}%')
 
 
 if __name__ == '__main__':
