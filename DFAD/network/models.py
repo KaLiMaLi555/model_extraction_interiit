@@ -1,25 +1,17 @@
 # Import the required libraries
-import os
 import torch
-import torchvision
-import numpy as np
-from tqdm import tqdm
 import torch.nn as nn
-from torch import Tensor
-import torch.optim as optim
-import torch.utils.data as data
 import torch.nn.functional as F
-from torchvision import transforms
 import torchvision.models as models
-import torchvision.transforms as transforms
+
 
 class DecoderRNN(nn.Module):
     def __init__(self, CNN_embed_dim=300, h_RNN_layers=3, h_RNN=256, h_FC_dim=128, drop_p=0.3, num_classes=400):
         super(DecoderRNN, self).__init__()
 
         self.RNN_input_size = CNN_embed_dim
-        self.h_RNN_layers = h_RNN_layers   # RNN hidden layers
-        self.h_RNN = h_RNN                 # RNN hidden nodes
+        self.h_RNN_layers = h_RNN_layers  # RNN hidden layers
+        self.h_RNN = h_RNN  # RNN hidden nodes
         self.h_FC_dim = h_FC_dim
         self.drop_p = drop_p
         self.num_classes = num_classes
@@ -28,21 +20,20 @@ class DecoderRNN(nn.Module):
             input_size=self.RNN_input_size,
             hidden_size=self.h_RNN,
             num_layers=h_RNN_layers,
-            batch_first=True,       # input & output will has batch size as 1s dimension. e.g. (batch, time_step, input_size)
+            batch_first=True,  # input & output will has batch size as 1s dimension. e.g. (batch, time_step, input_size)
         )
 
         self.fc1 = nn.Linear(self.h_RNN, self.h_FC_dim)
         self.fc2 = nn.Linear(self.h_FC_dim, self.num_classes)
 
     def forward(self, x_RNN):
-
         self.LSTM.flatten_parameters()
         RNN_out, (h_n, h_c) = self.LSTM(x_RNN, None)
         """ h_n shape (n_layers, batch, hidden_size), h_c shape (n_layers, batch, hidden_size) """
         """ None represents zero initial hidden state. RNN_out has shape=(batch, time_step, output_size) """
 
         # FC layers
-        x = self.fc1(RNN_out[:, -1, :])   # choose RNN_out at the last time step
+        x = self.fc1(RNN_out[:, -1, :])  # choose RNN_out at the last time step
         x = F.relu(x)
         x = F.dropout(x, p=self.drop_p, training=self.training)
         x = self.fc2(x)
@@ -61,7 +52,7 @@ class ResCNNEncoder(nn.Module):
 
         # Model Update: Unfreezing more layers when pretrained
         resnet = models.resnet50(pretrained=pretrained)
-        modules = list(resnet.children())[:-1]      # delete the last fc layer.
+        modules = list(resnet.children())[:-1]  # delete the last fc layer.
         # Model Update: Freezing only when pretrained
         if pretrained:
             for module in modules[:-2]:
@@ -83,7 +74,7 @@ class ResCNNEncoder(nn.Module):
             # x = x.reshape((-1, x.shape[3], x.shape[1], x.shape[2]))
 
             x = self.resnet(x)  # ResNet
-            x = x.view(x.size(0), -1)   # flatten output of conv
+            x = x.view(x.size(0), -1)  # flatten output of conv
 
             # FC layers
             x = self.bn1(self.fc1(x))
@@ -102,6 +93,7 @@ class ResCNNEncoder(nn.Module):
 
         return cnn_embed_seq
 
+
 class ResCNNRNN(nn.Module):
 
     def __init__(self, fc_hidden1=512, fc_hidden2=512, drop_p=0.3, CNN_embed_dim=300, h_RNN_layers=3, h_RNN=256, h_FC_dim=128, num_classes=400):
@@ -114,8 +106,9 @@ class ResCNNRNN(nn.Module):
     def forward(self, x_3d):
         return self.decoder(self.encoder(x_3d))
 
+
 class VideoGAN(nn.Module):
-    def __init__(self, zdim = 100):
+    def __init__(self, zdim=100):
         super(VideoGAN, self).__init__()
 
         self.zdim = zdim
@@ -136,19 +129,19 @@ class VideoGAN(nn.Module):
         # self.conv5b = nn.ConvTranspose2d(64, 3, [4,4], [2,2], [1,1])
 
         # Foreground
-        self.conv1 = nn.ConvTranspose3d(zdim, 512, [1,4,4], [1,1,1])
+        self.conv1 = nn.ConvTranspose3d(zdim, 512, [1, 4, 4], [1, 1, 1])
         self.bn1 = nn.BatchNorm3d(512)
 
-        self.conv2 = nn.ConvTranspose3d(512, 256, [4,4,4], [2,2,2], [1,1,1])
+        self.conv2 = nn.ConvTranspose3d(512, 256, [4, 4, 4], [2, 2, 2], [1, 1, 1])
         self.bn2 = nn.BatchNorm3d(256)
 
-        self.conv3 = nn.ConvTranspose3d(256, 128, [4,4,4], [2,2,2], [1,1,1])
+        self.conv3 = nn.ConvTranspose3d(256, 128, [4, 4, 4], [2, 2, 2], [1, 1, 1])
         self.bn3 = nn.BatchNorm3d(128)
 
-        self.conv4 = nn.ConvTranspose3d(128, 64, [4,4,4], [2,2,2], [1,1,1])
+        self.conv4 = nn.ConvTranspose3d(128, 64, [4, 4, 4], [2, 2, 2], [1, 1, 1])
         self.bn4 = nn.BatchNorm3d(64)
 
-        self.conv5 = nn.ConvTranspose3d(64, 3, [4,4,4], [2,2,2], [1,1,1])
+        self.conv5 = nn.ConvTranspose3d(64, 3, [4, 4, 4], [2, 2, 2], [1, 1, 1])
 
         # Mask
         # self.conv5m = nn.ConvTranspose3d(64, 1, [4,4,4], [2,2,2], [1,1,1])
@@ -177,7 +170,8 @@ class VideoGAN(nn.Module):
         f = F.leaky_relu(self.bn3(self.conv3(f)))
         f = F.leaky_relu(self.bn4(self.conv4(f)))
         # m = torch.sigmoid(self.conv5m(f))   # b, 1, 32, 64, 64
-        f = torch.sigmoid(self.conv5(f))   # b, 3, 32, 64, 64
+        # Model Update: Removed activation function from last year
+        f = self.conv5(f)  # b, 3, 32, 64, 64
 
         # out = m*f + (1-m)*b
         out = f

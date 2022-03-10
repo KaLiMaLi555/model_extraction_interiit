@@ -40,7 +40,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
           z = torch.randn( (args.batch_size, args.nz) ).to(device)
           optimizer_G.zero_grad()
           generator.train()
-          fake = generator(z)
+          fake = torch.sigmoid(generator(z))
           fake_shape = fake.shape
 
           t_logit = torch.tensor(teacher(fake)).to(device)
@@ -61,7 +61,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         z = torch.randn( (args.batch_size, args.nz) ).to(device)
         optimizer_S.zero_grad()
 
-        fake = generator(z).detach()
+        fake = torch.sigmoid(generator(z).detach())
         fake_shape = fake.shape
 
         t_logit = torch.tensor(teacher(fake)).to(device)

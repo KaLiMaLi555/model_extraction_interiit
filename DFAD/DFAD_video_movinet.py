@@ -32,12 +32,11 @@ def train(args, teacher, student, generator, device, optimizer, epoch, step_S, s
         total_loss_S = 0
         total_loss_G = 0
 
-
         for k in tqdm(range(step_S), position=0, leave=True):
             z = torch.randn((args.batch_size, args.nz)).to(device)
             optimizer_S.zero_grad()
 
-            fake = generator(z).detach()
+            fake = torch.sigmoid(generator(z).detach())
             fake_shape = fake.shape
 
             fake_tf = fake.view(fake_shape[0], fake_shape[2], fake_shape[3], fake_shape[4], fake_shape[1])
@@ -62,7 +61,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch, step_S, s
             z = torch.randn((args.batch_size, args.nz)).to(device)
             optimizer_G.zero_grad()
             generator.train()
-            fake = generator(z)
+            fake = torch.sigmoid(generator(z))
             fake_shape = fake.shape
 
             # fake_tf = fake.clone()
