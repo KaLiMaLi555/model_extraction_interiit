@@ -173,7 +173,7 @@ class VideoGAN(nn.Module):
         f = F.leaky_relu(self.bn3(self.conv3(f)))
         f = F.leaky_relu(self.bn4(self.conv4(f)))
         # m = torch.sigmoid(self.conv5m(f))   # b, 1, 32, 64, 64
-        f = torch.tanh(self.conv5(f))   # b, 3, 32, 64, 64
+        f = torch.sigmoid(self.conv5(f))   # b, 3, 32, 64, 64
 
         # out = m*f + (1-m)*b
         out = f
