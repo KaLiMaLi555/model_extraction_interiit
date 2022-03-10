@@ -51,11 +51,12 @@ def train(args, teacher, student, generator, device, optimizer, epoch, step_S, s
 
             loss_S = F.l1_loss(s_logit, t_logit)
             total_loss_S += loss_S.item()
-            wandb.log({'Loss_S': total_loss_S, }, step=epoch)
+
             loss_S.backward()
             optimizer_S.step()
 
-        print("Loss on Student model:", total_loss_S / (step_S * (i + 1)))
+        wandb.log({'Loss_S': total_loss_S / step_S}, step=epoch)
+        print("Loss on Student model:", total_loss_S / step_S)
 
         for k in tqdm(range(step_G), position=0, leave=True):
             z = torch.randn((args.batch_size, args.nz)).to(device)
@@ -79,11 +80,10 @@ def train(args, teacher, student, generator, device, optimizer, epoch, step_S, s
             loss_G = - F.l1_loss(s_logit, t_logit)
             total_loss_G += loss_G.item()
 
-            wandb.log({'Loss_G': total_loss_G, }, step=epoch)
-
             loss_G.backward()
             optimizer_G.step()
-        print("Loss on Generator model: ", total_loss_G / (step_G * (i + 1)))
+        wandb.log({'Loss_G': total_loss_G / step_G}, step=epoch)
+        print("Loss on Generator model: ", total_loss_G / step_G)
 
         if args.verbose and i % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tG_Loss: {:.6f} S_loss: {:.6f}'.format(
