@@ -10,6 +10,8 @@ from env import set_seed
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms.functional as TF
 import pickle
+import mmcv
+import matplotlib.pyplot as plt
 
 # TODO: The class is implemented now for random, 
 # Do if we have both the actual images and labels
@@ -24,6 +26,8 @@ class CustomResizeTransform:
       for i, image in enumerate(list(x)):
           image = TF.resize(image, size+32)
           image = TF.center_crop(image, (size, size))
+          image = image.permute(1, 2, 0)
+          image = torch.tensor(mmcv.imnormalize(image.numpy(), np.array([123.675, 116.28, 103.53]), np.array([58.395, 57.12, 57.375]), False))
           video_transform.append(image)
       return torch.stack(video_transform)
 
@@ -57,7 +61,7 @@ class VideoDataset(Dataset):
 
             for image_name in images:
                 image = Image.open(os.path.join(video_dir, image_name))
-                image = np.array(image, dtype = np.float32)
+                image = np.array(image, dtype = np.uint8)
                 image_frames.append(torch.tensor(image))
 
             if self.transform:
@@ -92,7 +96,7 @@ class VideoDatasetFromDisk(Dataset):
 
         for image_name in images:
             image = Image.open(os.path.join(video_path, image_name))
-            image = np.array(image, dtype = np.float32)
+            image = np.array(image, dtype = np.uint8)
             image_frames.append(torch.tensor(image))
         if len(image_frames) > 0:
             return torch.stack(image_frames)
@@ -105,7 +109,6 @@ class VideoDatasetFromDisk(Dataset):
         if self.transform:
             vid = vid.permute(0, 3, 1, 2)
             vid = self.transform(vid)
-            vid = vid.permute(0, 2, 3, 1)
         pad_shape = 16 - vid.shape[0]
         vid = torch.cat((vid, torch.zeros(pad_shape, vid.shape[1], vid.shape[2], vid.shape[3])))
         # print(vid.shape, vid)
