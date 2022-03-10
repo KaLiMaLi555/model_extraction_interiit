@@ -9,16 +9,16 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 
-# NOTE: Returns input images in [-1, 1]
-
-
 class ValDataset(Dataset):
 
-    def __init__(self, video_dir_path, logits_file, num_classes, transform=None):
+    def __init__(self, video_dir_path, logits_file, num_classes, transform=None, scale=1, shift=0):
 
         self.video_dir_path = video_dir_path
         self.logits = pickle.load(open(logits_file, 'rb'))
+
         self.transform = transform
+        self.scale = scale
+        self.shift = shift
 
         self.videos = sorted([str(x.name) for x in Path(self.video_dir_path).iterdir() if x.is_dir()])
         self.num_instances = len(self.videos)
@@ -62,10 +62,10 @@ class ValDataset(Dataset):
 
         for image_name in images:
             image = Image.open(os.path.join(video_path, image_name))
-            image = (np.array(image, dtype=np.float32) / 127.5) - 1
+            image = np.array(image, dtype=np.float32)
             image_frames.append(torch.tensor(image))
 
-        return torch.stack(image_frames)
+        return torch.stack(image_frames) * self.scale + self.shift
 
     def __getitem__(self, idx):
         video_path = os.path.join(self.video_dir_path, self.videos[idx])
