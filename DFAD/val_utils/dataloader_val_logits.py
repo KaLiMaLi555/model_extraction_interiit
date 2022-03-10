@@ -1,29 +1,24 @@
 # List of imports
 import os
+import pickle
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
-# PyTorch
 import torch
-import torch.nn.functional as F
-from torch.utils.data import Dataset
-
 from PIL import Image
+from torch.utils.data import Dataset
 
 
 # NOTE: Returns input images in [-1, 1]
 
 
-
 class ValDataset(Dataset):
 
-    def __init__(self, video_dir_path, classes_file, labels_file, num_classes, transform=None):
+    def __init__(self, video_dir_path, logits_file, num_classes, transform=None):
 
         self.video_dir_path = video_dir_path
-        self.classes_file = classes_file
-        self.labels_file = labels_file
+        self.logits = pickle.load(open(logits_file, 'rb'))
         self.transform = transform
 
         self.videos = sorted([str(x.name) for x in Path(self.video_dir_path).iterdir() if x.is_dir()])
@@ -41,6 +36,7 @@ class ValDataset(Dataset):
             if index == 0:
                 continue
             self.new_classes_dict[id] = self.label_dict[label]
+        print(f'Number of videos: {self.num_instances}, number of logits: {len(self.logits)}')
         # print(self.new_classes_dict)
         # print(self.num_instances, len(self.new_classes_dict))
 
@@ -58,12 +54,8 @@ class ValDataset(Dataset):
 
         return id
 
-    def get_label(self, idx):
-        video_name = self.videos[idx]
-        video_id = self.get_id(video_name)
-        label = self.new_classes_dict[video_id]
-        one_hot = F.one_hot(torch.tensor(int(label)), self.num_classes)
-        return one_hot
+    def get_logits(self, idx):
+        return self.logits[idx]
 
     def get_frames(self, video_path):
         images = sorted(os.listdir(video_path))
