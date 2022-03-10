@@ -4,7 +4,6 @@ import pickle
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
@@ -25,17 +24,17 @@ class ValDataset(Dataset):
         self.num_instances = len(self.videos)
         self.num_classes = num_classes
 
-        self.label_dict = pd.read_csv(self.labels_file, header=None, index_col=1, squeeze=False).to_dict()
-        self.label_dict = self.label_dict[0]
+        # self.label_dict = pd.read_csv(self.labels_file, header=None, index_col=1, squeeze=False).to_dict()
+        # self.label_dict = self.label_dict[0]
 
-        self.classes_dict = pd.read_csv(self.classes_file, header=None, index_col=1, squeeze=False).to_dict()
-        self.classes_dict = self.classes_dict[0]
+        # self.classes_dict = pd.read_csv(self.classes_file, header=None, index_col=1, squeeze=False).to_dict()
+        # self.classes_dict = self.classes_dict[0]
 
-        self.new_classes_dict = {}
-        for index, (id, label) in enumerate(self.classes_dict.items()):
-            if index == 0:
-                continue
-            self.new_classes_dict[id] = self.label_dict[label]
+        # self.new_classes_dict = {}
+        # for index, (id, label) in enumerate(self.classes_dict.items()):
+        #     if index == 0:
+        #         continue
+        #     self.new_classes_dict[id] = self.label_dict[label]
         print(f'Number of videos: {self.num_instances}, number of logits: {len(self.logits)}')
         # print(self.new_classes_dict)
         # print(self.num_instances, len(self.new_classes_dict))
