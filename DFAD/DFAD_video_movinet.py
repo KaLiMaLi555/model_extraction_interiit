@@ -15,7 +15,7 @@ import network
 from utils.wandb_utils import init_wandb, save_ckp
 
 
-def train(args, teacher, student, generator, device, optimizer, epoch):
+def train(args, teacher, student, generator, device, optimizer, epoch, step_S, step_G):
     device_tf = tf.test.gpu_device_name()
     if device_tf != '/device:GPU:0':
         print('GPU not found!')
@@ -33,7 +33,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         total_loss_G = 0
 
 
-        for k in tqdm(range(5), position=0, leave=True):
+        for k in tqdm(range(step_S), position=0, leave=True):
             z = torch.randn((args.batch_size, args.nz)).to(device)
             optimizer_S.zero_grad()
 
@@ -55,34 +55,35 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             loss_S.backward()
             optimizer_S.step()
 
-        print("Loss on Student model:", total_loss_S / (5 * (i + 1)))
+        print("Loss on Student model:", total_loss_S / (step_S * (i + 1)))
 
-        z = torch.randn((args.batch_size, args.nz)).to(device)
-        optimizer_G.zero_grad()
-        generator.train()
-        fake = generator(z)
-        fake_shape = fake.shape
+        for k in tqdm(range(step_G), position=0, leave=True):
+            z = torch.randn((args.batch_size, args.nz)).to(device)
+            optimizer_G.zero_grad()
+            generator.train()
+            fake = generator(z)
+            fake_shape = fake.shape
 
-        # fake_tf = fake.clone()
-        fake_tf = torch.empty_like(fake).copy_(fake)
-        fake_tf = fake_tf.detach()
-        fake_tf = fake_tf.view(fake_shape[0], fake_shape[2], fake_shape[3], fake_shape[4], fake_shape[1])
-        with tf.device(device_tf):
-            tf_tensor = tf.convert_to_tensor(fake_tf.cpu().numpy())
-            t_logit = teacher(tf_tensor).numpy()
-            t_logit = torch.tensor(t_logit).to(device)
+            # fake_tf = fake.clone()
+            fake_tf = torch.empty_like(fake).copy_(fake)
+            fake_tf = fake_tf.detach()
+            fake_tf = fake_tf.view(fake_shape[0], fake_shape[2], fake_shape[3], fake_shape[4], fake_shape[1])
+            with tf.device(device_tf):
+                tf_tensor = tf.convert_to_tensor(fake_tf.cpu().numpy())
+                t_logit = teacher(tf_tensor).numpy()
+                t_logit = torch.tensor(t_logit).to(device)
 
-        fake = fake.view(fake_shape[0], fake_shape[2], fake_shape[1], fake_shape[3], fake_shape[4])
-        s_logit = student(fake).to(device)
+            fake = fake.view(fake_shape[0], fake_shape[2], fake_shape[1], fake_shape[3], fake_shape[4])
+            s_logit = student(fake).to(device)
 
-        loss_G = - F.l1_loss(s_logit, t_logit)
-        total_loss_G += loss_G.item()
+            loss_G = - F.l1_loss(s_logit, t_logit)
+            total_loss_G += loss_G.item()
 
-        print("Loss on Generator model: ", total_loss_G / (i + 1))
-        wandb.log({'Loss_G': total_loss_G, }, step=epoch)
+            wandb.log({'Loss_G': total_loss_G, }, step=epoch)
 
-        loss_G.backward()
-        optimizer_G.step()
+            loss_G.backward()
+            optimizer_G.step()
+        print("Loss on Generator model: ", total_loss_G / (step_G * (i + 1)))
 
         if args.verbose and i % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tG_Loss: {:.6f} S_loss: {:.6f}'.format(
@@ -128,6 +129,8 @@ def main():
     parser.add_argument('--scheduler', action='store_true', default=False)
     parser.add_argument('--verbose', action='store_true', default=False)
     parser.add_argument('--image_size', default=32, type=int)
+    parser.add_argument('--step_S', default=5, type=int)
+    parser.add_argument('--step_G', default=1, type=int)
 
     parser.add_argument('--wandb_api_key', type=str)
     parser.add_argument('--wandb', action="store_true")
@@ -194,7 +197,9 @@ def main():
             scheduler_G.step()
 
         print("################### Training Student and Generator Models ###################\n")
-        train(args, teacher=teacher, student=student, generator=generator, device=device, optimizer=[optimizer_S, optimizer_G], epoch=epoch)
+        train(args, teacher=teacher, student=student, generator=generator,
+              device=device, optimizer=[optimizer_S, optimizer_G], epoch=epoch,
+              step_S=args.step_S, step_G=args.step_G)
 
         # Test
         # TODO: Validate after we get the sample validation set
