@@ -48,8 +48,8 @@ def main():
     student = student.to(device)
     student.eval()
 
-    val_data = ValDataset(args.val_data_dir, args.val_classes_file,
-                          args.val_labels_file, args.val_num_classes,
+    val_data = ValDataset(args.val_data_dir, args.val_logits_file,
+                          args.val_num_classes,
                           transform=CustomResizeTransform())
 
     val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
