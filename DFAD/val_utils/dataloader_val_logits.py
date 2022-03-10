@@ -76,7 +76,7 @@ class ValDataset(Dataset):
             vid = self.transform(vid)
             vid = vid.permute(0, 2, 3, 1)
         vid = vid.swapaxes(0, 3)  # <C3D Transform>
-        return vid, self.get_label(idx)
+        return vid, self.get_logits(idx)
 
     def __len__(self):
         return self.num_instances
