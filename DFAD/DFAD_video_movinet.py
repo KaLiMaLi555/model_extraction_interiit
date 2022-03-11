@@ -229,7 +229,7 @@ def main():
     val_data = ValDataset(args.val_data_dir, args.val_classes_file,
                           args.val_labels_file, args.num_classes,
                           transform=CustomResizeTransform(),
-                          scale=args.scale, shift=args.shift)
+                          scale=args.val_scale, shift=args.val_shift)
 
     val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
                             shuffle=False, drop_last=False,
