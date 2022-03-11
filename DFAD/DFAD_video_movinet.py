@@ -25,6 +25,8 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         print('GPU not found!')
         device_tf = '/device:CPU:0'
 
+    debug_distribution = True
+    distribution = np.zeros(600)
     optimizer_S, optimizer_G = optimizers
 
     for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
@@ -57,6 +59,9 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
 
             loss_S.backward()
             optimizer_S.step()
+            if debug_distribution:
+                for c in np.argmax(t_logit.detach(), dim=1):
+                    distribution[c] += 1
 
         wandb.log({'Loss_S': total_loss_S / step_S}, step=epoch)
         print("Loss on Student model:", total_loss_S / step_S)
@@ -85,8 +90,14 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
 
             loss_G.backward()
             optimizer_G.step()
+            if debug_distribution:
+                for c in np.argmax(t_logit.detach(), dim=1):
+                    distribution[c] += 1
         wandb.log({'Loss_G': total_loss_G / step_G}, step=epoch)
         print("Loss on Generator model: ", total_loss_G / step_G)
+
+        if debug_distribution:
+            wandb.log({'distribution': debug_distribution}, step=epoch)
 
         if args.verbose and i % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tG_Loss: {:.6f} S_loss: {:.6f}'.format(
