@@ -252,6 +252,8 @@ def main():
         acc_5 = 100 * acc_5.detach().cpu().numpy()
         print(f'\nEpoch {epoch}')
         print(f'Top-1: {str(acc_1)}, Top-5: {str(acc_5)}\n')
+        wandb.log({'val_T1': acc_1}, step=epoch)
+        wandb.log({'val_T5': acc_5}, step=epoch)
 
 
 if __name__ == '__main__':
