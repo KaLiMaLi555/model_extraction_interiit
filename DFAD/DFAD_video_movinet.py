@@ -1,6 +1,10 @@
 # Import required libraries
 import argparse
 import random
+from val_utils.dataloader_val import ValDataset
+from val_utils import metrics
+from val_utils.custom_transformations import CustomResizeTransform
+from torch.utils.data import DataLoader
 
 import numpy as np
 import tensorflow as tf
@@ -15,15 +19,13 @@ import network
 from utils.wandb_utils import init_wandb, save_ckp
 
 
-def train(args, teacher, student, generator, device, optimizer, epoch, step_S, step_G):
+def train_epoch(args, teacher, student, generator, device, optimizers, epoch, step_S, step_G):
     device_tf = tf.test.gpu_device_name()
     if device_tf != '/device:GPU:0':
         print('GPU not found!')
         device_tf = '/device:CPU:0'
-    student.train()
-    generator.train()
 
-    optimizer_S, optimizer_G = optimizer
+    optimizer_S, optimizer_G = optimizers
 
     for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
 
@@ -32,6 +34,8 @@ def train(args, teacher, student, generator, device, optimizer, epoch, step_S, s
         total_loss_S = 0
         total_loss_G = 0
 
+        student.train()
+        generator.eval()
         for k in tqdm(range(step_S), position=0, leave=True):
             z = torch.randn((args.batch_size, args.nz)).to(device)
             optimizer_S.zero_grad()
@@ -57,10 +61,10 @@ def train(args, teacher, student, generator, device, optimizer, epoch, step_S, s
         wandb.log({'Loss_S': total_loss_S / step_S}, step=epoch)
         print("Loss on Student model:", total_loss_S / step_S)
 
+        generator.train()
         for k in tqdm(range(step_G), position=0, leave=True):
             z = torch.randn((args.batch_size, args.nz)).to(device)
             optimizer_G.zero_grad()
-            generator.train()
             fake = torch.sigmoid(generator(z))
             fake_shape = fake.shape
 
@@ -103,33 +107,63 @@ def train(args, teacher, student, generator, device, optimizer, epoch, step_S, s
             save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
 
 
+def val(student, dataloader, device):
+    accuracy_1, accuracy_5 = [], []
+    for (x, y) in tqdm(dataloader, total=len(dataloader)):
+        x, y = x.to(device), y.to(device)
+        x_shape = x.shape
+        x = x.view(x_shape[0], x_shape[4], x_shape[1], x_shape[2], x_shape[3])
+        # print(x_shape, x.shape)
+        logits = student(x)
+        accuracy_1.append(metrics.topk_accuracy(logits, y, 1))
+        accuracy_5.append(metrics.topk_accuracy(logits, y, 5))
+
+    return sum(accuracy_1) / len(accuracy_1), sum(accuracy_5) / len(accuracy_5)
+
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='DFAD MNIST')
-    parser.add_argument('--batch_size', type=int, default=16, metavar='N',
-                        help='input batch size for training (default: 64)')
+    parser.add_argument('--model_name', default="movinet", type=str)
+    parser.add_argument('--num_classes', type=int, default=600)
     parser.add_argument('--epochs', type=int, default=40, metavar='N',
                         help='number of epochs to train (default: 40)')
+    parser.add_argument('--epoch_itrs', type=int, default=50)
+    parser.add_argument('--batch_size', type=int, default=16, metavar='N',
+                        help='input batch size for training (default: 64)')
+
+    parser.add_argument('--no-cuda', action='store_true', default=False,
+                        help='disables CUDA training')
+    parser.add_argument('--seed', type=int, default=42, metavar='S',
+                        help='random seed (default: 1)')
+    parser.add_argument('--verbose', action='store_true', default=False)
+
+    parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
+                        help='SGD momentum (default: 0.9)')
+    parser.add_argument('--nz', type=int, default=100)
+    parser.add_argument('--image_size', default=32, type=int)
+    parser.add_argument('--step_S', default=5, type=int)
+    parser.add_argument('--step_G', default=1, type=int)
+
     parser.add_argument('--lr_S', type=float, default=0.01, metavar='LR',
                         help='learning rate (default: 0.1)')
     parser.add_argument('--lr_G', type=float, default=1e-3,
                         help='learning rate (default: 0.1)')
     parser.add_argument('--weight_decay', type=float, default=1e-4)
-    parser.add_argument('--model_name', default="movinet", type=str)
-    parser.add_argument('--epoch_itrs', type=int, default=50)
-    parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
-                        help='SGD momentum (default: 0.9)')
-    parser.add_argument('--no-cuda', action='store_true', default=False,
-                        help='disables CUDA training')
-    parser.add_argument('--seed', type=int, default=42, metavar='S',
-                        help='random seed (default: 1)')
-    parser.add_argument('--nz', type=int, default=100)
     parser.add_argument('--step_size', type=int, default=100, metavar='S')
     parser.add_argument('--scheduler', action='store_true', default=False)
-    parser.add_argument('--verbose', action='store_true', default=False)
-    parser.add_argument('--image_size', default=32, type=int)
-    parser.add_argument('--step_S', default=5, type=int)
-    parser.add_argument('--step_G', default=1, type=int)
+
+    parser.add_argument('--val_data_dir', type=str,
+                        default='/content/val_data/k400_16_frames_uniform')
+    parser.add_argument('--val_classes_file', type=str,
+                        default='/content/val_data/k400_16_frames_uniform/classes.csv')
+    parser.add_argument('--val_labels_file', type=str,
+                        default='/content/val_data/k400_16_frames_uniform/labels.csv')
+    parser.add_argument('--val_num_workers', type=int, default=4)
+
+    parser.add_argument('--val_batch_size', type=int, default=16)
+    parser.add_argument('--val_scale', type=float, default=1)
+    parser.add_argument('--val_scale_inv', type=float, default=1)
+    parser.add_argument('--val_shift', type=float, default=0)
 
     parser.add_argument('--wandb_api_key', type=str)
     parser.add_argument('--wandb', action="store_true")
@@ -139,7 +173,8 @@ def main():
     parser.add_argument('--wandb_resume', action="store_true")
     parser.add_argument('--wandb_watch', action="store_true")
     parser.add_argument('--checkpoint_base', type=str, default="/content")
-    parser.add_argument('--checkpoint_path', type=str, default="/gdrive/MyDrive/DFAD_video_ckpts")
+    parser.add_argument('--checkpoint_path', type=str,
+                        default="/gdrive/MyDrive/DFAD_video_ckpts")
     parser.add_argument('--wandb_save', action="store_true")
 
     print("\nArguments are as follows:\n")
@@ -170,7 +205,7 @@ def main():
         outputs = encoder(dict(image=inputs))
         model = tf.keras.Model(inputs, outputs, name='movinet')
 
-    student = network.models.ResCNNRNN(num_classes=600)
+    student = network.models.ResCNNRNN(num_classes=args.num_classes)
     print("\nLoaded student and teacher")
     generator = network.models.VideoGAN(zdim=args.nz)
     print("Loaded student, generator and teacher\n")
@@ -189,6 +224,16 @@ def main():
         scheduler_S = optim.lr_scheduler.StepLR(optimizer_S, args.step_size, 0.1)
         scheduler_G = optim.lr_scheduler.StepLR(optimizer_G, args.step_size, 0.1)
 
+    if args.val_scale == 1:
+        args.val_scale = 1 / args.val_scale_inv
+    val_data = ValDataset(args.val_data_dir, args.val_classes_file,
+                          args.val_labels_file, args.val_num_classes,
+                          transform=CustomResizeTransform(),
+                          scale=args.scale, shift=args.shift)
+
+    val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
+                            shuffle=False, drop_last=False,
+                            num_workers=args.val_num_workers)
     for epoch in range(1, args.epochs + 1):
         # Train
         if args.scheduler:
@@ -196,12 +241,17 @@ def main():
             scheduler_G.step()
 
         print("################### Training Student and Generator Models ###################\n")
-        train(args, teacher=teacher, student=student, generator=generator,
-              device=device, optimizer=[optimizer_S, optimizer_G], epoch=epoch,
-              step_S=args.step_S, step_G=args.step_G)
+        # train_epoch(args, teacher=teacher, student=student, generator=generator,
+        #             device=device, optimizers=[optimizer_S, optimizer_G],
+        #             epoch=epoch, step_S=args.step_S, step_G=args.step_G)
 
-        # Test
-        # TODO: Validate after we get the sample validation set
+        # Run validation
+        student.eval()
+        acc_1, acc_5 = val(student, val_loader, device)
+        acc_1 = 100 * acc_1.detach().cpu().numpy()
+        acc_5 = 100 * acc_5.detach().cpu().numpy()
+        print(f'\nEpoch {epoch}')
+        print(f'Top-1: {str(acc_1)}, Top-5: {str(acc_5)}\n')
 
 
 if __name__ == '__main__':
