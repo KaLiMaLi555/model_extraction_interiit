@@ -222,7 +222,7 @@ def main():
 
     student = network.models.ResCNNRNN(num_classes=args.num_classes)
     print("\nLoaded student and teacher")
-    generator = network.models.VideoGAN(zdim=args.nz)
+    # generator = network.models.VideoGAN(zdim=args.nz)
     print("Loaded student, generator and teacher\n")
 
     if args.wandb:
@@ -233,11 +233,11 @@ def main():
     # generator = generator.to(device)
 
     optimizer_S = optim.SGD(student.parameters(), lr=args.lr_S, weight_decay=args.weight_decay, momentum=args.momentum)
-    optimizer_G = optim.Adam(generator.parameters(), lr=args.lr_G)
+    # optimizer_G = optim.Adam(generator.parameters(), lr=args.lr_G)
 
     if args.scheduler:
         scheduler_S = optim.lr_scheduler.StepLR(optimizer_S, args.step_size, 0.1)
-        scheduler_G = optim.lr_scheduler.StepLR(optimizer_G, args.step_size, 0.1)
+        # scheduler_G = optim.lr_scheduler.StepLR(optimizer_G, args.step_size, 0.1)
 
     if args.val_scale == 1:
         args.val_scale = 1 / args.val_scale_inv
@@ -253,7 +253,7 @@ def main():
         # Train
         if args.scheduler:
             scheduler_S.step()
-            scheduler_G.step()
+            # scheduler_G.step()
 
         print("################### Training Student and Generator Models ###################\n")
         # train_epoch(args, teacher=teacher, student=student, generator=generator,
