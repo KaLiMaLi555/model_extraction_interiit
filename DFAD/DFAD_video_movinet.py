@@ -115,8 +115,10 @@ def val(student, dataloader, device):
         x = x.view(x_shape[0], x_shape[4], x_shape[1], x_shape[2], x_shape[3])
         # print(x_shape, x.shape)
         logits = student(x)
+        del x
         accuracy_1.append(metrics.topk_accuracy(logits, y, 1))
         accuracy_5.append(metrics.topk_accuracy(logits, y, 5))
+        del y, logits
 
     return sum(accuracy_1) / len(accuracy_1), sum(accuracy_5) / len(accuracy_5)
 
@@ -203,11 +205,11 @@ def main():
                 for gpu in gpus:
                     tf.config.experimental.set_memory_growth(gpu, True)
                 logical_gpus = tf.config.list_logical_devices('GPU')
-                print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+                print(len(gpus), "Physical GPU(s),", len(logical_gpus), "Logical GPU(s)")
             except RuntimeError as e:
                 # Memory growth must be set before GPUs have been initialized
                 print(e)
-                
+
         print("\n######################## Loading Model ########################\n")
         hub_url = "https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3"
 
