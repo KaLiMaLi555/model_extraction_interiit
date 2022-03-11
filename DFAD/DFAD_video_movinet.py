@@ -161,7 +161,7 @@ def main():
                         default='/content/val_data/k400_16_frames_uniform/labels.csv')
     parser.add_argument('--val_num_workers', type=int, default=2)
 
-    parser.add_argument('--val_batch_size', type=int, default=128)
+    parser.add_argument('--val_batch_size', type=int, default=64)
     parser.add_argument('--val_scale', type=float, default=1)
     parser.add_argument('--val_scale_inv', type=float, default=255)
     parser.add_argument('--val_shift', type=float, default=0)
