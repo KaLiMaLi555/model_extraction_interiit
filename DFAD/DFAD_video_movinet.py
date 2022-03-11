@@ -211,14 +211,14 @@ def main():
                 print(e)
 
         print("\n######################## Loading Model ########################\n")
-        hub_url = "https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3"
+        # hub_url = "https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3"
 
-        encoder = hub.KerasLayer(hub_url, trainable=False)
-        inputs = tf.keras.layers.Input(shape=[None, None, None, 3], dtype=tf.float32, name='image')
+        # encoder = hub.KerasLayer(hub_url, trainable=False)
+        # inputs = tf.keras.layers.Input(shape=[None, None, None, 3], dtype=tf.float32, name='image')
 
         # [batch_size, 600]
-        outputs = encoder(dict(image=inputs))
-        model = tf.keras.Model(inputs, outputs, name='movinet')
+        # outputs = encoder(dict(image=inputs))
+        # model = tf.keras.Model(inputs, outputs, name='movinet')
 
     student = network.models.ResCNNRNN(num_classes=args.num_classes)
     print("\nLoaded student and teacher")
@@ -228,7 +228,7 @@ def main():
     if args.wandb:
         init_wandb(student, args.wandb_api_key, args.wandb_resume, args.wandb_name, args.wandb_project, args.wandb_run_id, args.wandb_watch)
 
-    teacher = model
+    # teacher = model
     student = student.to(device)
     # generator = generator.to(device)
 
