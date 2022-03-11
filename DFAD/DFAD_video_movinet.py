@@ -26,7 +26,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         device_tf = '/device:CPU:0'
 
     debug_distribution = True
-    distribution = np.zeros(600)
+    distribution = np.zeros(600, dtype=np.int32)
     optimizer_S, optimizer_G = optimizers
 
     for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
@@ -96,27 +96,27 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         wandb.log({'Loss_G': total_loss_G / step_G}, step=epoch)
         print("Loss on Generator model: ", total_loss_G / step_G)
 
-        if debug_distribution:
-            wandb.log({'distribution': distribution}, step=epoch)
-            print(distribution)
-
         if args.verbose and i % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tG_Loss: {:.6f} S_loss: {:.6f}'.format(
                 epoch, i, args.epoch_itrs, 100 * float(i) / float(args.epoch_itrs), loss_G.item(), loss_S.item()))
 
-        checkpoint = {
-            'outer_epoch': epoch,
-            'inner_epoch': i + 1,
-            'optimizer_S': optimizer_S.state_dict(),
-            'optimizer_G': optimizer_G.state_dict(),
-            'generator': generator.state_dict(),
-            'student': student.state_dict(),
-            # 'scheduler':scheduler.state_dict(),
-            # 'criterion': criterion.state_dict()
-        }
+    checkpoint = {
+        'outer_epoch': epoch,
+        'inner_epoch': i + 1,
+        'optimizer_S': optimizer_S.state_dict(),
+        'optimizer_G': optimizer_G.state_dict(),
+        'generator': generator.state_dict(),
+        'student': student.state_dict(),
+        # 'scheduler':scheduler.state_dict(),
+        # 'criterion': criterion.state_dict()
+    }
 
-        if args.wandb_save:
-            save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
+    if args.wandb_save:
+        save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
+
+    if debug_distribution:
+        wandb.log({'distribution': distribution}, step=epoch)
+        print(distribution)
 
 
 def val(student, dataloader, device):
