@@ -163,7 +163,7 @@ def main():
                         default='/content/val_data/k400_16_frames_uniform/labels.csv')
     parser.add_argument('--val_num_workers', type=int, default=2)
 
-    parser.add_argument('--val_batch_size', type=int, default=32)
+    parser.add_argument('--val_batch_size', type=int, default=8)
     parser.add_argument('--val_scale', type=float, default=1)
     parser.add_argument('--val_scale_inv', type=float, default=255)
     parser.add_argument('--val_shift', type=float, default=0)
@@ -243,7 +243,7 @@ def main():
         args.val_scale = 1 / args.val_scale_inv
     val_data = ValDataset(args.val_data_dir, args.val_classes_file,
                           args.val_labels_file, args.num_classes,
-                          transform=CustomResizeTransform(size=64),
+                          transform=CustomResizeTransform(size=224),
                           scale=args.val_scale, shift=args.val_shift)
 
     val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
