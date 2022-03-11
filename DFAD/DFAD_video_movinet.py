@@ -230,7 +230,7 @@ def main():
 
     teacher = model
     student = student.to(device)
-    generator = generator.to(device)
+    # generator = generator.to(device)
 
     optimizer_S = optim.SGD(student.parameters(), lr=args.lr_S, weight_decay=args.weight_decay, momentum=args.momentum)
     optimizer_G = optim.Adam(generator.parameters(), lr=args.lr_G)
