@@ -256,9 +256,9 @@ def main():
             scheduler_G.step()
 
         print("################### Training Student and Generator Models ###################\n")
-        # train_epoch(args, teacher=teacher, student=student, generator=generator,
-        #             device=device, optimizers=[optimizer_S, optimizer_G],
-        #             epoch=epoch, step_S=args.step_S, step_G=args.step_G)
+        train_epoch(args, teacher=teacher, student=student, generator=generator,
+                    device=device, optimizers=[optimizer_S, optimizer_G],
+                    epoch=epoch, step_S=args.step_S, step_G=args.step_G)
 
         # Run validation
         student.eval()
