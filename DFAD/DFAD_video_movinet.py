@@ -1,10 +1,6 @@
 # Import required libraries
 import argparse
 import random
-from val_utils.dataloader_val import ValDataset
-from val_utils import metrics
-from val_utils.custom_transformations import CustomResizeTransform
-from torch.utils.data import DataLoader
 
 import numpy as np
 import tensorflow as tf
@@ -13,10 +9,14 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 import wandb
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 import network
 from utils.wandb_utils import init_wandb, save_ckp
+from val_utils import metrics
+from val_utils.custom_transformations import CustomResizeTransform
+from val_utils.dataloader_val import ValDataset
 
 
 def train_epoch(args, teacher, student, generator, device, optimizers, epoch, step_S, step_G):
@@ -120,6 +120,7 @@ def val(student, dataloader, device):
 
     return sum(accuracy_1) / len(accuracy_1), sum(accuracy_5) / len(accuracy_5)
 
+
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='DFAD MNIST')
@@ -158,11 +159,11 @@ def main():
                         default='/content/val_data/k400_16_frames_uniform/classes.csv')
     parser.add_argument('--val_labels_file', type=str,
                         default='/content/val_data/k400_16_frames_uniform/labels.csv')
-    parser.add_argument('--val_num_workers', type=int, default=4)
+    parser.add_argument('--val_num_workers', type=int, default=2)
 
     parser.add_argument('--val_batch_size', type=int, default=128)
     parser.add_argument('--val_scale', type=float, default=1)
-    parser.add_argument('--val_scale_inv', type=float, default=1)
+    parser.add_argument('--val_scale_inv', type=float, default=255)
     parser.add_argument('--val_shift', type=float, default=0)
 
     parser.add_argument('--wandb_api_key', type=str)
