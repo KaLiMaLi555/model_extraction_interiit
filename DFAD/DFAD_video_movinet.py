@@ -60,7 +60,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
             loss_S.backward()
             optimizer_S.step()
             if debug_distribution:
-                for c in np.argmax(t_logit.detach().cpu().numpy(), axis=1):
+                for c in torch.argmax(t_logit.detach(), dim=1).cpu().numpy():
                     distribution[c] += 1
 
         wandb.log({'Loss_S': total_loss_S / step_S}, step=epoch)
@@ -91,7 +91,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
             loss_G.backward()
             optimizer_G.step()
             if debug_distribution:
-                for c in np.argmax(t_logit.detach().cpu().numpy(), axis=1):
+                for c in torch.argmax(t_logit.detach(), dim=1).cpu().numpy():
                     distribution[c] += 1
         wandb.log({'Loss_G': total_loss_G / step_G}, step=epoch)
         print("Loss on Generator model: ", total_loss_G / step_G)
