@@ -3,8 +3,8 @@ import argparse
 import random
 
 import numpy as np
-# import tensorflow as tf
-# import tensorflow_hub as hub
+import tensorflow as tf
+import tensorflow_hub as hub
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
@@ -198,46 +198,46 @@ def main():
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
     if args.model_name == "movinet":
-        # gpus = tf.config.list_physical_devices('GPU')
-        # if gpus:
-        #     try:
-        #         # Currently, memory growth needs to be the same across GPUs
-        #         for gpu in gpus:
-        #             tf.config.experimental.set_memory_growth(gpu, True)
-        #         logical_gpus = tf.config.list_logical_devices('GPU')
-        #         print(len(gpus), "Physical GPU(s),", len(logical_gpus), "Logical GPU(s)")
-        #     except RuntimeError as e:
-        #         # Memory growth must be set before GPUs have been initialized
-        #         print(e)
+        gpus = tf.config.list_physical_devices('GPU')
+        if gpus:
+            try:
+                # Currently, memory growth needs to be the same across GPUs
+                for gpu in gpus:
+                    tf.config.experimental.set_memory_growth(gpu, True)
+                logical_gpus = tf.config.list_logical_devices('GPU')
+                print(len(gpus), "Physical GPU(s),", len(logical_gpus), "Logical GPU(s)")
+            except RuntimeError as e:
+                # Memory growth must be set before GPUs have been initialized
+                print(e)
 
         print("\n######################## Loading Model ########################\n")
-        # hub_url = "https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3"
+        hub_url = "https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3"
 
-        # encoder = hub.KerasLayer(hub_url, trainable=False)
-        # inputs = tf.keras.layers.Input(shape=[None, None, None, 3], dtype=tf.float32, name='image')
+        encoder = hub.KerasLayer(hub_url, trainable=False)
+        inputs = tf.keras.layers.Input(shape=[None, None, None, 3], dtype=tf.float32, name='image')
 
         # [batch_size, 600]
-        # outputs = encoder(dict(image=inputs))
-        # model = tf.keras.Model(inputs, outputs, name='movinet')
+        outputs = encoder(dict(image=inputs))
+        model = tf.keras.Model(inputs, outputs, name='movinet')
 
     student = network.models.ResCNNRNN(num_classes=args.num_classes)
     print("\nLoaded student and teacher")
-    # generator = network.models.VideoGAN(zdim=args.nz)
+    generator = network.models.VideoGAN(zdim=args.nz)
     print("Loaded student, generator and teacher\n")
 
     if args.wandb:
         init_wandb(student, args.wandb_api_key, args.wandb_resume, args.wandb_name, args.wandb_project, args.wandb_run_id, args.wandb_watch)
 
-    # teacher = model
+    teacher = model
     student = student.to(device)
-    # generator = generator.to(device)
+    generator = generator.to(device)
 
     optimizer_S = optim.SGD(student.parameters(), lr=args.lr_S, weight_decay=args.weight_decay, momentum=args.momentum)
-    # optimizer_G = optim.Adam(generator.parameters(), lr=args.lr_G)
+    optimizer_G = optim.Adam(generator.parameters(), lr=args.lr_G)
 
     if args.scheduler:
         scheduler_S = optim.lr_scheduler.StepLR(optimizer_S, args.step_size, 0.1)
-        # scheduler_G = optim.lr_scheduler.StepLR(optimizer_G, args.step_size, 0.1)
+        scheduler_G = optim.lr_scheduler.StepLR(optimizer_G, args.step_size, 0.1)
 
     if args.val_scale == 1:
         args.val_scale = 1 / args.val_scale_inv
@@ -253,7 +253,7 @@ def main():
         # Train
         if args.scheduler:
             scheduler_S.step()
-            # scheduler_G.step()
+            scheduler_G.step()
 
         print("################### Training Student and Generator Models ###################\n")
         # train_epoch(args, teacher=teacher, student=student, generator=generator,
