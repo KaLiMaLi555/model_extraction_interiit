@@ -97,7 +97,8 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         print("Loss on Generator model: ", total_loss_G / step_G)
 
         if debug_distribution:
-            wandb.log({'distribution': debug_distribution}, step=epoch)
+            wandb.log({'distribution': distribution}, step=epoch)
+            print(distribution)
 
         if args.verbose and i % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tG_Loss: {:.6f} S_loss: {:.6f}'.format(
