@@ -260,7 +260,7 @@ def main():
                     device=device, optimizers=[optimizer_S, optimizer_G],
                     epoch=epoch, step_S=args.step_S, step_G=args.step_G)
 
-        # Run validation
+        print("################### Evaluating Student Model ###################\n")
         student.eval()
         acc_1, acc_5 = val(student, val_loader, device)
         acc_1 = 100 * acc_1.detach().cpu().numpy()
