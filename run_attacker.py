@@ -29,7 +29,7 @@ from env import seed_all
 
 import argparse
 
-from dataloader import VideoLogitDataset, VideoLogitDatasetFromDisk
+from dataloader import MovinetTransform, SwinTransform, VideoDataset, VideoDatasetFromDisk
 from cnn_lstm import ResCNNRNN
 
 class WrapperModel(pl.LightningModule):
@@ -86,6 +86,9 @@ if __name__ == "__main__":
     parser.add_argument('--train_input_dir', type=str)
     parser.add_argument('--val_input_dir', type=str)
     parser.add_argument('--test_input_dir', type=str)
+    parser.add_argument('--train_video_names', default= "/content/train_video_names.txt", type=str)
+    parser.add_argument('--val_video_names', default= "/content/val_video_names.txt", type=str)
+    parser.add_argument('--test_video_names', default= "/content/test_video_names.txt", type=str)
     parser.add_argument('--attacker_model_name', type=str)
     parser.add_argument('--victim_model_name', type=str)
     parser.add_argument('--epochs', type=int)
@@ -108,29 +111,34 @@ if __name__ == "__main__":
     victim_model_name = args.victim_model_name
     learning_rate = args.learning_rate
 
+    if attacker_model_name == "swin-t":
+        transforms = SwinTransform()
+    else:
+        transforms = MovinetTransform()
+
     seed_all()
 
     if args.load_train_from_disk:
-        train_video_data = VideoLogitDatasetFromDisk(train_input_dir, train_logits_file)
+        train_video_data = VideoDatasetFromDisk(train_input_dir, video_names_file=args.train_video_names, transforms=transforms, logits_file=train_logits_file)
     else:
-        train_video_data = VideoLogitDataset(train_input_dir, train_logits_file)
+        train_video_data = VideoDataset(train_input_dir, video_names_file=args.train_video_names, transforms=transforms, logits_file=train_logits_file)
 
     train_size = int(len(train_video_data)*0.9)
     if val_input_dir:
         train_data = train_video_data
         if args.load_val_from_disk:
-            val_data = VideoLogitDatasetFromDisk(val_input_dir, val_logits_file)
+            val_data = VideoDatasetFromDisk(val_input_dir, video_names_file=args.val_video_names, transforms=transforms, logits_file=val_logits_file)
         else:
-            val_data = VideoLogitDataset(val_input_dir, val_logits_file)
+            val_data = VideoDataset(val_input_dir, video_names_file=args.val_video_names, transforms=transforms, logits_file=val_logits_file)
     else:
         train_data, val_data = data.random_split(train_video_data, [train_size, len(train_video_data) - train_size])
     train_loader = DataLoader(train_data, batch_size=32, shuffle=True, drop_last=True, pin_memory=True, num_workers=2)
     val_loader = DataLoader(val_data, batch_size=32, shuffle=False, drop_last=False, num_workers=2)
 
     if args.load_test_from_disk:
-        test_video_data = VideoLogitDatasetFromDisk(test_input_dir, test_logits_file)
+        test_video_data = VideoDatasetFromDisk(test_input_dir, video_names_file=args.test_video_names, transforms=transforms, logits_file=test_logits_file)
     else:
-        test_video_data = VideoLogitDataset(test_input_dir, test_logits_file)
+        test_video_data = VideoDataset(test_input_dir, video_names_file=args.test_video_names, transforms=transforms, logits_file=test_logits_file)
 
     test_loader = DataLoader(test_video_data, batch_size=32, shuffle=False, drop_last=False, num_workers=2)
     
