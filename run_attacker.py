@@ -110,11 +110,7 @@ if __name__ == "__main__":
     attacker_model_name = args.attacker_model_name
     victim_model_name = args.victim_model_name
     learning_rate = args.learning_rate
-
-    if attacker_model_name == "swin-t":
-        transforms = SwinTransform()
-    else:
-        transforms = MovinetTransform()
+    transforms = MovinetTransform()
 
     seed_all()
 

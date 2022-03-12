@@ -46,10 +46,7 @@ def get_logits(model, model_name, dataloader, device):
     # labels = []
     model.eval()
     with torch.no_grad():
-        for idx, video_frames in tqdm(enumerate(dataloader), position = 0, leave = True):
-            shape = video_frames.shape
-            video_frames = video_frames.view((shape[0], shape[4], shape[1], shape[2], shape[3]))
-            
+        for idx, video_frames in tqdm(enumerate(dataloader), position = 0, leave = True):            
             video_frames.to(device)
             if model_name == "swin_transformer":
                 outputs = model(video_frames, return_loss=False)
