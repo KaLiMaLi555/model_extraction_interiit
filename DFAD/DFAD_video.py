@@ -44,6 +44,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             fake = torch.sigmoid(generator(z).detach())
             fake_shape = fake.shape
 
+            
             t_logit = torch.tensor(teacher(fake)).to(device)
 
             fake = fake.view(fake_shape[0], fake_shape[2], fake_shape[1], fake_shape[3], fake_shape[4])

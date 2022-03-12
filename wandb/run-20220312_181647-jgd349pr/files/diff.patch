@@ -1,0 +1,102 @@
+diff --git a/DFAD/DFAD_video.py b/DFAD/DFAD_video.py
+index 144302c..bfcfe4a 100644
+--- a/DFAD/DFAD_video.py
++++ b/DFAD/DFAD_video.py
+@@ -44,6 +44,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
+             fake = torch.sigmoid(generator(z).detach())
+             fake_shape = fake.shape
+ 
++            
+             t_logit = torch.tensor(teacher(fake)).to(device)
+ 
+             fake = fake.view(fake_shape[0], fake_shape[2], fake_shape[1], fake_shape[3], fake_shape[4])
+diff --git a/DFAD/DFAD_video_swapped.py b/DFAD/DFAD_video_swapped.py
+index d0ee8f0..bf03d85 100644
+--- a/DFAD/DFAD_video_swapped.py
++++ b/DFAD/DFAD_video_swapped.py
+@@ -42,7 +42,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
+           generator.train()
+           fake = torch.sigmoid(generator(z))
+           fake_shape = fake.shape
+-
++          print(fake_shape)
+           t_logit = torch.tensor(teacher(fake)).to(device)
+ 
+           fake = fake.view(fake_shape[0], fake_shape[2], fake_shape[1], fake_shape[3], fake_shape[4])
+@@ -157,7 +157,7 @@ def main():
+ 
+     if args.model_name == "swin-t":
+         print()
+-        config = "./VST/configs/_base_/models/swin/swin_tiny.py"
++        config = "./Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py"
+         checkpoint = "/content/swin_tiny_patch244_window877_kinetics400_1k.pth"
+         cfg = Config.fromfile(config)
+         teacher = build_model(cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))
+diff --git a/DFAD/network/models.py b/DFAD/network/models.py
+index 308b427..0b977aa 100644
+--- a/DFAD/network/models.py
++++ b/DFAD/network/models.py
+@@ -129,7 +129,7 @@ class VideoGAN(nn.Module):
+         # self.conv5b = nn.ConvTranspose2d(64, 3, [4,4], [2,2], [1,1])
+ 
+         # Foreground
+-        self.conv1 = nn.ConvTranspose3d(zdim, 512, [1, 4, 4], [1, 1, 1])
++        self.conv1 = nn.ConvTranspose3d(zdim, 512, [1, 7, 7], [1, 1, 1])
+         self.bn1 = nn.BatchNorm3d(512)
+ 
+         self.conv2 = nn.ConvTranspose3d(512, 256, [4, 4, 4], [2, 2, 2], [1, 1, 1])
+@@ -141,7 +141,10 @@ class VideoGAN(nn.Module):
+         self.conv4 = nn.ConvTranspose3d(128, 64, [4, 4, 4], [2, 2, 2], [1, 1, 1])
+         self.bn4 = nn.BatchNorm3d(64)
+ 
+-        self.conv5 = nn.ConvTranspose3d(64, 3, [4, 4, 4], [2, 2, 2], [1, 1, 1])
++        self.conv5 = nn.ConvTranspose3d(64, 32, [4, 4, 4], [2, 2, 2], [1, 1, 1])
++        self.bn5 = nn.BatchNorm3d(32)
++
++        self.conv6 = nn.ConvTranspose3d(32, 3, [4, 4, 4], [2, 2, 2], [1, 1, 1])
+ 
+         # Mask
+         # self.conv5m = nn.ConvTranspose3d(64, 1, [4,4,4], [2,2,2], [1,1,1])
+@@ -166,12 +169,19 @@ class VideoGAN(nn.Module):
+ 
+         # Foreground
+         f = F.leaky_relu(self.bn1(self.conv1(z.unsqueeze(2).unsqueeze(3).unsqueeze(4))))
++        print(f.shape)
+         f = F.leaky_relu(self.bn2(self.conv2(f)))
++        print(f.shape)
+         f = F.leaky_relu(self.bn3(self.conv3(f)))
++        print(f.shape)
+         f = F.leaky_relu(self.bn4(self.conv4(f)))
++        print(f.shape)
++        f = F.leaky_relu(self.bn5(self.conv5(f)))
++        print(f.shape)
+         # m = torch.sigmoid(self.conv5m(f))   # b, 1, 32, 64, 64
+         # Model Update: Removed activation function from last year
+-        f = self.conv5(f)  # b, 3, 32, 64, 64
++        f = self.conv6(f)  # b, 3, 32, 64, 64
++        print(f.shape)
+ 
+         # out = m*f + (1-m)*b
+         out = f
+diff --git a/Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py b/Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py
+index 69c7e0b..b2a77ce 100644
+--- a/Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py
++++ b/Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py
+@@ -1,7 +1,7 @@
+ _base_ = [
+     '../../_base_/models/swin/swin_tiny.py', '../../_base_/default_runtime.py'
+ ]
+-model=dict(backbone=dict(patch_size=(2,4,4), drop_path_rate=0.1), test_cfg=dict(max_testing_views=4))
++model=dict(backbone=dict(patch_size=(2,4,4), drop_path_rate=0.1), test_cfg=dict())
+ 
+ # dataset settings
+ dataset_type = 'VideoDataset'
+diff --git a/wandb/latest-run b/wandb/latest-run
+index d1071c5..f92f4f0 120000
+--- a/wandb/latest-run
++++ b/wandb/latest-run
+@@ -1 +1 @@
+-run-20220310_060756-18r5a49k
+\ No newline at end of file
++run-20220312_181647-jgd349pr
+\ No newline at end of file

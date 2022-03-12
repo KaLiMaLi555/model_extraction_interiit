@@ -129,7 +129,7 @@ class VideoGAN(nn.Module):
         # self.conv5b = nn.ConvTranspose2d(64, 3, [4,4], [2,2], [1,1])
 
         # Foreground
-        self.conv1 = nn.ConvTranspose3d(zdim, 512, [1, 4, 4], [1, 1, 1])
+        self.conv1 = nn.ConvTranspose3d(zdim, 512, [1, 7, 7], [1, 1, 1])
         self.bn1 = nn.BatchNorm3d(512)
 
         self.conv2 = nn.ConvTranspose3d(512, 256, [4, 4, 4], [2, 2, 2], [1, 1, 1])
@@ -141,7 +141,10 @@ class VideoGAN(nn.Module):
         self.conv4 = nn.ConvTranspose3d(128, 64, [4, 4, 4], [2, 2, 2], [1, 1, 1])
         self.bn4 = nn.BatchNorm3d(64)
 
-        self.conv5 = nn.ConvTranspose3d(64, 3, [4, 4, 4], [2, 2, 2], [1, 1, 1])
+        self.conv5 = nn.ConvTranspose3d(64, 32, [4, 4, 4], [2, 2, 2], [1, 1, 1])
+        self.bn5 = nn.BatchNorm3d(32)
+
+        self.conv6 = nn.ConvTranspose3d(32, 3, [4, 4, 4], [2, 2, 2], [1, 1, 1])
 
         # Mask
         # self.conv5m = nn.ConvTranspose3d(64, 1, [4,4,4], [2,2,2], [1,1,1])
@@ -169,9 +172,10 @@ class VideoGAN(nn.Module):
         f = F.leaky_relu(self.bn2(self.conv2(f)))
         f = F.leaky_relu(self.bn3(self.conv3(f)))
         f = F.leaky_relu(self.bn4(self.conv4(f)))
+        f = F.leaky_relu(self.bn5(self.conv5(f)))
         # m = torch.sigmoid(self.conv5m(f))   # b, 1, 32, 64, 64
         # Model Update: Removed activation function from last year
-        f = self.conv5(f)  # b, 3, 32, 64, 64
+        f = self.conv6(f)  # b, 3, 32, 64, 64
 
         # out = m*f + (1-m)*b
         out = f
