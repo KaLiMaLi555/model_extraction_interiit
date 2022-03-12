@@ -7,7 +7,7 @@ import numpy as np
 import torch.nn as nn
 from tqdm import tqdm
 from PIL import Image
-from env import set_seed
+from env import seed_all
 from dataloader import MovinetTransform, SwinTransform, VideoDataset, VideoDatasetFromDisk
 from torch.utils.data import TensorDataset, DataLoader, Dataset
 
