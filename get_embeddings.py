@@ -73,7 +73,7 @@ def get_logits(model, model_name, dataloader, device):
 if __name__ == "__main__":
 
     args = parse_args()
-    set_seed(args.seed)
+    seed_all(args.seed)
 
     if not os.path.exists(args.logit_dir):
         os.makedirs(args.logit_dir)
