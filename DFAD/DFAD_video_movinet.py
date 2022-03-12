@@ -115,7 +115,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
 
     if debug_distribution:
-        wandb.log({'distribution': distribution}, step=epoch)
+        wandb.log({'distribution': wandb.Histogram(distribution, num_bins=300)}, step=epoch)
         print(distribution)
 
 
