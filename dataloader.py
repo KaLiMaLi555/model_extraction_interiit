@@ -82,7 +82,7 @@ class VideoDataset(Dataset):
         self.transform = transforms
         
         with open(video_names_file) as f:
-            self.videos = [os.path.join(video_dir_path, x) for x in f.readlines()]
+            self.videos = [os.path.join(video_dir_path, x[:-1]) for x in f.readlines()]
         self.get_frames()
 
         self.instances = torch.stack(self.instances)
@@ -123,7 +123,7 @@ class VideoDatasetFromDisk(Dataset):
             self.logits = None
 
         with open(video_names_file) as f:
-            self.videos = [os.path.join(video_dir_path, x) for x in f.readlines()]
+            self.videos = [os.path.join(video_dir_path, x[:-1]) for x in f.readlines()]
         self.num_instances = len(self.videos)
 
     def get_frames(self, video_path):
