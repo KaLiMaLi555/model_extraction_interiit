@@ -38,9 +38,11 @@ def neg_sampling_softmax(logits, window):
     logits -- (batch, num_classes)
     """
     summed_tensor = F.avg_pool1d(logits, kernel_size=window, stride=1) * window
-    ret = logits / (
-        logits + summed_tensor[:, torch.randint(0, logits.shape[1] - window, (1,))]
-    )
+    r1 = torch.randint(2 * window, logits.shape[1] - window, (1,))
+    t1 = torch.zeros(*logits.shape).cuda() + summed_tensor[:, r1]
+    t1[:, r1 : r1 + window] = summed_tensor[:, torch.randint(0, window, (1,))]
+    ret = logits / (logits + t1)
+    # del t1 ########## should I do this would this affect backprop
     return ret
 
 
