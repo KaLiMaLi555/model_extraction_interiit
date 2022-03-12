@@ -175,6 +175,7 @@ def main():
                         default='/content/val_data/k400_16_frames_uniform/labels.csv')
     parser.add_argument('--val_num_workers', type=int, default=2)
 
+    parser.add_argument('--val_epoch', type=int, default=5)
     parser.add_argument('--val_batch_size', type=int, default=8)
     parser.add_argument('--val_scale', type=float, default=1)
     parser.add_argument('--val_scale_inv', type=float, default=255)
@@ -272,15 +273,16 @@ def main():
                     device=device, optimizers=[optimizer_S, optimizer_G],
                     epoch=epoch, step_S=args.step_S, step_G=args.step_G)
 
-        print("################### Evaluating Student Model ###################\n")
-        student.eval()
-        acc_1, acc_5 = val(student, val_loader, device)
-        acc_1 = 100 * acc_1.detach().cpu().numpy()
-        acc_5 = 100 * acc_5.detach().cpu().numpy()
-        print(f'\nEpoch {epoch}')
-        print(f'Top-1: {str(acc_1)}, Top-5: {str(acc_5)}\n')
-        wandb.log({'val_T1': acc_1}, step=epoch)
-        wandb.log({'val_T5': acc_5}, step=epoch)
+        if epoch % args.val_epoch == 0:
+            print("################### Evaluating Student Model ###################\n")
+            student.eval()
+            acc_1, acc_5 = val(student, val_loader, device)
+            acc_1 = 100 * acc_1.detach().cpu().numpy()
+            acc_5 = 100 * acc_5.detach().cpu().numpy()
+            print(f'\nEpoch {epoch}')
+            print(f'Top-1: {str(acc_1)}, Top-5: {str(acc_5)}\n')
+            wandb.log({'val_T1': acc_1}, step=epoch)
+            wandb.log({'val_T5': acc_5}, step=epoch)
 
 
 if __name__ == '__main__':
