@@ -15,12 +15,15 @@ from PIL import Image
 
 class ValDataset(Dataset):
 
-    def __init__(self, video_dir_path, classes_file, labels_file, num_classes, transform=None):
+    def __init__(self, video_dir_path, classes_file, labels_file, num_classes, transform=None, scale=1, shift=0):
 
         self.video_dir_path = video_dir_path
         self.classes_file = classes_file
         self.labels_file = labels_file
+
         self.transform = transform
+        self.scale = scale
+        self.shift = shift
 
         self.videos = sorted([str(x.name) for x in Path(self.video_dir_path).iterdir() if x.is_dir()])
         self.num_instances = len(self.videos)
@@ -37,8 +40,8 @@ class ValDataset(Dataset):
             if index == 0:
                 continue
             self.new_classes_dict[id] = self.label_dict[label]
-        print(self.new_classes_dict)
-        print(len(self.new_classes_dict))
+        # print(self.new_classes_dict)
+        # print(self.num_instances, len(self.new_classes_dict))
 
     def get_id(self, video_name):
         k = 0
@@ -70,7 +73,7 @@ class ValDataset(Dataset):
             image = np.array(image, dtype=np.float32)
             image_frames.append(torch.tensor(image))
 
-        return torch.stack(image_frames)
+        return torch.stack(image_frames) * self.scale + self.shift
 
     def __getitem__(self, idx):
         video_path = os.path.join(self.video_dir_path, self.videos[idx])

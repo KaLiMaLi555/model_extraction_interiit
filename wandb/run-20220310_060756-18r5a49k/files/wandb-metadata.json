@@ -1,0 +1,36 @@
+{
+    "os": "Linux-5.4.144+-x86_64-with-Ubuntu-18.04-bionic",
+    "python": "3.7.12",
+    "heartbeatAt": "2022-03-10T06:08:00.049834",
+    "startedAt": "2022-03-10T06:07:56.830470",
+    "docker": null,
+    "gpu": "Tesla P100-PCIE-16GB",
+    "gpu_count": 1,
+    "cpu_count": 8,
+    "cuda": null,
+    "args": [
+        "--nz",
+        "1000",
+        "--wandb_api_key",
+        "5e3e5810a102939f20929d2151ad1ff25edac441",
+        "--wandb",
+        "--wandb_watch",
+        "--wandb_save",
+        "--wandb_name",
+        "DFAD_mars_pretrained_false",
+        "--checkpoint_path",
+        "/content/gdrive/MyDrive/DFAD_mars_pretrained_false"
+    ],
+    "state": "running",
+    "program": "DFAD/DFAD_mars_movinet.py",
+    "codePath": "DFAD/DFAD_mars_movinet.py",
+    "git": {
+        "remote": "https://github.com/Sohanpatnaik106/model_extraction_interiit/",
+        "commit": "94589f7e5b1a6db17f331f2c8af2122f072e44ab"
+    },
+    "email": null,
+    "root": "/content/model_extraction_interiit",
+    "host": "cffbc0b1bd5c",
+    "username": "root",
+    "executable": "/usr/bin/python3"
+}
