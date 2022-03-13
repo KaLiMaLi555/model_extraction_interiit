@@ -45,6 +45,9 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
             fake = torch.sigmoid(generator(z).detach())
             fake_shape = fake.shape
 
+            # b, 3, 32, 64, 64
+            # b, 32, 64, 64, 3
+            # b, 32, 3, 64, 64
             fake_tf = fake.view(fake_shape[0], fake_shape[2], fake_shape[3], fake_shape[4], fake_shape[1])
             with tf.device(device_tf):
                 tf_tensor = tf.convert_to_tensor(fake_tf.cpu().numpy())

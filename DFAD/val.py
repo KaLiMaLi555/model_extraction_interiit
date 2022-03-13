@@ -36,7 +36,10 @@ def val(student, dataloader, device):
     for (x, y) in tqdm(dataloader, total=len(dataloader)):
         x, y = x.to(device), y.to(device)
         x_shape = x.shape
-        x = x.view(x_shape[0], x_shape[4], x_shape[1], x_shape[2], x_shape[3])
+        # b, f, h, w, c
+        x = x.reshape(x_shape[0], x_shape[1], x_shape[4], x_shape[2], x_shape[3])
+        # without swapaxis: b, c, f, h, w
+        # with swapaxis:    b, f, c, h, w
         # print(x_shape, x.shape)
         logits = student(x)
         accuracy_1.append(metrics.topk_accuracy(logits, y, 1))

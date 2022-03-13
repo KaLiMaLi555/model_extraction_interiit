@@ -44,25 +44,26 @@ class ValDataset(Dataset):
         # print(self.num_instances, len(self.new_classes_dict))
 
     def get_id(self, video_name):
-        k = 0
-        rev = video_name[::-1]
-        for x in range(len(video_name)):
-            if rev[x] == '_':
-                k = k + 1
-            if k >= 2:
-                k = x
-                break
+        # k = 0
+        # rev = video_name[::-1]
+        # id = ''.join(rev.split('_')[2:])[::-1]
+        # for x in range(len(video_name)):
+        #     if rev[x] == '_':
+        #         k = k + 1
+        #     if k >= 2:
+        #         k = x
+        #         break
 
-        id = video_name[0:len(video_name) - k - 1]
-
+        id = video_name[:-18]
         return id
 
     def get_label(self, idx):
         video_name = self.videos[idx]
         video_id = self.get_id(video_name)
         label = self.new_classes_dict[video_id]
-        one_hot = F.one_hot(torch.tensor(int(label)), self.num_classes)
-        return one_hot
+        # one_hot = F.one_hot(torch.tensor(int(label)), self.num_classes)
+        # return one_hot
+        return label
 
     def get_frames(self, video_path):
         images = sorted(os.listdir(video_path))
@@ -80,10 +81,10 @@ class ValDataset(Dataset):
         vid = self.get_frames(video_path)
         # vid = custom_resize_transform(vid)
         if self.transform:
-            vid = vid.permute(0, 3, 1, 2)
-            vid = self.transform(vid)
-            vid = vid.permute(0, 2, 3, 1)
-        vid = vid.swapaxes(0, 3)  # <C3D Transform>
+            vid = vid.permute(0, 3, 1, 2)  # f, h, w, c
+            vid = self.transform(vid)  # f, c, h, w
+            vid = vid.permute(0, 2, 3, 1)  # f, h, w, c
+        # vid = vid.swapaxes(0, 3)  # <C3D Transform>
         return vid, self.get_label(idx)
 
     def __len__(self):
