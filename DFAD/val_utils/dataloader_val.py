@@ -63,7 +63,7 @@ class ValDataset(Dataset):
         label = self.new_classes_dict[video_id]
         # one_hot = F.one_hot(torch.tensor(int(label)), self.num_classes)
         # return one_hot
-        return torch.tensor(label)
+        return torch.tensor(int(label))
 
     def get_frames(self, video_path):
         images = sorted(os.listdir(video_path))
