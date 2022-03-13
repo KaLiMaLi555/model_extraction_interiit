@@ -60,6 +60,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
 
             # TODO: Change as needed for Swin-T
             # t_logit = torch.tensor(teacher(fake)).to(device)
+            # TODO: Make appropriate shape changes for single image generation
             fake_tf = fake.view(fake_shape[0], fake_shape[2], fake_shape[3], fake_shape[4], fake_shape[1])
             with tf.device(device_tf):
                 tf_tensor = tf.convert_to_tensor(fake_tf.cpu().numpy())
@@ -93,6 +94,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
             # t_logit = torch.tensor(teacher(fake)).to(device)
             fake_tf = torch.empty_like(fake).copy_(fake)
             fake_tf = fake_tf.detach()
+            # TODO: Make appropriate shape changes for single image generation
             fake_tf = fake_tf.view(fake_shape[0], fake_shape[2], fake_shape[3], fake_shape[4], fake_shape[1])
             with tf.device(device_tf):
                 tf_tensor = tf.convert_to_tensor(fake_tf.cpu().numpy())
@@ -144,6 +146,7 @@ def val(student, dataloader, device):
     for (x, y) in tqdm(dataloader, total=len(dataloader)):
         x, y = x.to(device), y.to(device)
         x_shape = x.shape
+        # TODO: Make appropriate shape changes for single image generation
         x = x.view(x_shape[0], x_shape[4], x_shape[1], x_shape[2], x_shape[3])
         # print(x_shape, x.shape)
         logits = student(x).detach()
