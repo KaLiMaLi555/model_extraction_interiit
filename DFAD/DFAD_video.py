@@ -14,6 +14,7 @@ import tensorflow as tf
 import torch.optim as optim
 import tensorflow_hub as hub
 import torch.nn.functional as F
+from collections import Counter
 
 # Import for Swin-T
 # from mmcv import Config
@@ -40,7 +41,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         device_tf = '/device:CPU:0'
 
     debug_distribution = True
-    distr = np.zeros(600, dtype=np.int32)
+    distr = []
     optimizer_S, optimizer_G = optimizers
 
     for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
@@ -75,8 +76,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
             optimizer_S.step()
 
             if debug_distribution:
-                for c in torch.argmax(t_logit.detach(), dim=1).cpu().numpy():
-                    distr[c] += 1
+                distr.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
 
         wandb.log({'Loss_S': total_loss_S}, step=epoch)
         wandb.log({'Loss_S_inner': total_loss_S})
@@ -109,8 +109,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
             optimizer_G.step()
 
             if debug_distribution:
-                for c in torch.argmax(t_logit.detach(), dim=1).cpu().numpy():
-                    distr[c] += 1
+                distr.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
 
         wandb.log({'Loss_G': total_loss_G}, step=epoch)
         wandb.log({'Loss_G_inner': total_loss_G})
@@ -135,9 +134,9 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
 
     if debug_distribution:
-        hist = ([distr[i] + distr[i + 1] for i in range(0, 600, 2)], list(range(0, 600, 2)))
-        wandb.log({'distribution': wandb.Histogram(np_histogram=hist)}, step=epoch)
-        print(distr)
+        wandb.log({'distribution': wandb.Histogram(distr, num_bins=300)}, step=epoch)
+        c = Counter(distr)
+        print(c.items())
 
 
 def val(student, dataloader, device):
