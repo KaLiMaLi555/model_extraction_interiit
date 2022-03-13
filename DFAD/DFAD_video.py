@@ -10,15 +10,15 @@ import torchvision
 import numpy as np
 import torch.nn as nn
 from tqdm import tqdm
+import tensorflow as tf
 import torch.optim as optim
+import tensorflow_hub as hub
 import torch.nn.functional as F
 
-from torchsummary import summary
-
 # Import for Swin-T
-from mmcv import Config
-from mmaction.models import build_model
-from mmcv.runner import load_checkpoint
+# from mmcv import Config
+# from VST.mmaction.models import build_model
+# from mmcv.runner import load_checkpoint
 from utils.wandb_utils import init_wandb, save_ckp
 
 
@@ -28,9 +28,17 @@ def count_parameters(model):
 
 def train(args, teacher, student, generator, device, optimizer, epoch):
 
-    teacher.eval()
+    # teacher.eval()
     student.train()
     generator.train()
+
+    device_tf = tf.test.gpu_device_name()
+    if device_tf != '/device:GPU:0':
+        print('GPU not found!')
+        device_tf = '/device:CPU:0'
+
+    debug_distribution = True
+    distribution = np.zeros(600, dtype=np.int32)
     
     optimizer_S, optimizer_G = optimizer
 
@@ -49,6 +57,12 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             fake = generator(z).detach()
             fake_shape = fake.shape
             
+            fake_tf = fake.view(fake_shape[0], fake_shape[2], fake_shape[3], fake_shape[4], fake_shape[1])
+            with tf.device(device_tf):
+                tf_tensor = tf.convert_to_tensor(fake_tf.cpu().numpy())
+                t_logit = teacher(tf_tensor).numpy()
+                t_logit = torch.tensor(t_logit).to(device)
+
             t_logit = torch.tensor(teacher(fake)).to(device)
             
             fake = fake.view(fake_shape[0], fake_shape[2], fake_shape[1], fake_shape[3], fake_shape[4])
@@ -100,7 +114,6 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         if args.wandb_save:
             save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
         
-
 def main():
 
     # Training settings
@@ -114,7 +127,7 @@ def main():
     parser.add_argument('--lr_G', type=float, default=1e-3,
                         help='learning rate (default: 0.1)')
     parser.add_argument('--weight_decay', type=float, default=1e-4)
-    parser.add_argument('--model_name', default = "swin-t", type = str)
+    parser.add_argument('--model_name', default = "movinet", type = str)
     parser.add_argument('--epoch_itrs', type=int, default=50)
     parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
                         help='SGD momentum (default: 0.9)')
@@ -156,21 +169,45 @@ def main():
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     
+    # device = "cpu"
     device = torch.device("cuda" if use_cuda else "cpu")
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
     
     if args.model_name == "swin-t":
         print()
         config = "./VST/configs/_base_/models/swin/swin_tiny.py"
-        checkpoint = "/content/swin_tiny_patch244_window877_kinetics400_1k.pth"
+        checkpoint = "./swin_tiny_patch244_window877_kinetics400_1k.pth"
         cfg = Config.fromfile(config)
         teacher = build_model(cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))
         load_checkpoint(teacher, checkpoint, map_location=device)
 
-    
+    elif args.model_name == "movinet":
+        gpus = tf.config.list_physical_devices('GPU')
+        if gpus:
+            try:
+                # Currently, memory growth needs to be the same across GPUs
+                for gpu in gpus:
+                    tf.config.experimental.set_memory_growth(gpu, True)
+                logical_gpus = tf.config.list_logical_devices('GPU')
+                print(len(gpus), "Physical GPU(s),", len(logical_gpus), "Logical GPU(s)")
+            except RuntimeError as e:
+                # Memory growth must be set before GPUs have been initialized
+                print(e)
 
+        print("\n######################## Loading Model ########################\n")
+        hub_url = "https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3"
 
-    student = network.models.ResCNNRNN()
+        encoder = hub.KerasLayer(hub_url, trainable=False)
+        inputs = tf.keras.layers.Input(shape=[None, None, None, 3], dtype=tf.float32, name='image')
+
+        # [batch_size, 600]
+        outputs = encoder(dict(image=inputs))
+        teacher = tf.keras.Model(inputs, outputs, name='movinet')
+
+    # NOTE: Uncomment for using CNN LSTM
+    # student = network.models.ResCNNRNN()
+    # NOTE: Lightweight CNN model (Mobile Net)
+    student = torchvision.models.mobilenet_v2()
     print("\nLoaded student and teacher")
     generator = network.models.VideoGAN(zdim = args.nz)
     print("Loaded student, generator and teacher\n")
@@ -178,7 +215,8 @@ def main():
     if args.wandb:
         init_wandb(student, args.wandb_api_key, args.wandb_resume, args.wandb_name, args.wandb_project, args.wandb_run_id, args.wandb_watch)
 
-    teacher = teacher.to(device)
+    if args.model_name == "swin-t":
+        teacher = teacher.to(device)
     student = student.to(device)
     generator = generator.to(device)
 
