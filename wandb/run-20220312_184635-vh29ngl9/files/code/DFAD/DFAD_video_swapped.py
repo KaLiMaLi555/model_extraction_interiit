@@ -44,22 +44,20 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
           fake = torch.sigmoid(generator(z))
           fake_shape = fake.shape
 
-          with torch.no_grad():
-            fake_teacher = fake.reshape((-1, fake_shape[2], fake_shape[1], *fake_shape[3:]))
-            fake_teacher = fake_teacher.detach()
-            fake_teacher_batch = []
-            for vid in list(fake_teacher):
-              vid = torch.stack(
-                [
-                  TF.normalize(frame*255, [123.675, 116.28, 103.53], [58.395, 57.12, 57.375]) 
-                  for frame in vid
-                  ]
-                )
-              fake_teacher_batch.append(vid)
-            fake_teacher = torch.stack(fake_teacher_batch)
-            
-            fake_teacher = fake_teacher.reshape((-1, 1, *fake_shape[1:]))
-            t_logit = torch.tensor(teacher(fake_teacher, return_loss=False)).to(device)
+          fake_teacher = fake.reshape((-1, fake_shape[2], fake_shape[1], fake_shape[3:]))
+          fake_teacher_batch = []
+          for vid in list(fake_teacher):
+            vid = torch.stack(
+              [
+                TF.normalize(frame*255, [123.675, 116.28, 103.53], [58.395, 57.12, 57.375]) 
+                for frame in vid
+                ]
+              )
+            fake_teacher_batch.append(vid)
+          fake_teacher = torch.stack(fake_teacher_batch)
+          
+          fake_teacher = fake_teacher.reshape((-1, 1, fake_shape[1:]))
+          t_logit = torch.tensor(teacher(fake_teacher, return_loss=False)).to(device)
 
           fake = fake.view(fake_shape[0], fake_shape[2], fake_shape[1], fake_shape[3], fake_shape[4])
           s_logit = student(fake).to(device)
@@ -80,21 +78,19 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         fake = torch.sigmoid(generator(z).detach())
         fake_shape = fake.shape
 
-        with torch.no_grad():
-          fake_teacher = fake.reshape((-1, fake_shape[2], fake_shape[1], *fake_shape[3:]))
-          fake_teacher = fake_teacher.detach()
-          fake_teacher_batch = []
-          for vid in list(fake_teacher):
-            vid = torch.stack(
-              [
-                TF.normalize(frame*255, [123.675, 116.28, 103.53], [58.395, 57.12, 57.375]) 
-                for frame in vid
-                ]
-              )
-            fake_teacher_batch.append(vid)
-          fake_teacher = torch.stack(fake_teacher_batch)
-          fake_teacher = fake_teacher.reshape((-1, 1, *fake_shape[1:]))
-          t_logit = torch.tensor(teacher(fake_teacher, return_loss=False)).to(device)
+        fake_teacher = fake.reshape((-1, fake_shape[2], fake_shape[1], fake_shape[3:]))
+        fake_teacher_batch = []
+        for vid in list(fake_teacher):
+          vid = torch.stack(
+            [
+              TF.normalize(frame*255, [123.675, 116.28, 103.53], [58.395, 57.12, 57.375]) 
+              for frame in vid
+              ]
+            )
+          fake_teacher_batch.append(vid)
+        fake_teacher = torch.stack(fake_teacher_batch)
+        fake_teacher = fake_teacher.reshape((-1, 1, fake_shape[1:]))
+        t_logit = torch.tensor(teacher(fake_teacher, return_loss=False)).to(device)
 
         fake = fake.view(fake_shape[0], fake_shape[2], fake_shape[1], fake_shape[3], fake_shape[4])
         s_logit = student(fake).to(device)
@@ -131,7 +127,7 @@ def main():
 
     # Training settings
     parser = argparse.ArgumentParser(description='DFAD MNIST')
-    parser.add_argument('--batch_size', type=int, default=2, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=16, metavar='N',
                         help='input batch size for training (default: 64)')
     parser.add_argument('--epochs', type=int, default=40, metavar='N',
                         help='number of epochs to train (default: 40)')
