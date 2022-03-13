@@ -2,6 +2,8 @@ torch>=1.2
 torchvision
 torchmetrics
 pytorch_lightning
+tensorflow
+tensorflow-hub
 tqdm
 visdom
 numpy
