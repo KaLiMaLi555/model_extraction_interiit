@@ -12,11 +12,11 @@ from dataloader import Dataloader
 from torch.utils.data import TensorDataset, DataLoader, Dataset
 
 from mmcv import Config
-from mmaction.models import build_model
+from VST.mmaction.models import build_model
 from mmcv.runner import load_checkpoint
 
-from movinets import MoViNet
-from movinets.config import _C
+# from movinets import MoViNet
+# from movinets.config import _C
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -70,13 +70,13 @@ if __name__ == "__main__":
     args = parse_args()
     set_seed(args.seed)
 
-    if not os.path.exists(args.logit_dir):
-        os.makedirs(args.logit_dir)
+    # if not os.path.exists(args.logit_dir):
+    #     os.makedirs(args.logit_dir)
 
-    print("\n######################## Loading Data ########################\n")
-    dataloader = Dataloader(args.video_dir_path, num_classes = args.num_classes)
-    tensor_dataset = TensorDataset(dataloader.instances, dataloader.labels)
-    tensor_dataloader = DataLoader(tensor_dataset, batch_size = args.batch_size, shuffle = False, num_workers = 0)
+    # print("\n######################## Loading Data ########################\n")
+    # dataloader = Dataloader(args.video_dir_path, num_classes = args.num_classes)
+    # tensor_dataset = TensorDataset(dataloader.instances, dataloader.labels)
+    # tensor_dataloader = DataLoader(tensor_dataset, batch_size = args.batch_size, shuffle = False, num_workers = 0)
 
     if torch.cuda.is_available:
         device = torch.device("cuda")
@@ -94,6 +94,6 @@ if __name__ == "__main__":
         load_checkpoint(model, checkpoint, map_location=device)
 
     print("\n######################## Getting Logits ########################\n")
-    logits, labels = get_logits(model, args.model_name, tensor_dataloader, device)
-    combined = zip(logits, labels)
-    pickle.dump(combined, open(os.path.join(args.logit_dir, args.model_name + "_" + args.dataset_type + ".pkl"), "wb"))
+    # logits, labels = get_logits(model, args.model_name, tensor_dataloader, device)
+    # combined = zip(logits, labels)
+    # pickle.dump(combined, open(os.path.join(args.logit_dir, args.model_name + "_" + args.dataset_type + ".pkl"), "wb"))

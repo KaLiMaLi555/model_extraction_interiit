@@ -148,3 +148,5 @@ swin_tiny_patch244_window877_kinetics400_1k.pth
 /DFAD/run_mnist.sh
 /DFAD/train_teacher_seg.py
 /DFAD/train_teacher.py
+
+data/

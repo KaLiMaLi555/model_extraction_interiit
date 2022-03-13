@@ -12,10 +12,16 @@ from tqdm import tqdm
 import torch.optim as optim
 import torch.nn.functional as F
 
+from torchsummary import summary
+
 # Import for Swin-T
 from mmcv import Config
 from mmaction.models import build_model
 from mmcv.runner import load_checkpoint
+
+def count_parameters(model):
+
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 def train(args, teacher, student, generator, device, optimizer, epoch):
 
@@ -97,7 +103,7 @@ def main():
                         help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=42, metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument('--nz', type=int, default=100)
+    parser.add_argument('--nz', type=int, default=128)
     parser.add_argument('--step_size', type=int, default=100, metavar='S')
     parser.add_argument('--scheduler', action='store_true', default=False)
     parser.add_argument('--verbose', action='store_true', default=False)
@@ -136,6 +142,9 @@ def main():
     teacher = teacher.to(device)
     student = student.to(device)
     generator = generator.to(device)
+
+    print(count_parameters(generator))
+    # exit(0)
 
     optimizer_S = optim.SGD( student.parameters(), lr=args.lr_S, weight_decay=args.weight_decay, momentum=0.9 )
     optimizer_G = optim.Adam( generator.parameters(), lr=args.lr_G )
