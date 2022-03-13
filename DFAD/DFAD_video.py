@@ -267,7 +267,7 @@ def main():
     # NOTE: Lightweight CNN model (Mobile Net)
     student = torchvision.models.mobilenet_v2()
     print("\nLoaded student and teacher")
-    generator = network.models.ImageGenerator(nz=args.nz)
+    generator = network.models.ImageGenerator(ngpu=1, nz=args.nz)
     print("Loaded student, generator and teacher\n")
 
     if args.wandb:
