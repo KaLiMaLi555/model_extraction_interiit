@@ -290,15 +290,17 @@ def main():
         # [batch_size, 600]
         outputs = encoder(dict(image=inputs))
         teacher = tf.keras.Model(inputs, outputs, name='movinet')
+    print('\nLoaded teacher')
 
     # NOTE: Uncomment for using CNN LSTM
     # student = network.models.ResCNNRNN()
     # NOTE: Lightweight CNN model (Mobile Net)
     student = torchvision.models.mobilenet_v2()
-    print("\nLoaded student and teacher")
+    student.classifier[1] = torch.nn.Linear(in_features=student.classifier[1].in_features, out_features=args.num_classes)
+    print('Loaded student')
     # TODO: Unhardcode ngpu
-    generator = network.models.ImageGenerator(ngpu=1, nz=args.nz, ngf=args.images_size)
-    print("Loaded student, generator and teacher\n")
+    generator = network.models.ImageGenerator(ngpu=1, nz=args.nz, ngf=args.image_size)
+    print('Loaded generator\n')
 
     if args.wandb:
         init_wandb(student, args.wandb_api_key, args.wandb_resume, args.wandb_name, args.wandb_project, args.wandb_run_id, args.wandb_watch)
@@ -322,7 +324,7 @@ def main():
         args.val_scale = 1 / args.val_scale_inv
     val_data = ValDataset(args.val_data_dir, args.val_classes_file,
                           args.val_labels_file, args.num_classes,
-                          transform=get_movinet_resize_transform(out_size=args.images_size),
+                          transform=get_movinet_resize_transform(out_size=args.image_size),
                           scale=args.val_scale, shift=args.val_shift)
 
     val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
