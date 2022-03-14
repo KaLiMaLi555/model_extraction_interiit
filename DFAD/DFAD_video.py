@@ -94,7 +94,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
             if debug_distribution:
                 distr.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
 
-        wandb.log({'Loss_S': total_loss_S}, step=epoch)
+        wandb.log({'Loss_S': total_loss_S, 'epoch': epoch})
         wandb.log({'Loss_S_inner': total_loss_S})
         print('Loss on Student model:', total_loss_S / step_S)
 
@@ -102,7 +102,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         generator.train()
 
         for k in tqdm(range(step_G), position=0, leave=True):
-            z = torch.randn((args.batch_size, args.nz)).to(device)
+            z = torch.randn((args.batch_size, args.nz, 1, 1)).to(device)
             optimizer_G.zero_grad()
             generator.train()
 
@@ -139,7 +139,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
             if debug_distribution:
                 distr.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
 
-        wandb.log({'Loss_G': total_loss_G}, step=epoch)
+        wandb.log({'Loss_G': total_loss_G, 'epoch': epoch})
         wandb.log({'Loss_G_inner': total_loss_G})
         print('Loss on Generator model:', total_loss_G)
 
@@ -162,8 +162,8 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
 
     if debug_distribution:
-        wandb.log({'distribution': wandb.Histogram(distr, num_bins=300)}, step=epoch)
-        c = Counter(distr)
+        wandb.log({'distribution': wandb.Histogram(distr, num_bins=300), 'epoch': epoch})
+        c = Counter(list(distr.flatten()))
         print(c.items())
 
 
@@ -351,8 +351,8 @@ def main():
             acc_5 = 100 * acc_5.detach().cpu().numpy()
             print(f'\nEpoch {epoch}')
             print(f'Top-1: {str(acc_1)}, Top-5: {str(acc_5)}\n')
-            wandb.log({'val_T1': acc_1}, step=epoch)
-            wandb.log({'val_T5': acc_5}, step=epoch)
+            wandb.log({'val_T1': acc_1, 'epoch': epoch})
+            wandb.log({'val_T5': acc_5, 'epoch': epoch})
 
 
 if __name__ == '__main__':
