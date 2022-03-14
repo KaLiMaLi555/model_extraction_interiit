@@ -169,7 +169,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         wandb.log({f'Teacher distribution epoch {epoch}': c_t})
         wandb.log({f'Student distribution epoch {epoch}': c_s})
         print(f'Teacher distribution epoch {epoch}:', c_t)
-        print(f'Student distribution epoch {epoch}:', c_t)
+        print(f'Student distribution epoch {epoch}:', c_s)
 
 
 def val(student, dataloader, device):
