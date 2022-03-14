@@ -162,9 +162,9 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
 
     if debug_distribution:
-        wandb.log({'distribution': wandb.Histogram(distr, num_bins=300), 'epoch': epoch})
         c = Counter(list(np.array(distr).flatten()))
-        print(c.items())
+        wandb.log({'distribution': c.most_common(), 'epoch': epoch})
+        print(c.most_common())
 
 
 def val(student, dataloader, device):
