@@ -98,7 +98,8 @@ class CustomMobilenetTransform:
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
         x = vid
-        frame = vid[:, 0, :, :, :].squeeze()
+        print(vid.shape)
+        frame = vid[0, :, :, :].squeeze()
         frame = t(frame)
         return torch.unsqueeze(frame, dim=1)
 
