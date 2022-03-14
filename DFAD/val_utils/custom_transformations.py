@@ -86,11 +86,22 @@ class CustomResizeTransform:
         return vid
 
 
-def get_movinet_resize_transform(out_size=224):
-    t = transforms.Compose([
-        transforms.Resize(out_size + 32),
-        transforms.CenterCrop(out_size),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-    return t
+class CustomMobilenetTransform:
+
+    def __init__(self, size=224):
+        self.size = size
+
+    def custom_resize_transform(self, vid):
+        t = transforms.Compose([
+            transforms.Resize(self.size + 32),
+            transforms.CenterCrop(self.size),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        x = vid
+        frame = vid[:, 0, :, :, :].squeeze()
+        frame = t(frame)
+        return torch.unsqueeze(frame, dim=1)
+
+    def __call__(self, vid):
+        vid = self.custom_resize_transform(vid)  # Resize
+        return vid

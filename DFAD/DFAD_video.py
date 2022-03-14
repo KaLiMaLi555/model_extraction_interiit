@@ -23,7 +23,7 @@ from collections import Counter
 # from mmcv.runner import load_checkpoint
 from utils.wandb_utils import init_wandb, save_ckp
 from val_utils import metrics
-from val_utils.custom_transformations import CustomResizeTransform, get_movinet_resize_transform
+from val_utils.custom_transformations import CustomResizeTransform, CustomMobilenetTransform
 from val_utils.dataloader_val import ValDataset
 
 
@@ -163,7 +163,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
 
     if debug_distribution:
         wandb.log({'distribution': wandb.Histogram(distr, num_bins=300), 'epoch': epoch})
-        c = Counter(list(distr.flatten()))
+        c = Counter(list(np.array(distr).flatten()))
         print(c.items())
 
 
@@ -324,7 +324,7 @@ def main():
         args.val_scale = 1 / args.val_scale_inv
     val_data = ValDataset(args.val_data_dir, args.val_classes_file,
                           args.val_labels_file, args.num_classes,
-                          transform=get_movinet_resize_transform(out_size=args.image_size),
+                          transform=CustomMobilenetTransform(size=args.image_size),
                           scale=args.val_scale, shift=args.val_shift)
 
     val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
