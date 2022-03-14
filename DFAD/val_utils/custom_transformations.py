@@ -1,5 +1,6 @@
 import numpy as np
 import torchvision.transforms.functional as TF
+from torchvision import transforms
 import torch
 import random
 import imgaug.augmenters as iaa
@@ -83,3 +84,13 @@ class CustomResizeTransform:
     def __call__(self, vid):
         vid = self.custom_resize_transform(vid)  # Resize
         return vid
+
+
+def get_movinet_resize_transform(out_size=224):
+    t = transforms.Compose([
+        transforms.Resize(out_size + 32),
+        transforms.CenterCrop(out_size),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+    return t

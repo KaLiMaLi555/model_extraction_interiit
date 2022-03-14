@@ -8,6 +8,7 @@ import argparse
 import torchvision
 import numpy as np
 import torch.nn as nn
+from torchvision import transforms
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 import tensorflow as tf
@@ -22,7 +23,7 @@ from collections import Counter
 # from mmcv.runner import load_checkpoint
 from utils.wandb_utils import init_wandb, save_ckp
 from val_utils import metrics
-from val_utils.custom_transformations import CustomResizeTransform
+from val_utils.custom_transformations import CustomResizeTransform, get_movinet_resize_transform
 from val_utils.dataloader_val import ValDataset
 
 
@@ -30,10 +31,13 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
+def apply_mobilenet_transform(inp):
+    t = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    return t(inp)
+
+
 def train_epoch(args, teacher, student, generator, device, optimizers, epoch, step_S, step_G):
     # teacher.eval()
-    student.train()
-    generator.train()
 
     device_tf = tf.test.gpu_device_name()
     if device_tf != '/device:GPU:0':
@@ -51,24 +55,35 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         total_loss_S = 0
         total_loss_G = 0
 
+        student.train()
+        generator.eval()
+
         for k in tqdm(range(step_S), position=0, leave=True):
-            z = torch.randn((args.batch_size, args.nz)).to(device)
+            z = torch.randn((args.batch_size, args.nz, 1, 1)).to(device)
             optimizer_S.zero_grad()
 
+            # Returns: b, c, w, h
             fake = torch.sigmoid(generator(z).detach())
+            # b, 1, c, w, h
             fake_shape = fake.shape
 
             # TODO: Change as needed for Swin-T
             # t_logit = torch.tensor(teacher(fake)).to(device)
-            # TODO: Make appropriate shape changes for single image generation
-            fake_tf = fake.view(fake_shape[0], fake_shape[2], fake_shape[3], fake_shape[4], fake_shape[1])
+
+            # Reshaped to: b, h, w, c
+            fake_tf = fake.reshape(fake_shape[0], fake_shape[2], fake_shape[3], fake_shape[1])
+            # Unsqueezed to: b, 1, h, w, c
+            fake_tf = torch.unsqueeze(fake_tf, dim=1)
             with tf.device(device_tf):
                 tf_tensor = tf.convert_to_tensor(fake_tf.cpu().numpy())
+                # Teacher expects: b, f, h, w, c
                 t_logit = teacher(tf_tensor).numpy()
                 t_logit = torch.tensor(t_logit).to(device)
 
-            fake = fake.view(fake_shape[0], fake_shape[2], fake_shape[1], fake_shape[3], fake_shape[4])
-            s_logit = student(fake).to(device)
+            # Preprocess expects: b, c, h, w
+            transformed = apply_mobilenet_transform(fake)
+            # Student expects: b, c, h, w
+            s_logit = student(transformed).to(device)
 
             loss_S = F.l1_loss(s_logit, t_logit)
             total_loss_S += loss_S.item()
@@ -83,26 +98,37 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         wandb.log({'Loss_S_inner': total_loss_S})
         print('Loss on Student model:', total_loss_S / step_S)
 
+        student.eval()
+        generator.train()
+
         for k in tqdm(range(step_G), position=0, leave=True):
             z = torch.randn((args.batch_size, args.nz)).to(device)
             optimizer_G.zero_grad()
             generator.train()
+
+            # Returns: b, c, w, h
             fake = torch.sigmoid(generator(z))
+            # b, 1, c, w, h
             fake_shape = fake.shape
 
             # TODO: Change as needed for Swin-T
             # t_logit = torch.tensor(teacher(fake)).to(device)
-            fake_tf = torch.empty_like(fake).copy_(fake)
-            fake_tf = fake_tf.detach()
-            # TODO: Make appropriate shape changes for single image generation
-            fake_tf = fake_tf.view(fake_shape[0], fake_shape[2], fake_shape[3], fake_shape[4], fake_shape[1])
+
+            fake_tf = torch.empty_like(fake).copy_(fake).detach()
+            # Reshaped to: b, h, w, c
+            fake_tf = fake_tf.reshape(fake_shape[0], fake_shape[2], fake_shape[3], fake_shape[1])
+            # Unsqueezed to: b, 1, h, w, c
+            fake_tf = torch.unsqueeze(fake_tf, dim=1)
             with tf.device(device_tf):
                 tf_tensor = tf.convert_to_tensor(fake_tf.cpu().numpy())
+                # Teacher expects: b, f, h, w, c
                 t_logit = teacher(tf_tensor).numpy()
                 t_logit = torch.tensor(t_logit).to(device)
 
-            fake = fake.view(fake_shape[0], fake_shape[2], fake_shape[1], fake_shape[3], fake_shape[4])
-            s_logit = student(fake).to(device)
+            # Preprocess expects: b, c, h, w
+            transformed = apply_mobilenet_transform(fake)
+            # Student expects: b, c, h, w
+            s_logit = student(transformed).to(device)
 
             loss_G = - F.l1_loss(s_logit, t_logit)
             total_loss_G += loss_G.item()
@@ -178,7 +204,7 @@ def main():
     parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
                         help='SGD momentum (default: 0.9)')
     parser.add_argument('--nz', type=int, default=128)
-    parser.add_argument('--image_size', default=32, type=int)
+    parser.add_argument('--image_size', default=224, type=int)
     parser.add_argument('--step_S', default=5, type=int)
     parser.add_argument('--step_G', default=1, type=int)
 
@@ -271,7 +297,7 @@ def main():
     student = torchvision.models.mobilenet_v2()
     print("\nLoaded student and teacher")
     # TODO: Unhardcode ngpu
-    generator = network.models.ImageGenerator(ngpu=1, nz=args.nz)
+    generator = network.models.ImageGenerator(ngpu=1, nz=args.nz, ngf=args.images_size)
     print("Loaded student, generator and teacher\n")
 
     if args.wandb:
@@ -296,7 +322,7 @@ def main():
         args.val_scale = 1 / args.val_scale_inv
     val_data = ValDataset(args.val_data_dir, args.val_classes_file,
                           args.val_labels_file, args.num_classes,
-                          transform=CustomResizeTransform(size=64),
+                          transform=get_movinet_resize_transform(out_size=args.images_size),
                           scale=args.val_scale, shift=args.val_shift)
 
     val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
