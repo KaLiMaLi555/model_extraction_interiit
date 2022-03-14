@@ -45,7 +45,7 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         device_tf = '/device:CPU:0'
 
     debug_distribution = True
-    distr = []
+    dist_t, dist_s = [], []
     optimizer_S, optimizer_G = optimizers
 
     for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
@@ -92,7 +92,8 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
             optimizer_S.step()
 
             if debug_distribution:
-                distr.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
+                dist_t.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
+                dist_s.append(torch.argmax(s_logit.detach(), dim=1).cpu().numpy())
 
         wandb.log({'Loss_S': total_loss_S, 'epoch': epoch})
         wandb.log({'Loss_S_inner': total_loss_S})
@@ -137,7 +138,8 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
             optimizer_G.step()
 
             if debug_distribution:
-                distr.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
+                dist_t.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
+                dist_s.append(torch.argmax(s_logit.detach(), dim=1).cpu().numpy())
 
         wandb.log({'Loss_G': total_loss_G, 'epoch': epoch})
         wandb.log({'Loss_G_inner': total_loss_G})
@@ -162,9 +164,12 @@ def train_epoch(args, teacher, student, generator, device, optimizers, epoch, st
         save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
 
     if debug_distribution:
-        c = Counter(list(np.array(distr).flatten()))
-        wandb.log({'distribution': c.most_common(), 'epoch': epoch})
-        print(c.most_common())
+        c_t = Counter(list(np.array(dist_t).flatten())).most_common()
+        c_s = Counter(list(np.array(dist_s).flatten())).most_common()
+        wandb.log({f'Teacher distribution epoch {epoch}': c_t})
+        wandb.log({f'Student distribution epoch {epoch}': c_s})
+        print(f'Teacher distribution epoch {epoch}:', c_t)
+        print(f'Student distribution epoch {epoch}:', c_t)
 
 
 def val(student, dataloader, device):
