@@ -14,9 +14,13 @@ from mmcv import Config
 from mmcv.runner import load_checkpoint
 from tqdm import tqdm
 
+from torch.utils.data import DataLoader
 from approximate_gradients_swint_img import *
 # from my_utils import *
 from utils.wandb_utils import init_wandb, save_ckp
+from val_utils import metrics
+from val_utils.custom_transformations import CustomStudentImageTransform
+from val_utils.dataloader_val import ValDataset
 
 print("torch version", torch.__version__)
 
@@ -203,6 +207,24 @@ def compute_grad_norms(generator, student):
     return np.mean(G_grad), np.mean(S_grad)
 
 
+def val(student, dataloader, device):
+    accuracy_1, accuracy_5 = [], []
+    for (x, y) in tqdm(dataloader, total=len(dataloader)):
+        x, y = x.to(device), y.to(device)
+        x_shape = x.shape
+        x = x.reshape(x_shape[0], x_shape[1], x_shape[2], x_shape[3])
+        # print(x_shape, x.shape)
+
+        # Student expects: b, c, h, w
+        logits = student(x).detach()
+        del x
+        accuracy_1.append(metrics.topk_accuracy(logits, y, 1))
+        accuracy_5.append(metrics.topk_accuracy(logits, y, 5))
+        del y, logits
+
+    return sum(accuracy_1) / len(accuracy_1), sum(accuracy_5) / len(accuracy_5)
+
+
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='DFAD Swin-T Image')
@@ -257,6 +279,20 @@ def main():
     parser.add_argument('--MAZE', type=int, default=0)
 
     parser.add_argument('--store_checkpoints', type=int, default=1)
+
+    parser.add_argument('--val_data_dir', type=str,
+                        default='/content/val_data/content/k400_val_16_frames_uniform')
+    parser.add_argument('--val_classes_file', type=str,
+                        default='/content/val_data/classes.csv')
+    parser.add_argument('--val_labels_file', type=str,
+                        default='/content/val_data/labels.csv')
+    parser.add_argument('--val_num_workers', type=int, default=2)
+
+    parser.add_argument('--val_epoch', type=int, default=5)
+    parser.add_argument('--val_batch_size', type=int, default=8)
+    parser.add_argument('--val_scale', type=float, default=1)
+    parser.add_argument('--val_scale_inv', type=float, default=255)
+    parser.add_argument('--val_shift', type=float, default=0)
 
     parser.add_argument('--wandb_api_key', type=str)
     parser.add_argument('--wandb', action="store_true")
@@ -430,6 +466,20 @@ def main():
     best_acc = 0
     acc_list = []
 
+    if args.val_scale == 1:
+        args.val_scale = 1 / args.val_scale_inv
+    # val_data = ValDataset(args.val_data_dir, args.val_classes_file,
+    #                       args.val_labels_file, args.num_classes,
+    #                       transform=CustomMobilenetTransform(size=args.image_size),
+    #                       scale=args.val_scale, shift=args.val_shift)
+    val_data = ValDataset(args.val_data_dir, args.val_classes_file,
+                          args.val_labels_file, args.num_classes,
+                          transform=CustomStudentImageTransform(size=224),
+                          scale=args.val_scale, shift=args.val_shift)
+
+    val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
+                            shuffle=False, drop_last=False,
+                            num_workers=args.val_num_workers)
     if args.wandb:
         init_wandb(student, args.wandb_api_key, args.wandb_resume, args.wandb_name, args.wandb_project, args.wandb_run_id, args.wandb_watch)
 
@@ -440,6 +490,19 @@ def main():
             scheduler_G.step()
 
         train(args, teacher=teacher, student=student, generator=generator, device=device, optimizer=[optimizer_S, optimizer_G], epoch=epoch)
+
+        # Validating student on K400
+        if epoch % args.val_epoch == 0:
+            print("################### Evaluating Student Model ###################\n")
+            student.eval()
+            acc_1, acc_5 = val(student, val_loader, device)
+            acc_1 = 100 * acc_1.detach().cpu().numpy()
+            acc_5 = 100 * acc_5.detach().cpu().numpy()
+            print(f'\nEpoch {epoch}')
+            print(f'Top-1: {str(acc_1)}, Top-5: {str(acc_5)}\n')
+            wandb.log({'val_T1': acc_1, 'epoch': epoch})
+            wandb.log({'val_T5': acc_5, 'epoch': epoch})
+
         # Test
         # acc = test(args, student=student, generator=generator, device = device, test_loader = test_loader, epoch=epoch)
         # acc_list.append(acc)
