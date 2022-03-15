@@ -33,7 +33,7 @@ def topk_accuracy(preds, target, k=5):
     >>> preds = torch.tensor([[0.1, 0.9, 0], [0.3, 0.1, 0.6], [0.2, 0.5, 0.3]])
     tensor(0.6667)
     """
-    return accuracy(preds, torch.argmax(target, dim=1), top_k=k)
+    return accuracy(preds, target, top_k=k)
 
 
 def bce_logits(logits, target):
