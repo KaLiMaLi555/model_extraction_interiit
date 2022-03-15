@@ -281,11 +281,11 @@ def main():
     parser.add_argument('--store_checkpoints', type=int, default=1)
 
     parser.add_argument('--val_data_dir', type=str,
-                        default='/content/val_data/k400_val_16_frames_uniform')
+                        default='/content/val_data/k400_16_frames_uniform')
     parser.add_argument('--val_classes_file', type=str,
-                        default='/content/val_data/k400_val_16_frames_uniform/classes.csv')
+                        default='/content/val_data/k400_16_frames_uniform/classes.csv')
     parser.add_argument('--val_labels_file', type=str,
-                        default='/content/val_data/k400_val_16_frames_uniform/labels.csv')
+                        default='/content/val_data/k400_16_frames_uniform/labels.csv')
     parser.add_argument('--val_num_workers', type=int, default=2)
 
     parser.add_argument('--val_epoch', type=int, default=5)
