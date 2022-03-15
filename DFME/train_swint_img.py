@@ -500,9 +500,10 @@ def main():
         if epoch % args.val_epoch == 0:
             print("################### Evaluating Student Model ###################\n")
             student.eval()
-            acc_1, acc_5 = val(student, val_loader, device)
-            acc_1 = 100 * acc_1.detach().cpu().numpy()
-            acc_5 = 100 * acc_5.detach().cpu().numpy()
+            with torch.no_grad():
+                acc_1, acc_5 = val(student, val_loader, device)
+                acc_1 = 100 * acc_1.detach().cpu().numpy()
+                acc_5 = 100 * acc_5.detach().cpu().numpy()
             print(f'\nEpoch {epoch}')
             print(f'Top-1: {str(acc_1)}, Top-5: {str(acc_5)}\n')
             wandb.log({'val_T1': acc_1, 'epoch': epoch})
