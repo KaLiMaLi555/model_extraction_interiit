@@ -132,7 +132,7 @@ class VideoGAN(nn.Module):
         self.conv1 = nn.ConvTranspose3d(zdim, 512, [1, 7, 7], [1, 1, 1])
         self.bn1 = nn.BatchNorm3d(512)
 
-        self.conv2 = nn.ConvTranspose3d(512, 256, [4, 4, 4], [2, 2, 2], [1, 1, 1])
+        self.conv2 = nn.ConvTranspose3d(512, 256, [1, 4, 4], [1, 2, 2], [0, 1, 1])
         self.bn2 = nn.BatchNorm3d(256)
 
         self.conv3 = nn.ConvTranspose3d(256, 128, [4, 4, 4], [2, 2, 2], [1, 1, 1])
