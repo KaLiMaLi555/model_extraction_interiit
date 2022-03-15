@@ -1,5 +1,5 @@
 import torch
-import torchvision.functional.transforms as TF
+import torchvision.transforms.functional as TF
 
 def swin_transform(fake): # N, C, L, S, S
     fake_shape = fake.shape

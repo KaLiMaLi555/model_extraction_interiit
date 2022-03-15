@@ -14,7 +14,6 @@ from mmcv import Config
 from mmcv.runner import load_checkpoint
 
 from approximate_gradients_swint_img import *
-from dataloader import get_dataloader
 from my_utils import *
 from utils.wandb_utils import init_wandb, save_ckp
 
@@ -101,7 +100,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
 
             with torch.no_grad():
                 fake_teacher = network.swin.swin_transform(fake)
-                t_logit = teacher(fake_teacher)
+                t_logit = teacher(fake_teacher, return_loss=False)
 
             # Correction for the fake logits
             # if args.loss == "l1" and args.no_logits:
@@ -341,7 +340,7 @@ def main():
     args.device = device
 
     # Eigen values and vectors of the covariance matrix
-    _, test_loader = get_dataloader(args)
+    # _, test_loader = get_dataloader(args)
 
     args.normalization_coefs = None
     args.G_activation = torch.sigmoid
