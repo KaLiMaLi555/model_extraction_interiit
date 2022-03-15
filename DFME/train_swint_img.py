@@ -12,9 +12,10 @@ import wandb
 from mmaction.models import build_model
 from mmcv import Config
 from mmcv.runner import load_checkpoint
+from tqdm import tqdm
 
 from approximate_gradients_swint_img import *
-from my_utils import *
+# from my_utils import *
 from utils.wandb_utils import init_wandb, save_ckp
 
 print("torch version", torch.__version__)
@@ -130,12 +131,11 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
                 with open(args.log_dir + "/loss.csv", "a") as f:
                     f.write("%d,%f,%f\n" % (epoch, loss_G, loss_S))
 
-            if args.rec_grad_norm and i == 0:
-
-                G_grad_norm, S_grad_norm = compute_grad_norms(generator, student)
-                if i == 0:
-                    with open(args.log_dir + "/norm_grad.csv", "a") as f:
-                        f.write("%d,%f,%f,%f\n" % (epoch, G_grad_norm, S_grad_norm, x_true_grad))
+            # if args.rec_grad_norm and i == 0:
+            #     G_grad_norm, S_grad_norm = compute_grad_norms(generator, student)
+            #     if i == 0:
+            #         with open(args.log_dir + "/norm_grad.csv", "a") as f:
+            #             f.write("%d,%f,%f,%f\n" % (epoch, G_grad_norm, S_grad_norm, x_true_grad))
 
         # update query budget
         args.query_budget -= args.cost_per_iteration
