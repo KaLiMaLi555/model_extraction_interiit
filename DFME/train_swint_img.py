@@ -210,6 +210,7 @@ def compute_grad_norms(generator, student):
 def val(student, dataloader, device):
     accuracy_1, accuracy_5 = [], []
     for (x, y) in tqdm(dataloader, total=len(dataloader)):
+        # TODO: Consider printing x to make sure scaling is working correctly
         x, y = x.to(device), y.to(device)
         x_shape = x.shape
         x = x.reshape(x_shape[0], x_shape[1], x_shape[2], x_shape[3])
