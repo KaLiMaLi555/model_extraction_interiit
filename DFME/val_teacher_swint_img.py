@@ -47,15 +47,14 @@ def val(teacher, dataloader, device):
     accuracy_1, accuracy_5 = [], []
     for (x, y) in tqdm(dataloader, total=len(dataloader)):
         # TODO: Consider printing x to make sure scaling is working correctly
-        # Probably N, S, S, C
         x, y = x.to(device), y.to(device)
         x_shape = x.shape
-        x = x.reshape(x_shape[0], x_shape[3], x_shape[1], x_shape[2])
-        x = x.unsqueeze(dim=2)
+        x = x.reshape(x_shape[0], x_shape[1], x_shape[4], x_shape[2], x_shape[3])
+        # print(x_shape, x.shape)
 
         # Expects and returns: N, C, L, S, S
         x = network.swin.swin_transform(x)
-        logits = teacher(x, return_loss=False).detach()
+        logits = torch.Tensor(teacher(x, return_loss=False)).to(device)
         del x
         accuracy_1.append(metrics.topk_accuracy(logits, y, 1))
         accuracy_5.append(metrics.topk_accuracy(logits, y, 5))
@@ -97,20 +96,21 @@ def main():
     #                       args.val_labels_file, args.num_classes,
     #                       transform=CustomMobilenetTransform(size=args.image_size),
     #                       scale=args.val_scale, shift=args.val_shift)
-    val_data = ValDataset(args.val_data_dir, args.val_classes_file,
-                          args.val_labels_file, args.num_classes,
-                          transform=CustomStudentImageTransform(size=224),
-                          scale=args.val_scale, shift=args.val_shift)
+    val_data = ValDataset(
+        args.val_data_dir, args.val_classes_file, args.val_labels_file,
+        args.num_classes, transform=CustomStudentImageTransform(size=224),
+        scale=args.val_scale, shift=args.val_shift)
 
-    val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
-                            shuffle=False, drop_last=False,
-                            num_workers=args.val_num_workers)
+    val_loader = DataLoader(
+        val_data, batch_size=args.val_batch_size, shuffle=False,
+        drop_last=False, num_workers=args.val_num_workers)
 
     # Validating teacher on K400
-    teacher.eval()
-    acc_1, acc_5 = val(teacher, val_loader, device)
-    acc_1 = 100 * acc_1.detach().cpu().numpy()
-    acc_5 = 100 * acc_5.detach().cpu().numpy()
+    with torch.no_grad():
+        teacher.eval()
+        acc_1, acc_5 = val(teacher, val_loader, device)
+        acc_1 = 100 * acc_1.detach().cpu().numpy()
+        acc_5 = 100 * acc_5.detach().cpu().numpy()
     print(f'Top-1: {str(acc_1)}, Top-5: {str(acc_5)}\n')
 
 
