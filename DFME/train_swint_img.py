@@ -77,6 +77,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             generator.train()
             # Get fake image from generator
             fake = generator(z, pre_x=args.approx_grad)  # pre_x returns the output of G before applying the activation
+            fake = fake.unsqueeze(dim=2)
 
             ## APPOX GRADIENT
             approx_grad_wrt_x, loss_G = estimate_gradient_objective(
@@ -90,13 +91,14 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             total_loss_G += loss_G.item()
             wandb.log({'loss_G_verbose': loss_G.item()})
 
-            if i == 0 and args.rec_grad_norm:
-                x_true_grad = measure_true_grad_norm(args, fake)
+            # if i == 0 and args.rec_grad_norm:
+            #     x_true_grad = measure_true_grad_norm(args, fake)
 
         wandb.log({'loss_G_inner': total_loss_G / (i + 1)})
         for _ in range(args.d_iter):
             z = torch.randn((args.batch_size, args.nz)).to(device)
             fake = generator(z).detach()
+            fake = fake.unsqueeze(dim=2)
             optimizer_S.zero_grad()
 
             with torch.no_grad():
