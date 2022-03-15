@@ -220,7 +220,7 @@ def main():
     parser.add_argument('--steps', nargs='+', default=[0.1, 0.3, 0.5], type=float, help="Percentage epochs at which to take next step")
     parser.add_argument('--scale', type=float, default=3e-1, help="Fractional decrease in lr")
 
-    parser.add_argument('--dataset', type=str, default='cifar10', choices=['svhn', 'cifar10'], help='dataset name (default: cifar10)')
+    # parser.add_argument('--dataset', type=str, default='cifar10', choices=['svhn', 'cifar10'], help='dataset name (default: cifar10)')
     parser.add_argument('--data_root', type=str, default='data')
     parser.add_argument('--model', type=str, default='resnet34_8x', choices=classifiers, help='Target model name (default: resnet34_8x)')
     parser.add_argument('--weight_decay', type=float, default=5e-4)
@@ -230,7 +230,7 @@ def main():
                         help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=42, metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument('--ckpt', type=str, default='checkpoint/teacher/cifar10-resnet34_8x.pt')
+    # parser.add_argument('--ckpt', type=str, default='checkpoint/teacher/cifar10-resnet34_8x.pt')
 
     parser.add_argument('--student_load_path', type=str, default=None)
     parser.add_argument('--model_id', type=str, default="debug")
@@ -346,7 +346,7 @@ def main():
     args.normalization_coefs = None
     args.G_activation = torch.sigmoid
 
-    num_classes = 10 if args.dataset in ['cifar10', 'svhn'] else 100
+    # num_classes = 10 if args.dataset in ['cifar10', 'svhn'] else 100
     args.num_classes = 400
 
     # if args.model == 'resnet34_8x':
@@ -456,7 +456,8 @@ def main():
 
     import csv
     os.makedirs('log', exist_ok=True)
-    with open('log/DFAD-%s.csv' % args.dataset, 'a') as f:
+    # with open('log/DFAD-%s.csv' % args.dataset, 'a') as f:
+    with open('log/DFAD-swint.csv', 'a') as f:
         writer = csv.writer(f)
         writer.writerow(acc_list)
 
