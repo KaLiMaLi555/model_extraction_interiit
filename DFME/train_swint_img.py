@@ -39,7 +39,6 @@ def student_loss(args, s_logit, t_logit, return_t_logits=False):
     if args.loss == "kl":
         loss_fn = F.kl_div
         s_logit = F.log_softmax(s_logit, dim=1)
-        t_logit = t_logit
         loss = loss_fn(s_logit, t_logit.detach(), reduction="batchmean")
     else:
         raise ValueError(args.loss)
@@ -95,6 +94,8 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             #     x_true_grad = measure_true_grad_norm(args, fake)
 
         wandb.log({'loss_G_inner': total_loss_G / (i + 1)})
+        print(f'Total loss G:', total_loss_G / (i + 1))
+
         for _ in range(args.d_iter):
             z = torch.randn((args.batch_size, args.nz)).to(device)
             fake = generator(z).detach()
@@ -102,8 +103,9 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             optimizer_S.zero_grad()
 
             with torch.no_grad():
-                fake_teacher = network.swin.swin_transform(fake)
+                fake_teacher = network.swin.swin_transform(fake.detach())
                 t_logit = teacher(fake_teacher, return_loss=False)
+                t_logit = torch.Tensor(t_logit).to(device)
 
             # Correction for the fake logits
             # if args.loss == "l1" and args.no_logits:
@@ -123,7 +125,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             wandb.log({'loss_S_verbose': loss_S.item()})
 
         wandb.log({'loss_S_inner': total_loss_S / (i + 1)})
-        print(f'Total loss S: ')
+        print(f'Total loss S:', total_loss_S / (i + 1))
 
         # Log Results
         if i % args.log_interval == 0:

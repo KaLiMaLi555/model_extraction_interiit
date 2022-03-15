@@ -49,12 +49,12 @@ def estimate_gradient_objective(args, victim_model, clone_model, x, epsilon=1e-7
             pts = evaluation_points[i * max_number_points: (i + 1) * max_number_points]
             pts = pts.to(device)
 
-            swin_pts = network.swin.swin_transform(pts)
+            swin_pts = network.swin.swin_transform(pts.detach())
 
-            pred_victim_pts = victim_model(swin_pts, return_loss=False).detach()
+            pred_victim_pts = victim_model(swin_pts, return_loss=False)
             pred_clone_pts = clone_model(pts[:, :, 0, :, :])
 
-            pred_victim.append(pred_victim_pts)
+            pred_victim.append(torch.Tensor(pred_victim_pts))
             pred_clone.append(pred_clone_pts)
 
         pred_victim = torch.cat(pred_victim, dim=0).to(device)
