@@ -62,16 +62,16 @@ def estimate_gradient_objective(args, victim_model, clone_model, x, epsilon=1e-7
 
         u = u.to(device)
 
-        # if args.loss == "l1":
-        #     loss_fn = F.l1_loss
-        #     if args.no_logits:
-        #         pred_victim = torch.log(pred_victim).detach()
-        #         if args.logit_correction == 'min':
-        #             pred_victim -= pred_victim.min(dim=1).values.view(-1, 1).detach()
-        #         elif args.logit_correction == 'mean':
-        #             pred_victim -= pred_victim.mean(dim=1).view(-1, 1).detach()
+        if args.loss == "l1":
+            loss_fn = F.l1_loss
+            if args.no_logits:
+                pred_victim = torch.log(pred_victim).detach()
+                if args.logit_correction == 'min':
+                    pred_victim -= pred_victim.min(dim=1).values.view(-1, 1).detach()
+                elif args.logit_correction == 'mean':
+                    pred_victim -= pred_victim.mean(dim=1).view(-1, 1).detach()
 
-        if args.loss == "kl":
+        elif args.loss == "kl":
             loss_fn = F.kl_div
             pred_clone = F.log_softmax(pred_clone, dim=1)
             pred_victim = pred_victim.detach()
@@ -83,8 +83,8 @@ def estimate_gradient_objective(args, victim_model, clone_model, x, epsilon=1e-7
         if args.loss == "kl":
             loss_values = - loss_fn(pred_clone, pred_victim, reduction='none').sum(dim=1).view(-1, m + 1)
         else:
-            raise ValueError(args.loss)
-            # loss_values = - loss_fn(pred_clone, pred_victim, reduction='none').mean(dim = 1).view(-1, m + 1)
+            # raise ValueError(args.loss)
+            loss_values = - loss_fn(pred_clone, pred_victim, reduction='none').mean(dim = 1).view(-1, m + 1)
 
         # Compute difference following each direction
         differences = loss_values[:, :-1] - loss_values[:, -1].view(-1, 1)
@@ -98,8 +98,8 @@ def estimate_gradient_objective(args, victim_model, clone_model, x, epsilon=1e-7
         if args.loss == "kl":
             gradient_estimates = gradient_estimates.mean(dim=1).view(-1, C, L, S, S)
         else:
-            raise ValueError(args.loss)
-            # gradient_estimates = gradient_estimates.mean(dim = 1).view(-1, C, L, S, S) / (num_classes * N)
+            # raise ValueError(args.loss)
+            gradient_estimates = gradient_estimates.mean(dim = 1).view(-1, C, L, S, S) / (num_classes * N)
 
         clone_model.train()
         loss_G = loss_values[:, -1].mean()
@@ -122,18 +122,18 @@ def compute_gradient(args, victim_model, clone_model, x, pre_x=False, device="cp
     pred_victim = victim_model(x_swin, return_loss=False)
     pred_clone = clone_model(x_)
 
-    # if args.loss == "l1":
-    #     loss_fn = F.l1_loss
-    #     if args.no_logits:
-    #         pred_victim_no_logits = torch.log(pred_victim, dim=1)
-    #         if args.logit_correction == 'min':
-    #             pred_victim = pred_victim_no_logits - pred_victim_no_logits.min(dim=1).values.view(-1, 1)
-    #         elif args.logit_correction == 'mean':
-    #             pred_victim = pred_victim_no_logits - pred_victim_no_logits.mean(dim=1).view(-1, 1)
-    #         else:
-    #             pred_victim = pred_victim_no_logits
+    if args.loss == "l1":
+        loss_fn = F.l1_loss
+        if args.no_logits:
+            pred_victim_no_logits = torch.log(pred_victim)
+            if args.logit_correction == 'min':
+                pred_victim = pred_victim_no_logits - pred_victim_no_logits.min(dim=1).values.view(-1, 1)
+            elif args.logit_correction == 'mean':
+                pred_victim = pred_victim_no_logits - pred_victim_no_logits.mean(dim=1).view(-1, 1)
+            else:
+                pred_victim = pred_victim_no_logits
 
-    if args.loss == "kl":
+    elif args.loss == "kl":
         loss_fn = F.kl_div
         pred_clone = F.log_softmax(pred_clone, dim=1)
         pred_victim = pred_victim

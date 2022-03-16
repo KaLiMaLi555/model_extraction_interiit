@@ -21,6 +21,7 @@ from utils.wandb_utils import init_wandb, save_ckp
 from val_utils import metrics
 from val_utils.custom_transformations import CustomStudentImageTransform
 from val_utils.dataloader_val import ValDataset
+import pickle
 
 print("torch version", torch.__version__)
 
@@ -31,16 +32,16 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=16, metavar='N', help='input batch size for training (default: 256)')
     parser.add_argument('--query_budget', type=float, default=20, metavar='N', help='Query budget for the extraction attack in millions (default: 20M)')
     parser.add_argument('--epoch_itrs', type=int, default=50)
-    parser.add_argument('--g_iter', type=int, default=1, help="Number of generator iterations per epoch_iter")
+    parser.add_argument('--g_iter', type=int, default=10, help="Number of generator iterations per epoch_iter")
     parser.add_argument('--d_iter', type=int, default=5, help="Number of discriminator iterations per epoch_iter")
 
-    parser.add_argument('--lr_S', type=float, default=0.1, metavar='LR', help='Student learning rate (default: 0.1)')
+    parser.add_argument('--lr_S', type=float, default=0.001, metavar='LR', help='Student learning rate (default: 0.1)')
     parser.add_argument('--lr_G', type=float, default=1e-4, help='Generator learning rate (default: 0.1)')
     parser.add_argument('--nz', type=int, default=256, help="Size of random noise input to generator")
 
     parser.add_argument('--log_interval', type=int, default=10, metavar='N', help='how many batches to wait before logging training status')
 
-    parser.add_argument('--loss', type=str, default='kl', choices=['l1', 'kl'], )
+    parser.add_argument('--loss', type=str, default='l1', choices=['l1', 'kl'], )
     parser.add_argument('--scheduler', type=str, default='multistep', choices=['multistep', 'cosine', "none"], )
     parser.add_argument('--steps', nargs='+', default=[0.1, 0.3, 0.5], type=float, help="Percentage epochs at which to take next step")
     parser.add_argument('--scale', type=float, default=3e-1, help="Fractional decrease in lr")
@@ -91,7 +92,7 @@ def parse_args():
     parser.add_argument('--val_epoch', type=int, default=5)
     parser.add_argument('--val_batch_size', type=int, default=8)
     parser.add_argument('--val_scale', type=float, default=1)
-    parser.add_argument('--val_scale_inv', type=float, default=255)
+    parser.add_argument('--val_scale_inv', type=float, default=255.0)
     parser.add_argument('--val_shift', type=float, default=0)
 
     parser.add_argument('--wandb_api_key', type=str)
@@ -123,10 +124,10 @@ def myprint(a):
 def student_loss(args, s_logit, t_logit, return_t_logits=False):
     """Kl/ L1 Loss for student"""
     print_logits = False
-    # if args.loss == "l1":
-    #     loss_fn = F.l1_loss
-    #     loss = loss_fn(s_logit, t_logit.detach())
-    if args.loss == "kl":
+    if args.loss == "l1":
+        loss_fn = F.l1_loss
+        loss = loss_fn(s_logit, t_logit.detach())
+    elif args.loss == "kl":
         loss_fn = F.kl_div
         s_logit = F.log_softmax(s_logit, dim=1)
         loss = loss_fn(s_logit, t_logit.detach(), reduction="batchmean")
@@ -189,23 +190,29 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         for _ in range(args.d_iter):
             z = torch.randn((args.batch_size, args.nz)).to(device)
             fake = generator(z).detach()
+            # print(fake)
+            # with open("weird_tens.pkl", "wb+") as f:
+            #   pickle.dump(fake.cpu(), f)
+            # exit(0)
             fake = fake.unsqueeze(dim=2)
             optimizer_S.zero_grad()
 
             with torch.no_grad():
                 fake_teacher = network.swin.swin_transform(fake.detach())
                 t_logit = teacher(fake_teacher, return_loss=False)
+                print(t_logit.argmax(axis=1))
                 t_logit = torch.Tensor(t_logit).to(device)
 
             # Correction for the fake logits
-            # if args.loss == "l1" and args.no_logits:
-            #     t_logit = F.log_softmax(t_logit, dim=1).detach()
-            #     if args.logit_correction == 'min':
-            #         t_logit -= t_logit.min(dim=1).values.view(-1, 1).detach()
-            #     elif args.logit_correction == 'mean':
-            #         t_logit -= t_logit.mean(dim=1).view(-1, 1).detach()
+            if args.loss == "l1" and args.no_logits:
+                t_logit = torch.log(t_logit).detach()
+                if args.logit_correction == 'min':
+                    t_logit -= t_logit.min(dim=1).values.view(-1, 1).detach()
+                elif args.logit_correction == 'mean':
+                    t_logit -= t_logit.mean(dim=1).view(-1, 1).detach()
 
             s_logit = student(fake[:, :, 0, :, :])
+            print(s_logit.argmax(dim=1))
 
             loss_S = student_loss(args, s_logit, t_logit)
             loss_S.backward()
@@ -299,11 +306,20 @@ def val(student, dataloader, device):
         # TODO: Consider printing x to make sure scaling is working correctly
         x, y = x.to(device), y.to(device)
         x_shape = x.shape
-        x = x.reshape(x_shape[0], x_shape[1], x_shape[2], x_shape[3])
+        x = x[:, :, 0, :, :]
         # print(x_shape, x.shape)
+        # print(x.shape)
+        # print(y.shape)
+        # print(x)
+        # print(y)
+
+        # with open("/content/weird_tensor.pkl", "wb+") as f:
+        #   pickle.dump((x, y), f)
+        # exit(0)
 
         # Student expects: b, c, h, w
-        logits = student(x).detach()
+        logits = torch.softmax(student(x).detach(), dim=1)
+        print(logits.argmax(dim=1))
         del x
         accuracy_1.append(metrics.topk_accuracy(logits, y, 1))
         accuracy_5.append(metrics.topk_accuracy(logits, y, 5))
@@ -487,6 +503,17 @@ def main():
                             num_workers=args.val_num_workers)
     if args.wandb:
         init_wandb(student, args.wandb_api_key, args.wandb_resume, args.wandb_name, args.wandb_project, args.wandb_run_id, args.wandb_watch)
+
+    # print("################### Evaluating Student Model ###################\n")
+    # student.eval()
+    # with torch.no_grad():
+    #     acc_1, acc_5 = val(student, val_loader, device)
+    #     acc_1 = 100 * acc_1.detach().cpu().numpy()
+    #     acc_5 = 100 * acc_5.detach().cpu().numpy()
+    # print(f'\nEpoch {epoch}')
+    # print(f'Top-1: {str(acc_1)}, Top-5: {str(acc_5)}\n')
+    # wandb.log({'val_T1': acc_1, 'epoch': epoch})
+    # wandb.log({'val_T5': acc_5, 'epoch': epoch})
 
     for epoch in range(1, number_epochs + 1):
         # Train

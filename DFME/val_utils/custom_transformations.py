@@ -116,9 +116,9 @@ class CustomStudentImageTransform:
             transforms.Resize(self.size + 32),
             transforms.CenterCrop(self.size)
         ])
-        frame = vid[0, :, :, :].squeeze()
+        frame = vid[0, :, :, :]
         frame = t(frame)
-        return torch.unsqueeze(frame, dim=1)
+        return torch.unsqueeze(frame, dim=0)
 
     def __call__(self, vid):
         vid = self.custom_resize_transform(vid)  # Resize
