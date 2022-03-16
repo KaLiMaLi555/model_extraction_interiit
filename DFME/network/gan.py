@@ -110,7 +110,7 @@ class GeneratorC(nn.Module):
         img = self.conv_blocks1(img)
         img = nn.functional.interpolate(img, scale_factor=2)
         img = self.conv_blocks2(img)
-        
+
         if pre_x:
             return img
         return self.activation(img)

@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision.models as models
+import wandb
 
 import network
 
@@ -28,7 +29,7 @@ def estimate_gradient_objective(args, victim_model, clone_model, x, labels=None,
         S = x.size(3)
         dim = S ** 2 * C * L
 
-        labels = labels.unsqueeze(0).repeat(m+1, 1).transpose(0, 1).reshape(-1)
+        labels = labels.unsqueeze(0).repeat(m + 1, 1).transpose(0, 1).reshape(-1)
 
         u = np.random.randn(N * m * dim).reshape(-1, m, dim)  # generate random points from normal distribution
 
@@ -88,11 +89,18 @@ def estimate_gradient_objective(args, victim_model, clone_model, x, labels=None,
         # Compute loss
         if args.loss == "kl":
             loss_values = - loss_fn(pred_clone, pred_victim, reduction='none').sum(dim=1).view(-1, m + 1)
+            with torch.no_grad():
+                print(f'Adversarial Loss: {loss_values[:, -1].mean().item()}')
+                wandb.log({'loss_G_adversarial': loss_values[:, -1].mean().item()})
         else:
             # raise ValueError(args.loss)
-            loss_values = - loss_fn(pred_clone, pred_victim, reduction='none').mean(dim = 1).view(-1, m + 1)
+            loss_values = - loss_fn(pred_clone, pred_victim, reduction='none').mean(dim=1).view(-1, m + 1)
 
-        loss_values += F.cross_entropy(pred_victim, labels, reduction='none').view(-1, m + 1)
+        conditional_loss = F.cross_entropy(pred_victim, labels, reduction='none').view(-1, m + 1)
+        loss_values += conditional_loss
+        with torch.no_grad():
+            print(f'Conditional Loss: {conditional_loss[:, -1].mean().item()}')
+            wandb.log({'loss_G_conditional': conditional_loss[:, -1].mean().item()})
 
         # Compute difference following each direction
         differences = loss_values[:, :-1] - loss_values[:, -1].view(-1, 1)
@@ -107,7 +115,7 @@ def estimate_gradient_objective(args, victim_model, clone_model, x, labels=None,
             gradient_estimates = gradient_estimates.mean(dim=1).view(-1, C, L, S, S)
         else:
             # raise ValueError(args.loss)
-            gradient_estimates = gradient_estimates.mean(dim = 1).view(-1, C, L, S, S) / (num_classes * N)
+            gradient_estimates = gradient_estimates.mean(dim=1).view(-1, C, L, S, S) / (num_classes * N)
 
         clone_model.train()
         loss_G = loss_values[:, -1].mean()
