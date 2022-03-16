@@ -273,16 +273,16 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         if args.wandb_save:
             save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
 
-        if debug_distribution:
-            c_l = Counter(list(np.array(dist_l).flatten())).most_common()
-            c_t = Counter(list(np.array(dist_t).flatten())).most_common()
-            c_s = Counter(list(np.array(dist_s).flatten())).most_common()
-            wandb.run.summary[f'Label distribution epoch {epoch}'] = c_l
-            wandb.run.summary[f'Teacher distribution epoch {epoch}'] = c_t
-            wandb.run.summary[f'Student distribution epoch {epoch}'] = c_s
-            print(f'Label distribution epoch {epoch}:', c_l)
-            print(f'Teacher distribution epoch {epoch}:', c_t)
-            print(f'Student distribution epoch {epoch}:', c_s)
+    if debug_distribution:
+        c_l = Counter(list(np.array(dist_l).flatten())).most_common()
+        c_t = Counter(list(np.array(dist_t).flatten())).most_common()
+        c_s = Counter(list(np.array(dist_s).flatten())).most_common()
+        wandb.run.summary[f'Label distribution epoch {epoch}'] = c_l
+        wandb.run.summary[f'Teacher distribution epoch {epoch}'] = c_t
+        wandb.run.summary[f'Student distribution epoch {epoch}'] = c_s
+        print(f'Label distribution epoch {epoch}:', c_l)
+        print(f'Teacher distribution epoch {epoch}:', c_t)
+        print(f'Student distribution epoch {epoch}:', c_s)
 
 
 def test(args, student=None, generator=None, device="cuda", test_loader=None, epoch=0):
