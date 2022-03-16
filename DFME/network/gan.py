@@ -89,11 +89,11 @@ class GeneratorC(nn.Module):
             nn.BatchNorm2d(ngf),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Conv2d(ngf, nc, 3, stride=1, padding=1),
-            nn.Tanh(),
-            nn.BatchNorm2d(nc, affine=False) 
+            # nn.Sigmoid(),
+            # nn.BatchNorm2d(nc, affine=False) 
         )
 
-    def forward(self, z, label):
+    def forward(self, z, label, pre_x=False):
         # Concatenate label embedding and image to produce input
         label_inp = self.label_emb(label)
         gen_input = torch.cat((label_inp, z), -1)
@@ -105,6 +105,8 @@ class GeneratorC(nn.Module):
         img = self.conv_blocks1(img)
         img = nn.functional.interpolate(img,scale_factor=2)
         img = self.conv_blocks2(img)
+        if pre_x:
+          return torch.sigmoid(pre_x)
         return img
 
 

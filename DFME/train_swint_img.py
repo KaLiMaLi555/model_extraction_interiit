@@ -162,16 +162,17 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         """Repeat epoch_itrs times per epoch"""
         for _ in range(args.g_iter):
             # Sample Random Noise
+            labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
             z = torch.randn((args.batch_size, args.nz)).to(device)
             optimizer_G.zero_grad()
             generator.train()
             # Get fake image from generator
-            fake = generator(z, pre_x=args.approx_grad)  # pre_x returns the output of G before applying the activation
+            fake = generator(z, label=labels, pre_x=args.approx_grad)  # pre_x returns the output of G before applying the activation
             fake = fake.unsqueeze(dim=2)
 
             ## APPOX GRADIENT
             approx_grad_wrt_x, loss_G = estimate_gradient_objective(
-                args, teacher, student, fake,
+                args, teacher, student, fake, labels=labels,
                 epsilon=args.grad_epsilon, m=args.grad_m, num_classes=args.num_classes,
                 device=device, pre_x=True)
 
@@ -188,8 +189,9 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         print(f'Total loss G:', total_loss_G / (i + 1))
 
         for _ in range(args.d_iter):
+            labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
             z = torch.randn((args.batch_size, args.nz)).to(device)
-            fake = generator(z).detach()
+            fake = generator(z, label=labels).detach()
             # print(fake)
             # with open("weird_tens.pkl", "wb+") as f:
             #   pickle.dump(fake.cpu(), f)
@@ -442,7 +444,7 @@ def main():
     student = torchvision.models.mobilenet_v2()
     student.classifier[1] = torch.nn.Linear(in_features=student.classifier[1].in_features, out_features=400)
 
-    generator = network.gan.GeneratorA(nz=args.nz, nc=3, img_size=224, activation=args.G_activation)
+    generator = network.gan.GeneratorC(nz=args.nz, nc=3, img_size=224, num_classes=400, activation=args.G_activation)
 
     student = student.to(device)
     generator = generator.to(device)

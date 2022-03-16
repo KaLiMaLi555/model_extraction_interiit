@@ -9,7 +9,7 @@ import network
 # from cifar10_models import *
 
 
-def estimate_gradient_objective(args, victim_model, clone_model, x, epsilon=1e-7, m=5, verb=False, num_classes=400, device="cpu", pre_x=False):
+def estimate_gradient_objective(args, victim_model, clone_model, x, labels=None, epsilon=1e-7, m=5, verb=False, num_classes=400, device="cpu", pre_x=False):
     # Sampling from unit sphere is the method 3 from this website:
     #  http://extremelearning.com.au/how-to-generate-uniformly-random-points-on-n-spheres-and-n-balls/
     # x = torch.Tensor(np.arange(2*1*7*7).reshape(-1, 1, 7, 7))
@@ -28,6 +28,8 @@ def estimate_gradient_objective(args, victim_model, clone_model, x, epsilon=1e-7
         S = x.size(3)
         dim = S ** 2 * C * L
 
+        labels = labels.unsqueeze(0).repeat(m+1, 1).transpose(0, 1).reshape(-1)
+
         u = np.random.randn(N * m * dim).reshape(-1, m, dim)  # generate random points from normal distribution
 
         d = np.sqrt(np.sum(u ** 2, axis=2)).reshape(-1, m, 1)  # map to a uniform distribution on a unit sphere
@@ -43,6 +45,7 @@ def estimate_gradient_objective(args, victim_model, clone_model, x, epsilon=1e-7
         # Compute the approximation sequentially to allow large values of m
         pred_victim = []
         pred_clone = []
+        exp_labels = []
         max_number_points = 32  # Hardcoded value to split the large evaluation_points tensor to fit in GPU
 
         for i in (range(N * m // max_number_points + 1)):
@@ -57,8 +60,11 @@ def estimate_gradient_objective(args, victim_model, clone_model, x, epsilon=1e-7
             pred_victim.append(torch.Tensor(pred_victim_pts))
             pred_clone.append(pred_clone_pts)
 
+            exp_labels.append(labels[i * max_number_points: (i + 1) * max_number_points])
+
         pred_victim = torch.cat(pred_victim, dim=0).to(device)
         pred_clone = torch.cat(pred_clone, dim=0).to(device)
+        exp_labels = torch.cat(exp_labels, dim=0).to(device)
 
         u = u.to(device)
 
@@ -85,6 +91,8 @@ def estimate_gradient_objective(args, victim_model, clone_model, x, epsilon=1e-7
         else:
             # raise ValueError(args.loss)
             loss_values = - loss_fn(pred_clone, pred_victim, reduction='none').mean(dim = 1).view(-1, m + 1)
+
+        loss_values += F.cross_entropy(pred_victim, labels, reduction='none').view(-1, m + 1)
 
         # Compute difference following each direction
         differences = loss_values[:, :-1] - loss_values[:, -1].view(-1, 1)
