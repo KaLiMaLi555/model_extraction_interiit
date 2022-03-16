@@ -92,7 +92,7 @@ def estimate_gradient_objective(args, victim_model, clone_model, x, labels=None,
         else:
             # raise ValueError(args.loss)
             loss_values = - loss_fn(pred_clone, pred_victim, reduction='none').mean(dim=1).view(-1, m + 1)
-        conditional_loss = F.cross_entropy(pred_victim, labels, reduction='none').view(-1, m + 1)
+        conditional_loss = 10 * F.cross_entropy(pred_victim, labels, reduction='none').view(-1, m + 1)
 
         with torch.no_grad():
             print(f'Adversarial Loss: {loss_values[:, -1].mean().item()}')

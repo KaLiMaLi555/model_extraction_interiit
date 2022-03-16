@@ -156,7 +156,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
 
     gradients = []
     debug_distribution = True
-    dist_l, dist_t, dist_s = [], [], []
+    dist_t, dist_s = [], []
 
     total_loss_S = 0
     total_loss_G = 0
@@ -233,7 +233,6 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             wandb.log({'loss_S_verbose': loss_S.item()})
 
             if debug_distribution:
-                dist_l.append(labels.detach().cpu().numpy())
                 dist_t.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
                 dist_s.append(torch.argmax(s_logit.detach(), dim=1).cpu().numpy())
 
@@ -274,13 +273,10 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
 
     if debug_distribution:
-        c_l = Counter(list(np.array(dist_l).flatten())).most_common()
         c_t = Counter(list(np.array(dist_t).flatten())).most_common()
         c_s = Counter(list(np.array(dist_s).flatten())).most_common()
-        wandb.run.summary[f'Label distribution epoch {epoch}'] = c_l
         wandb.run.summary[f'Teacher distribution epoch {epoch}'] = c_t
         wandb.run.summary[f'Student distribution epoch {epoch}'] = c_s
-        print(f'Label distribution epoch {epoch}:', c_l)
         print(f'Teacher distribution epoch {epoch}:', c_t)
         print(f'Student distribution epoch {epoch}:', c_s)
 
