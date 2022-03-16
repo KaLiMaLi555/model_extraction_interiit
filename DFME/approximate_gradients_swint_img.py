@@ -89,18 +89,17 @@ def estimate_gradient_objective(args, victim_model, clone_model, x, labels=None,
         # Compute loss
         if args.loss == "kl":
             loss_values = - loss_fn(pred_clone, pred_victim, reduction='none').sum(dim=1).view(-1, m + 1)
-            with torch.no_grad():
-                print(f'Adversarial Loss: {loss_values[:, -1].mean().item()}')
-                wandb.log({'loss_G_adversarial': loss_values[:, -1].mean().item()})
         else:
             # raise ValueError(args.loss)
             loss_values = - loss_fn(pred_clone, pred_victim, reduction='none').mean(dim=1).view(-1, m + 1)
-
         conditional_loss = F.cross_entropy(pred_victim, labels, reduction='none').view(-1, m + 1)
-        loss_values += conditional_loss
+
         with torch.no_grad():
+            print(f'Adversarial Loss: {loss_values[:, -1].mean().item()}')
             print(f'Conditional Loss: {conditional_loss[:, -1].mean().item()}')
+            wandb.log({'loss_G_adversarial': loss_values[:, -1].mean().item()})
             wandb.log({'loss_G_conditional': conditional_loss[:, -1].mean().item()})
+        loss_values += conditional_loss
 
         # Compute difference following each direction
         differences = loss_values[:, :-1] - loss_values[:, -1].view(-1, 1)
