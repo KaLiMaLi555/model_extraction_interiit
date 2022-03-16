@@ -208,7 +208,6 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
                 print(labels)
                 print('Teacher output:')
                 print(t_logit.argmax(axis=1))
-                # TODO: Distributions
                 # TODO: Count number of correct generations as a metric
                 t_logit = torch.Tensor(t_logit).to(device)
 
@@ -221,7 +220,6 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
                     t_logit -= t_logit.mean(dim=1).view(-1, 1).detach()
 
             s_logit = student(fake[:, :, 0, :, :])
-            # TODO: Distributions
             print('Student output:')
             print(s_logit.argmax(dim=1))
 
@@ -233,6 +231,8 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             wandb.log({'loss_S_verbose': loss_S.item()})
 
             if debug_distribution:
+                # TODO: Also print confidence, possibly for T-5 predicted classes
+                #  might be useful to understand the exact nature of mode collapse
                 dist_t.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
                 dist_s.append(torch.argmax(s_logit.detach(), dim=1).cpu().numpy())
 
