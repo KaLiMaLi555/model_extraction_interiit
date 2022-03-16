@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import random
+from collections import Counter
 from pprint import pprint
 
 import torch
@@ -12,16 +13,15 @@ import wandb
 from mmaction.models import build_model
 from mmcv import Config
 from mmcv.runner import load_checkpoint
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from torch.utils.data import DataLoader
 from approximate_gradients_swint_img import *
 # from my_utils import *
 from utils.wandb_utils import init_wandb, save_ckp
 from val_utils import metrics
 from val_utils.custom_transformations import CustomStudentImageTransform
 from val_utils.dataloader_val import ValDataset
-import pickle
 
 print("torch version", torch.__version__)
 
@@ -155,6 +155,8 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
     optimizer_S, optimizer_G = optimizer
 
     gradients = []
+    debug_distribution = True
+    dist_l, dist_t, dist_s = [], [], []
 
     total_loss_S = 0
     total_loss_G = 0
@@ -202,7 +204,12 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             with torch.no_grad():
                 fake_teacher = network.swin.swin_transform(fake.detach())
                 t_logit = teacher(fake_teacher, return_loss=False)
+                print('Expected labels:')
+                print(labels)
+                print('Teacher output:')
                 print(t_logit.argmax(axis=1))
+                # TODO: Distributions
+                # TODO: Count number of correct generations as a metric
                 t_logit = torch.Tensor(t_logit).to(device)
 
             # Correction for the fake logits
@@ -214,6 +221,8 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
                     t_logit -= t_logit.mean(dim=1).view(-1, 1).detach()
 
             s_logit = student(fake[:, :, 0, :, :])
+            # TODO: Distributions
+            print('Student output:')
             print(s_logit.argmax(dim=1))
 
             loss_S = student_loss(args, s_logit, t_logit)
@@ -222,6 +231,11 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
 
             total_loss_S += loss_S.item()
             wandb.log({'loss_S_verbose': loss_S.item()})
+
+            if debug_distribution:
+                dist_l.append(labels.detach().cpu().numpy())
+                dist_t.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
+                dist_s.append(torch.argmax(s_logit.detach(), dim=1).cpu().numpy())
 
         wandb.log({'loss_S_inner': total_loss_S / (i + 1)})
         print(f'Total loss S:', total_loss_S / (i + 1))
@@ -258,6 +272,17 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         }
         if args.wandb_save:
             save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
+
+        if debug_distribution:
+            c_l = Counter(list(np.array(dist_l).flatten())).most_common()
+            c_t = Counter(list(np.array(dist_t).flatten())).most_common()
+            c_s = Counter(list(np.array(dist_s).flatten())).most_common()
+            wandb.run.summary[f'Label distribution epoch {epoch}'] = c_l
+            wandb.run.summary[f'Teacher distribution epoch {epoch}'] = c_t
+            wandb.run.summary[f'Student distribution epoch {epoch}'] = c_s
+            print(f'Label distribution epoch {epoch}:', c_l)
+            print(f'Teacher distribution epoch {epoch}:', c_t)
+            print(f'Student distribution epoch {epoch}:', c_s)
 
 
 def test(args, student=None, generator=None, device="cuda", test_loader=None, epoch=0):
