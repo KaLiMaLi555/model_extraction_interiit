@@ -123,3 +123,25 @@ class CustomStudentImageTransform:
     def __call__(self, vid):
         vid = self.custom_resize_transform(vid)  # Resize
         return vid
+
+class CustomStudentVideoTransform:
+
+    def __init__(self, size=224):
+        self.size = size
+
+    def custom_resize_transform(self, vid):
+        # vid L, C, H, W
+        t = transforms.Compose([
+            transforms.Resize(self.size + 32),
+            transforms.CenterCrop(self.size)
+        ])
+        frames = []
+        for i in range(vid.shape[0]):
+            frame = vid[i, :, :, :]  # C, H, W
+            frame = t(frame)  # C, S, S
+            frames.append(frame)
+        return torch.stack(frames)  # L, C, S, S
+
+    def __call__(self, vid):
+        vid = self.custom_resize_transform(vid)  # Resize
+        return vid

@@ -80,10 +80,10 @@ class ValDataset(Dataset):
         video_path = os.path.join(self.video_dir_path, self.videos[idx])
         vid = self.get_frames(video_path)
         # vid = custom_resize_transform(vid)
-        vid = vid.permute(0, 3, 1, 2)  # f, h, w, c
-        vid = self.transform(vid)  # f, c, h, w
+        vid = vid.permute(0, 3, 1, 2)  # L, C, H, W
+        vid = self.transform(vid)  # L, C, S, S
         # vid = vid.permute(0, 2, 3, 1)  # f, h, w, c
-        vid = vid.swapaxes(0, 1)  # c, f, h, w
+        vid = vid.swapaxes(0, 1)  # C, L, S, S
         return vid, self.get_label(idx)
 
     def __len__(self):

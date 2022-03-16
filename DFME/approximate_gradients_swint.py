@@ -69,17 +69,17 @@ def estimate_gradient_objective(args, victim_model, clone_model, x, epsilon = 1e
 
         u = u.to(device)
 
-        # if args.loss == "l1":
-        #     loss_fn = F.l1_loss
-        #     if args.no_logits:
-        #         pred_victim = torch.log(pred_victim).detach()
-        #         if args.logit_correction == 'min':
-        #             pred_victim -= pred_victim.min(dim=1).values.view(-1, 1).detach()
-        #         elif args.logit_correction == 'mean':
-        #             pred_victim -= pred_victim.mean(dim=1).view(-1, 1).detach()
+        if args.loss == "l1":
+            loss_fn = F.l1_loss
+            if args.no_logits:
+                pred_victim = torch.log(pred_victim).detach()
+                if args.logit_correction == 'min':
+                    pred_victim -= pred_victim.min(dim=1).values.view(-1, 1).detach()
+                elif args.logit_correction == 'mean':
+                    pred_victim -= pred_victim.mean(dim=1).view(-1, 1).detach()
 
 
-        if args.loss == "kl":
+        elif args.loss == "kl":
             loss_fn = F.kl_div
             pred_clone = F.log_softmax(pred_clone, dim=1)
             pred_victim = pred_victim.detach()
@@ -131,18 +131,18 @@ def compute_gradient(args, victim_model, clone_model, x, pre_x=False, device="cp
     pred_victim = victim_model(x_swin)
     pred_clone = clone_model(x_)
 
-    # if args.loss == "l1":
-    #     loss_fn = F.l1_loss
-    #     if args.no_logits:
-    #         pred_victim_no_logits = torch.log(pred_victim, dim=1)
-    #         if args.logit_correction == 'min':
-    #             pred_victim = pred_victim_no_logits - pred_victim_no_logits.min(dim=1).values.view(-1, 1)
-    #         elif args.logit_correction == 'mean':
-    #             pred_victim = pred_victim_no_logits - pred_victim_no_logits.mean(dim=1).view(-1, 1)
-    #         else:
-    #             pred_victim = pred_victim_no_logits
+    if args.loss == "l1":
+        loss_fn = F.l1_loss
+        if args.no_logits:
+            pred_victim_no_logits = torch.log(pred_victim)
+            if args.logit_correction == 'min':
+                pred_victim = pred_victim_no_logits - pred_victim_no_logits.min(dim=1).values.view(-1, 1)
+            elif args.logit_correction == 'mean':
+                pred_victim = pred_victim_no_logits - pred_victim_no_logits.mean(dim=1).view(-1, 1)
+            else:
+                pred_victim = pred_victim_no_logits
 
-    if args.loss == "kl":
+    elif args.loss == "kl":
         loss_fn = F.kl_div
         pred_clone = F.log_softmax(pred_clone, dim=1)
         pred_victim = pred_victim
