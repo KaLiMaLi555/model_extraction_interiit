@@ -73,8 +73,8 @@ def estimate_gradient_objective(args, teacher, x, labels=None, epsilon=1e-7, m=5
             print('Teacher predictions')
             print(torch.argmax(pred_teacher, dim=1))
 
-            t1 = accuracy(pred_teacher, labels, top_k=1)
-            t5 = accuracy(pred_teacher, labels, top_k=5)
+            t1 = 100 * accuracy(pred_teacher, labels, top_k=1)
+            t5 = 100 * accuracy(pred_teacher, labels, top_k=5)
             print('T1 accuracy')
             print(t1)
             wandb.log({'T1': t1.detach().cpu().numpy()})
