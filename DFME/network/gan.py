@@ -75,11 +75,11 @@ class GeneratorC(nn.Module):
     def __init__(self, nz=100, num_classes=10, ngf=64, nc=1, img_size=32, activation=None):
         super(GeneratorC, self).__init__()
 
-        self.label_emb = nn.Embedding(num_classes, nz)
+        # self.label_emb = nn.Embedding(num_classes, nz)
         self.activation = activation
 
         self.init_size = img_size // 4
-        self.l1 = nn.Sequential(nn.Linear(nz * 2, ngf * 2 * self.init_size ** 2))
+        self.l1 = nn.Sequential(nn.Linear(nz + num_classes, ngf * 2 * self.init_size ** 2))
 
         self.conv_blocks0 = nn.Sequential(
             nn.BatchNorm2d(ngf * 2),
@@ -100,8 +100,9 @@ class GeneratorC(nn.Module):
 
     def forward(self, z, label, pre_x=False):
         # Concatenate label embedding and image to produce input
-        label_inp = self.label_emb(label)
-        gen_input = torch.cat((label_inp, z), -1)
+        # label_inp = self.label_emb(label)
+        # gen_input = torch.cat((label_inp, z), -1)
+        gen_input = torch.cat((label, z), -1)
 
         out = self.l1(gen_input.view(gen_input.shape[0], -1))
         out = out.view(out.shape[0], -1, self.init_size, self.init_size)
