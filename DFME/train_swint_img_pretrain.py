@@ -123,10 +123,10 @@ def pretrain(args, teacher, generator, device, optimizer, epoch):
 
             approx_grad_wrt_x, loss = compute_gradient(args, teacher, fake, labels=labels, device=device, pre_x=True)
 
-            print()
-            print(approx_grad_wrt_x.shape)
+            # print()
+            # print(approx_grad_wrt_x.shape)
             # print(grad_wrt_x.shape)
-            print(loss)
+            # print(loss)
             # print(loss_conf)
             # print(loss - loss_conf)
             # print(np.sum(loss - loss_conf))
