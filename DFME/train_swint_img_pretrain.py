@@ -40,7 +40,6 @@ def parse_args():
 
     # parser.add_argument('--dataset', type=str, default='cifar10', choices=['svhn', 'cifar10'], help='dataset name (default: cifar10)')
     parser.add_argument('--data_root', type=str, default='data')
-    parser.add_argument('--model', type=str, default='resnet34_8x', choices=classifiers, help='Target model name (default: resnet34_8x)')
     parser.add_argument('--weight_decay', type=float, default=5e-4)
     parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
                         help='SGD momentum (default: 0.9)')
@@ -121,16 +120,17 @@ def pretrain(args, teacher, generator, device, optimizer, epoch):
                 m=args.grad_m, num_classes=args.num_classes,
                 device=device, pre_x=True)
 
-            grad_wrt_x, loss_conf = compute_gradient(args, teacher, fake, labels=labels, device=device, pre_x=True)
+            # grad_wrt_x, loss_conf = compute_gradient(args, teacher, fake, labels=labels, device=device, pre_x=True)
 
+            print()
             print(approx_grad_wrt_x.shape)
-            print(grad_wrt_x.shape)
+            # print(grad_wrt_x.shape)
             print(loss)
-            print(loss_conf)
-            print(loss - loss_conf)
-            print(np.sum(loss - loss_conf))
-            print(approx_grad_wrt_x - grad_wrt_x)
-            print(np.sum(approx_grad_wrt_x - grad_wrt_x))
+            # print(loss_conf)
+            # print(loss - loss_conf)
+            # print(np.sum(loss - loss_conf))
+            # print(approx_grad_wrt_x - grad_wrt_x)
+            # print(np.sum(approx_grad_wrt_x - grad_wrt_x))
 
             fake.backward(approx_grad_wrt_x)
             optimizer.step()
@@ -141,10 +141,10 @@ def pretrain(args, teacher, generator, device, optimizer, epoch):
         wandb.log({'loss_G_inner': total_loss / (i + 1)})
         print(f'Total loss G:', total_loss / (i + 1))
 
-        if debug_distribution:
+        # if debug_distribution:
             # TODO: Also print confidence, possibly for T-5 predicted classes
             #  might be useful to understand the exact nature of mode collapse
-            distribution.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
+            # distribution.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
 
         # Log Results
         if i % args.log_interval == 0:
@@ -167,13 +167,13 @@ def pretrain(args, teacher, generator, device, optimizer, epoch):
         if args.wandb_save:
             save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
 
-    if debug_distribution:
-        c_t = Counter(list(np.array(distribution).flatten())).most_common()
-        c_s = Counter(list(np.array(dist_s).flatten())).most_common()
-        wandb.run.summary[f'Teacher distribution epoch {epoch}'] = c_t
-        wandb.run.summary[f'Student distribution epoch {epoch}'] = c_s
-        print(f'Teacher distribution epoch {epoch}:', c_t)
-        print(f'Student distribution epoch {epoch}:', c_s)
+    # if debug_distribution:
+    #     c_t = Counter(list(np.array(distribution).flatten())).most_common()
+    #     c_s = Counter(list(np.array(dist_s).flatten())).most_common()
+    #     wandb.run.summary[f'Teacher distribution epoch {epoch}'] = c_t
+    #     wandb.run.summary[f'Student distribution epoch {epoch}'] = c_s
+    #     print(f'Teacher distribution epoch {epoch}:', c_t)
+    #     print(f'Student distribution epoch {epoch}:', c_s)
 
 
 def compute_grad_norms(generator):
@@ -182,7 +182,7 @@ def compute_grad_norms(generator):
         if "weight" in n:
             # print('===========\ngradient{}\n----------\n{}'.format(n, p.grad.norm().to("cpu")))
             G_grad.append(p.grad.norm().to("cpu"))
-    return np.mean(G_grad), np.mean(S_grad)
+    return np.mean(G_grad)
 
 
 def main():
@@ -250,7 +250,7 @@ def main():
     args.teacher = teacher
 
     ## Compute the number of epochs with the given query budget:
-    args.cost_per_iteration = args.batch_size * (args.g_iter * (args.grad_m + 1) + args.d_iter)
+    args.cost_per_iteration = args.batch_size * (args.g_iter * (args.grad_m + 1))
 
     number_epochs = args.query_budget // (args.cost_per_iteration * args.epoch_itrs) + 1
 

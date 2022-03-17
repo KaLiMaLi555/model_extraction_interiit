@@ -59,10 +59,10 @@ def estimate_gradient_objective(args, teacher, x, labels=None, epsilon=1e-7, m=5
         pred_teacher = torch.cat(pred_teacher, dim=0).to(device)
         exp_labels = torch.cat(exp_labels, dim=0).to(device)
 
-        print()
-        print(pred_teacher.shape)
-        print(exp_labels.shape)
-        u = u.to(device)
+        # print()
+        # print(pred_teacher.shape)
+        # print(exp_labels.shape)
+        # u = u.to(device)
 
         conditional_loss = F.cross_entropy(pred_teacher, labels, reduction='none').view(-1, m + 1)
 
@@ -101,7 +101,7 @@ def compute_gradient(args, teacher, x, labels=None, device="cpu", pre_x=False):
         x_ = args.G_activation(x_)
 
     x_swin = network.swin.swin_transform(x_)
-    pred_teacher = teacher(x_swin, return_loss=False)
+    pred_teacher, loss = teacher(x_swin, torch.nn.functional.one_hot(labels, 400))
 
     conditional_loss = F.cross_entropy(pred_teacher, labels, reduction='none')
     loss_values = conditional_loss
