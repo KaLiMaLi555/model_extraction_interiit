@@ -118,12 +118,12 @@ def compute_gradient(args, teacher, x, labels=None, device="cpu", pre_x=False):
     x_swin = network.swin.swin_transform(x_)
     pred_teacher, loss = teacher(x_swin, torch.nn.functional.one_hot(labels, 400))
 
-    conditional_loss = F.cross_entropy(pred_teacher, labels, reduction='none')
-    loss_values = conditional_loss
+    # conditional_loss = F.cross_entropy(pred_teacher, labels, reduction='none')
+    # loss_values = conditional_loss
     # print("True mean loss", loss_values)
-    loss_values.backward()
+    loss.backward()
 
-    return x_copy.grad, loss_values
+    return x_copy.grad, loss
 
 
 class Args(dict):

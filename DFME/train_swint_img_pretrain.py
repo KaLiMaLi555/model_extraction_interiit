@@ -116,12 +116,12 @@ def pretrain(args, teacher, generator, device, optimizer, epoch):
             fake = fake.unsqueeze(dim=2)
 
             ## APPOX GRADIENT
-            approx_grad_wrt_x, loss = estimate_gradient_objective(
-                args, teacher, fake, labels=labels, epsilon=args.grad_epsilon,
-                m=args.grad_m, num_classes=args.num_classes,
-                device=device, pre_x=True)
+            # approx_grad_wrt_x, loss = estimate_gradient_objective(
+            #     args, teacher, fake, labels=labels, epsilon=args.grad_epsilon,
+            #     m=args.grad_m, num_classes=args.num_classes,
+            #     device=device, pre_x=True)
 
-            # grad_wrt_x, loss_conf = compute_gradient(args, teacher, fake, labels=labels, device=device, pre_x=True)
+            approx_grad_wrt_x, loss = compute_gradient(args, teacher, fake, labels=labels, device=device, pre_x=True)
 
             print()
             print(approx_grad_wrt_x.shape)
