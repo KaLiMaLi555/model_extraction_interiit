@@ -3,6 +3,7 @@ import torch
 import torch.nn.functional as F
 import wandb
 
+from torchmetrics.functional import accuracy
 import network
 
 
@@ -43,9 +44,9 @@ def estimate_gradient_objective(args, teacher, x, labels=None, epsilon=1e-7, m=5
         exp_labels = []
         max_number_points = 32  # Hardcoded value to split the large evaluation_points tensor to fit in GPU
 
-        print()
-        print(evaluation_points.shape)
-        print(labels.shape)
+        # print()
+        # print(evaluation_points.shape)
+        # print(labels.shape)
         for i in (range(N * m // max_number_points + 1)):
             pts = evaluation_points[i * max_number_points: (i + 1) * max_number_points]
             pts = pts.to(device)
@@ -67,6 +68,20 @@ def estimate_gradient_objective(args, teacher, x, labels=None, epsilon=1e-7, m=5
         conditional_loss = F.cross_entropy(pred_teacher, exp_labels, reduction='none').view(-1, m + 1).to(device)
 
         with torch.no_grad():
+            print('Expected Labels')
+            print(labels)
+            print('Teacher predictions')
+            print(torch.argmax(pred_teacher, dim=1))
+
+            t1 = accuracy(pred_teacher, labels, top_k=1)
+            t5 = accuracy(pred_teacher, labels, top_k=5)
+            print('T1 accuracy')
+            print(t1)
+            wandb.log({'T1': t1.detach().cpu().numpy()})
+            print('T5 accuracy')
+            print(t5)
+            wandb.log({'T5': t5.detach().cpu().numpy()})
+
             print(f'Conditional Loss: {conditional_loss[:, -1].mean().item()}')
             wandb.log({'loss_G_conditional': conditional_loss[:, -1].mean().item()})
         loss_values = conditional_loss
