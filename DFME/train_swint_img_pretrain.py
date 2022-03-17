@@ -2,7 +2,6 @@ import argparse
 import json
 import os
 import random
-from collections import Counter
 from pprint import pprint
 
 import torch
@@ -88,6 +87,7 @@ def parse_args():
 
     return parser.parse_args()
 
+
 # def generator_loss(args, s_logit, t_logit,  z = None, z_logit = None, reduction="mean"):
 #     assert 0
 #     loss = - F.l1_loss( s_logit, t_logit , reduction=reduction)
@@ -107,11 +107,12 @@ def pretrain(args, teacher, generator, device, optimizer, epoch):
         for _ in range(args.g_iter):
             # Sample Random Noise
             labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
+            labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
             z = torch.randn((args.batch_size, args.nz)).to(device)
             optimizer.zero_grad()
             generator.train()
             # Get fake image from generator
-            fake = generator(z, label=labels, pre_x=True)  # pre_x returns the output of G before applying the activation
+            fake = generator(z, label=labels_oh, pre_x=True)  # pre_x returns the output of G before applying the activation
             fake = fake.unsqueeze(dim=2)
 
             ## APPOX GRADIENT
@@ -142,9 +143,9 @@ def pretrain(args, teacher, generator, device, optimizer, epoch):
         print(f'Total loss G:', total_loss / (i + 1))
 
         # if debug_distribution:
-            # TODO: Also print confidence, possibly for T-5 predicted classes
-            #  might be useful to understand the exact nature of mode collapse
-            # distribution.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
+        # TODO: Also print confidence, possibly for T-5 predicted classes
+        #  might be useful to understand the exact nature of mode collapse
+        # distribution.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
 
         # Log Results
         if i % args.log_interval == 0:
