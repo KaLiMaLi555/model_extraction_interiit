@@ -234,7 +234,7 @@ def main():
 
     pprint(args, width=80)
     config = "./Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py"
-    checkpoint = "/content/swin_tiny_patch244_window877_kinetics400_1k.pth"
+    checkpoint = "../swin_tiny_patch244_window877_kinetics400_1k.pth"
     cfg = Config.fromfile(config)
     teacher = build_model(cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))
     load_checkpoint(teacher, checkpoint, map_location=device)
