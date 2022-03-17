@@ -52,8 +52,8 @@ def estimate_gradient_objective(args, teacher, x, labels=None, epsilon=1e-7, m=5
 
             swin_pts = network.swin.swin_transform(pts.detach())
 
-            pred_teacher_pts = teacher(swin_pts, return_loss=False).to(device)
-            pred_teacher.append(torch.Tensor(pred_teacher_pts))
+            pred_teacher_pts = teacher(swin_pts, return_loss=False)
+            pred_teacher.append(torch.Tensor(pred_teacher_pts).to(device))
             exp_labels.append(labels[i * max_number_points: (i + 1) * max_number_points])
 
         pred_teacher = torch.cat(pred_teacher, dim=0).to(device)
