@@ -24,17 +24,17 @@ def estimate_gradient_objective(args, teacher, x, labels=None, epsilon=1e-7, m=5
         S = x.size(3)
         dim = S ** 2 * C * L
 
-        labels = labels.unsqueeze(0).repeat(m + 1, 1).transpose(0, 1).reshape(-1)
+        labels = labels.to(device).unsqueeze(0).repeat(m + 1, 1).transpose(0, 1).reshape(-1)
 
         u = np.random.randn(N * m * dim).reshape(-1, m, dim)  # generate random points from normal distribution
 
         d = np.sqrt(np.sum(u ** 2, axis=2)).reshape(-1, m, 1)  # map to a uniform distribution on a unit sphere
-        u = torch.Tensor(u / d).view(-1, m, C, L, S, S)
-        u = torch.cat((u, torch.zeros(N, 1, C, L, S, S)), dim=1)  # Shape N, m + 1, S^2
+        u = torch.Tensor(u / d).to(device).view(-1, m, C, L, S, S)
+        u = torch.cat((u, torch.zeros(N, 1, C, L, S, S).to(device)), dim=1)  # Shape N, m + 1, S^2
 
         u = u.view(-1, m + 1, C, L, S, S)
 
-        evaluation_points = (x.view(-1, 1, C, L, S, S).cpu() + epsilon * u).view(-1, C, L, S, S)
+        evaluation_points = (x.view(-1, 1, C, L, S, S).to(device) + epsilon * u).view(-1, C, L, S, S)
         if pre_x:
             evaluation_points = args.G_activation(evaluation_points)  # Apply args.G_activation function
 
@@ -52,7 +52,7 @@ def estimate_gradient_objective(args, teacher, x, labels=None, epsilon=1e-7, m=5
 
             swin_pts = network.swin.swin_transform(pts.detach())
 
-            pred_teacher_pts = teacher(swin_pts, return_loss=False)
+            pred_teacher_pts = teacher(swin_pts, return_loss=False).to(device)
             pred_teacher.append(torch.Tensor(pred_teacher_pts))
             exp_labels.append(labels[i * max_number_points: (i + 1) * max_number_points])
 
@@ -64,7 +64,7 @@ def estimate_gradient_objective(args, teacher, x, labels=None, epsilon=1e-7, m=5
         # print(exp_labels.shape)
         # u = u.to(device)
 
-        conditional_loss = F.cross_entropy(pred_teacher, labels, reduction='none').view(-1, m + 1)
+        conditional_loss = F.cross_entropy(pred_teacher, exp_labels, reduction='none').view(-1, m + 1).to(device)
 
         with torch.no_grad():
             print(f'Conditional Loss: {conditional_loss[:, -1].mean().item()}')
