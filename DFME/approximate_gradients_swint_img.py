@@ -133,7 +133,7 @@ def compute_gradient(args, victim_model, clone_model, x, pre_x=False, device="cp
 
     x_swin = network.swin.swin_transform(x_)
     # pred_victim = victim_model(x_swin, return_loss=False)
-    pred_clone = clone_model(x_)
+    pred_clone = clone_model(x_[:, :, 0, :, :])
     loss = victim_model(x_swin, pred_clone)['loss_cls']
     loss.backward()
 
