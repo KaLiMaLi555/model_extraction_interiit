@@ -260,12 +260,12 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         print(f'Total loss S:', total_loss_S / (i + 1))
 
         # Log Results
-        if i % args.log_interval == 0:
-            myprint(f'Train Epoch: {epoch} [{i}/{args.epoch_itrs} ({100 * float(i) / float(args.epoch_itrs):.0f}%)]\tG_Loss: {loss_G.item():.6f} S_loss: {loss_S.item():.6f}')
+        # if i % args.log_interval == 0:
+            # myprint(f'Train Epoch: {epoch} [{i}/{args.epoch_itrs} ({100 * float(i) / float(args.epoch_itrs):.0f}%)]\tG_Loss: {loss_G.item():.6f} S_loss: {loss_S.item():.6f}')
 
-            if i == 0:
-                with open(args.log_dir + "/loss.csv", "a") as f:
-                    f.write("%d,%f,%f\n" % (epoch, loss_G, loss_S))
+            # if i == 0:
+            #     with open(args.log_dir + "/loss.csv", "a") as f:
+            #         f.write("%d,%f,%f\n" % (epoch, loss_G, loss_S))
 
             # if args.rec_grad_norm and i == 0:
             #     G_grad_norm, S_grad_norm = compute_grad_norms(generator, student)

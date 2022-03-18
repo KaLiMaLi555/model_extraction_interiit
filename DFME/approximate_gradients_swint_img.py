@@ -139,7 +139,7 @@ def compute_gradient(args, victim_model, clone_model, x, pre_x=False, device="cp
     loss.backward()
 
     with torch.no_grad():
-        wandb.log({'loss_G_conditional': loss.detach().cpu().numpy()})
+        # wandb.log({'loss_G_conditional': loss.detach().cpu().numpy()})
         pred_victim = torch.Tensor(victim_model(x_swin, return_loss=False)).to(device)
         argmax_victim = torch.argmax(pred_victim, dim=1)
         print('Teacher predictions')
