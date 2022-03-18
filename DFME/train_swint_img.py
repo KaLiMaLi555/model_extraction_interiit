@@ -213,12 +213,14 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
                 t_logit = teacher(fake_teacher, return_loss=False)
                 t_logit = torch.Tensor(t_logit).to(device)
                 t_argmax = t_logit.argmax(axis=1)
+
                 print('Expected labels:')
                 print(labels)
                 print('Teacher output:')
                 print(t_argmax)
                 print('Teacher confidences:')
                 print(t_logit.max(dim=1)[0])
+
                 t_t1 = 100 * accuracy(t_logit, labels, top_k=1)
                 t_t5 = 100 * accuracy(t_logit, labels, top_k=5)
                 wandb.log({'generator_T1_via_teacher': t_t1.detach().cpu().numpy()})
@@ -232,11 +234,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             #     elif args.logit_correction == 'mean':
             #         t_logit -= t_logit.mean(dim=1).view(-1, 1).detach()
 
-            s_logit = torch.nn.softmax(student(fake[:, :, 0, :, :]), dim=1)
-            print('Teacher softmax sanity')
-            print(t_logit.sum(dim=1))
-            print('Student softmax sanity')
-            print(s_logit.sum(dim=1))
+            s_logit = torch.nn.Softmax(dim=1)(student(fake[:, :, 0, :, :]))
             loss_S = student_loss(args, s_logit, t_logit)
             loss_S.backward()
             optimizer_S.step()
