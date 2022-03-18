@@ -65,7 +65,7 @@ def gen_examples(args, generator, teacher, device, epoch):
         x_swin = network.swin.swin_transform(fake)
         logits = torch.Tensor(teacher(x_swin, return_loss=False)).to(device)
         logits_argmax = torch.argmax(logits.detach(), dim=1)
-        distribution.append(logits_argmax.cpu())
+        distribution.append(logits_argmax.cpu().numpy())
 
         print('Expected')
         print(labels)
@@ -80,7 +80,7 @@ def gen_examples(args, generator, teacher, device, epoch):
     c = Counter(list(np.array(distribution).flatten())).most_common()
     wandb.run.summary[f'Distribution epoch {epoch}'] = c
     print('\n\n---------Distribution---------')
-    print(distribution)
+    print(c)
     print('---------Distribution---------\n\n')
 
 
@@ -100,6 +100,7 @@ def main():
 
     args.device = device
     args.num_classes = 400
+    args.G_activation = torch.sigmoid
 
     pprint(args, width=80)
     config = "./Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py"
@@ -125,8 +126,9 @@ def main():
     if args.wandb:
         init_wandb(generator, args.wandb_api_key, args.wandb_resume, args.wandb_name, args.wandb_project, args.wandb_run_id, args.wandb_watch)
 
-    for epoch in range(1, 25 + 1):
-        gen_examples(args, generator, teacher, device, epoch)
+    with torch.no_grad():
+        for epoch in range(1, 25 + 1):
+            gen_examples(args, generator, teacher, device, epoch)
 
 
 if __name__ == '__main__':
