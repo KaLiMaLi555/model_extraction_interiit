@@ -145,11 +145,11 @@ def compute_gradient(args, victim_model, clone_model, x, pre_x=False, device="cp
         print('Teacher predictions')
         print(argmax_victim)
         print('Teacher confidences')
-        print(pred_victim.max(dim=1))
+        print(pred_victim.max(dim=1)[0])
         print('Student predictions')
         print(torch.argmax(pred_clone, dim=1))
         print('Student confidences')
-        print(pred_clone.max(dim=1))
+        print(pred_clone.max(dim=1)[0])
 
         t1 = 100 * accuracy(pred_clone, argmax_victim, top_k=1)
         t5 = 100 * accuracy(pred_clone, argmax_victim, top_k=5)

@@ -218,7 +218,7 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
                 print('Teacher output:')
                 print(t_argmax)
                 print('Teacher confidences:')
-                print(t_logit.max(axis=1))
+                print(t_logit.max(axis=1)[0])
                 t_t1 = 100 * accuracy(t_logit, labels, top_k=1)
                 t_t5 = 100 * accuracy(t_logit, labels, top_k=5)
                 wandb.log({'generator_T1_via_teacher': t_t1.detach().cpu().numpy()})
@@ -233,22 +233,22 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
                     t_logit -= t_logit.mean(dim=1).view(-1, 1).detach()
 
             s_logit = student(fake[:, :, 0, :, :])
-            print('Student output:')
-            print(s_logit.argmax(dim=1))
-            print('Student confidences')
-            print(s_logit.max(dim=1))
-
-            t1 = 100 * accuracy(s_logit, t_argmax, top_k=1)
-            t5 = 100 * accuracy(s_logit, t_argmax, top_k=5)
-            wandb.log({'student_T1_via_teacher': t1.detach().cpu().numpy()})
-            wandb.log({'student_T5_via_teacher': t5.detach().cpu().numpy()})
-
             loss_S = student_loss(args, s_logit, t_logit)
             loss_S.backward()
             optimizer_S.step()
 
             total_loss_S += loss_S.item()
             wandb.log({'loss_S_verbose': loss_S.item()})
+
+            print('Student output:')
+            print(s_logit.argmax(dim=1))
+            print('Student confidences')
+            print(s_logit.max(dim=1)[0])
+
+            t1 = 100 * accuracy(s_logit, t_argmax, top_k=1)
+            t5 = 100 * accuracy(s_logit, t_argmax, top_k=5)
+            wandb.log({'student_T1_via_teacher': t1.detach().cpu().numpy()})
+            wandb.log({'student_T5_via_teacher': t5.detach().cpu().numpy()})
 
             if debug_distribution:
                 # TODO: Also print confidence, possibly for T-5 predicted classes
