@@ -40,7 +40,7 @@ def parse_args():
     parser.add_argument('--nz', type=int, default=256, help="Size of random noise input to generator")
 
     parser.add_argument('--log_interval', type=int, default=10, metavar='N', help='how many batches to wait before logging training status')
-
+    parser.add_argument('--generator_checkpoint', type=str, default='')
     parser.add_argument('--loss', type=str, default='l1', choices=['l1', 'kl'], )
     parser.add_argument('--scheduler', type=str, default='multistep', choices=['multistep', 'cosine', "none"], )
     parser.add_argument('--steps', nargs='+', default=[0.1, 0.3, 0.5], type=float, help="Percentage epochs at which to take next step")
@@ -173,11 +173,13 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             fake = fake.unsqueeze(dim=2)
 
             ## APPOX GRADIENT
-            approx_grad_wrt_x, loss_G = estimate_gradient_objective(
-                args, teacher, student, fake, labels=labels,
-                epsilon=args.grad_epsilon, m=args.grad_m, num_classes=args.num_classes,
-                device=device, pre_x=True)
+            # approx_grad_wrt_x, loss_G = estimate_gradient_objective(
+            #     args, teacher, student, fake, labels=labels,
+            #     epsilon=args.grad_epsilon, m=args.grad_m, num_classes=args.num_classes,
+            #     device=device, pre_x=True)
 
+            approx_grad_wrt_x, loss_G = compute_gradient(
+                args, teacher, student, fake, device=device, pre_x=True)
             fake.backward(approx_grad_wrt_x)
             optimizer_G.step()
 
@@ -495,6 +497,13 @@ def main():
         optimizer_G = optim.SGD(generator.parameters(), lr=args.lr_G, weight_decay=args.weight_decay, momentum=0.9)
     else:
         optimizer_G = optim.Adam(generator.parameters(), lr=args.lr_G)
+
+    if args.generator_checkpoint:
+        checkpoint = torch.load(args.generator_checkpoint, map_location=device)
+        generator.load_state_dict(checkpoint['generator'])
+        optimizer_G.load_state_dict(checkpoint['optimizer_G'])
+        for g in optimizer_G.param_groups:
+            g['lr'] = args.lr_G
 
     steps = sorted([int(step * number_epochs) for step in args.steps])
     print("Learning rate scheduling at steps: ", steps)

@@ -3,11 +3,9 @@ import torch
 import torch.nn.functional as F
 import torchvision.models as models
 import wandb
+from torchmetrics.functional import accuracy
 
 import network
-
-
-# from cifar10_models import *
 
 
 def estimate_gradient_objective(args, victim_model, clone_model, x, labels=None, epsilon=1e-7, m=5, verb=False, num_classes=400, device="cpu", pre_x=False):
@@ -126,7 +124,7 @@ def compute_gradient(args, victim_model, clone_model, x, pre_x=False, device="cp
         raise ValueError(args.G_activation)
 
     clone_model.eval()
-    N = x.size(0)
+    # N = x.size(0)
     x_copy = x.clone().detach().requires_grad_(True)
     x_ = x_copy.to(device)
 
@@ -134,35 +132,29 @@ def compute_gradient(args, victim_model, clone_model, x, pre_x=False, device="cp
         x_ = args.G_activation(x_)
 
     x_swin = network.swin.swin_transform(x_)
-    pred_victim = victim_model(x_swin, return_loss=False)
+    # pred_victim = victim_model(x_swin, return_loss=False)
     pred_clone = clone_model(x_)
+    loss = victim_model(x_swin, pred_clone)['loss_cls']
+    loss.backward()
 
-    if args.loss == "l1":
-        loss_fn = F.l1_loss
-        if args.no_logits:
-            pred_victim_no_logits = torch.log(pred_victim)
-            if args.logit_correction == 'min':
-                pred_victim = pred_victim_no_logits - pred_victim_no_logits.min(dim=1).values.view(-1, 1)
-            elif args.logit_correction == 'mean':
-                pred_victim = pred_victim_no_logits - pred_victim_no_logits.mean(dim=1).view(-1, 1)
-            else:
-                pred_victim = pred_victim_no_logits
+    with torch.no_grad():
+        wandb.log({'loss_G_conditional': loss.detach().cpu().numpy()})
+        pred_victim = torch.Tensor(victim_model(x_swin, return_loss=False)).to(device)
+        argmax_victim = torch.argmax(pred_victim, dim=1)
+        print('Teacher predictions')
+        print(argmax_victim)
+        print('Student predictions')
+        print(torch.argmax(pred_clone, dim=1))
 
-    elif args.loss == "kl":
-        loss_fn = F.kl_div
-        pred_clone = F.log_softmax(pred_clone, dim=1)
-        pred_victim = pred_victim
-
-    else:
-        raise ValueError(args.loss)
-
-    loss_values = -loss_fn(pred_clone, pred_victim, reduction='mean')
-    # print("True mean loss", loss_values)
-    loss_values.backward()
-
-    clone_model.train()
-
-    return x_copy.grad, loss_values
+        t1 = 100 * accuracy(pred_clone, argmax_victim, top_k=1)
+        t5 = 100 * accuracy(pred_clone, argmax_victim, top_k=5)
+        wandb.log({'student_T1_via_teacher': t1.detach().cpu().numpy()})
+        wandb.log({'student_T5_via_teacher': t5.detach().cpu().numpy()})
+        # print('student_T5_via_teacher')
+        # print(t5)
+        # print('student_T1_via_teacher')
+        # print(t1)
+    return x_copy.grad, loss
 
 
 class Args(dict):
