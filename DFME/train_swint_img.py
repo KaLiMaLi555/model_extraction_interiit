@@ -165,11 +165,12 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
         for _ in range(args.g_iter):
             # Sample Random Noise
             labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
+            labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
             z = torch.randn((args.batch_size, args.nz)).to(device)
             optimizer_G.zero_grad()
             generator.train()
             # Get fake image from generator
-            fake = generator(z, label=labels, pre_x=args.approx_grad)  # pre_x returns the output of G before applying the activation
+            fake = generator(z, label=labels_oh, pre_x=args.approx_grad)  # pre_x returns the output of G before applying the activation
             fake = fake.unsqueeze(dim=2)
 
             ## APPOX GRADIENT
@@ -194,8 +195,9 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
 
         for _ in range(args.d_iter):
             labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
+            labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
             z = torch.randn((args.batch_size, args.nz)).to(device)
-            fake = generator(z, label=labels).detach()
+            fake = generator(z, label=labels_oh).detach()
             # print(fake)
             # with open("weird_tens.pkl", "wb+") as f:
             #   pickle.dump(fake.cpu(), f)
