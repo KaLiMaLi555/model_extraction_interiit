@@ -14,6 +14,7 @@ from mmaction.models import build_model
 from mmcv import Config
 from mmcv.runner import load_checkpoint
 from torch.utils.data import DataLoader
+from torchmetrics.functional import accuracy
 from tqdm import tqdm
 
 from approximate_gradients_swint_img import *
@@ -179,6 +180,8 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             #     epsilon=args.grad_epsilon, m=args.grad_m, num_classes=args.num_classes,
             #     device=device, pre_x=True)
 
+            print('Expected labels')
+            print(labels)
             approx_grad_wrt_x, loss_G = compute_gradient(
                 args, teacher, student, fake, device=device, pre_x=True)
             fake.backward(approx_grad_wrt_x)
@@ -208,12 +211,18 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             with torch.no_grad():
                 fake_teacher = network.swin.swin_transform(fake.detach())
                 t_logit = teacher(fake_teacher, return_loss=False)
+                t_logit = torch.Tensor(t_logit).to(device)
+                t_argmax = t_logit.argmax(axis=1)
                 print('Expected labels:')
                 print(labels)
                 print('Teacher output:')
-                print(t_logit.argmax(axis=1))
-                # TODO: Count number of correct generations as a metric
-                t_logit = torch.Tensor(t_logit).to(device)
+                print(t_argmax)
+                print('Teacher confidences:')
+                print(t_logit.max(axis=1))
+                t_t1 = 100 * accuracy(t_logit, labels, top_k=1)
+                t_t5 = 100 * accuracy(t_logit, labels, top_k=5)
+                wandb.log({'generator_T1_via_teacher': t_t1.detach().cpu().numpy()})
+                wandb.log({'generator_T5_via_teacher': t_t5.detach().cpu().numpy()})
 
             # Correction for the fake logits
             if args.loss == "l1" and args.no_logits:
@@ -226,6 +235,13 @@ def train(args, teacher, student, generator, device, optimizer, epoch):
             s_logit = student(fake[:, :, 0, :, :])
             print('Student output:')
             print(s_logit.argmax(dim=1))
+            print('Student confidences')
+            print(s_logit.max(dim=1))
+
+            t1 = 100 * accuracy(s_logit, t_argmax, top_k=1)
+            t5 = 100 * accuracy(s_logit, t_argmax, top_k=5)
+            wandb.log({'student_T1_via_teacher': t1.detach().cpu().numpy()})
+            wandb.log({'student_T5_via_teacher': t5.detach().cpu().numpy()})
 
             loss_S = student_loss(args, s_logit, t_logit)
             loss_S.backward()

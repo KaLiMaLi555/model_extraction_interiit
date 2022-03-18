@@ -132,6 +132,7 @@ def compute_gradient(args, victim_model, clone_model, x, pre_x=False, device="cp
         x_ = args.G_activation(x_)
 
     x_swin = network.swin.swin_transform(x_)
+    print(x_.shape)
     # pred_victim = victim_model(x_swin, return_loss=False)
     pred_clone = clone_model(x_[:, :, 0, :, :])
     loss = victim_model(x_swin, pred_clone)['loss_cls']
@@ -143,8 +144,12 @@ def compute_gradient(args, victim_model, clone_model, x, pre_x=False, device="cp
         argmax_victim = torch.argmax(pred_victim, dim=1)
         print('Teacher predictions')
         print(argmax_victim)
+        print('Teacher confidences')
+        print(pred_victim.max(dim=1))
         print('Student predictions')
         print(torch.argmax(pred_clone, dim=1))
+        print('Student confidences')
+        print(pred_clone.max(dim=1))
 
         t1 = 100 * accuracy(pred_clone, argmax_victim, top_k=1)
         t5 = 100 * accuracy(pred_clone, argmax_victim, top_k=5)
