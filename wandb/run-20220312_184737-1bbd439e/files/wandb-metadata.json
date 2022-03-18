@@ -1,0 +1,34 @@
+{
+    "os": "Linux-5.4.144+-x86_64-with-Ubuntu-18.04-bionic",
+    "python": "3.7.12",
+    "heartbeatAt": "2022-03-12T18:47:41.344698",
+    "startedAt": "2022-03-12T18:47:37.983993",
+    "docker": null,
+    "gpu": "Tesla T4",
+    "gpu_count": 1,
+    "cpu_count": 8,
+    "cuda": null,
+    "args": [
+        "--wandb_api_key",
+        "5e3e5810a102939f20929d2151ad1ff25edac441",
+        "--wandb",
+        "--wandb_watch",
+        "--wandb_save",
+        "--wandb_name",
+        "dfad_video_lr_1e-3_kldiv",
+        "--checkpoint_path",
+        "/content/DFAD_video_ckpts_pretrain_false"
+    ],
+    "state": "running",
+    "program": "DFAD/DFAD_video_swapped.py",
+    "codePath": "DFAD/DFAD_video_swapped.py",
+    "git": {
+        "remote": "https://github.com/shubhraneel/model_extraction_interiit/",
+        "commit": "4a1afe114fb57703ca711025fc21c204ae0c2d71"
+    },
+    "email": null,
+    "root": "/content/model_extraction_interiit",
+    "host": "8ad7d6b05d8d",
+    "username": "root",
+    "executable": "/usr/bin/python3"
+}
