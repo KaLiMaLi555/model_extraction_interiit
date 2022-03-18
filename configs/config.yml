@@ -1,0 +1,36 @@
+experiment:
+  name: experiment1
+  type: blackbox
+  batch_size: 16
+  dataset: k400
+  train:
+    flag: true
+    logits_file: data/logits/swin_train_logits.pkl
+    input_dir: data/k400/train_frames/
+    load_from_disk: true
+    epochs: 50 
+    learning_rate: 1e-3
+  val:
+    flag: true
+    logits_file: data/logits/swin_val_logits.pkl
+    input_dir: data/k400/val_frames/
+    load_from_disk: true
+  test:
+    flag: true
+    logits_file: data/logits/swin_test_logits.pkl
+    input_dir: data/k400/test_frames/
+    load_from_disk: true
+  attacker_model_name: swin-t
+  victim_model_name: resnet-lstm
+dataset:
+  logit_generation:
+    video_dir_path: data/k400/val_frames
+    model_name: swin-t
+    logit_dir: data/logits/swin_val_logits.pkl
+    dataset: k400
+    dataset_type: val
+    num_classes: 400
+    batch_size: 16
+
+
+
