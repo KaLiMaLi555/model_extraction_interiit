@@ -46,13 +46,13 @@ def parse_args():
     parser.add_argument('--checkpoint_path', type=str, default="/drive/MyDrive/DFAD_video_ckpts")
     parser.add_argument('--wandb_save', action="store_true")
 
-    parser.add_argument('--vid_dir_path', type=str, default="/content")
-    parser.add_argument('--logit_dir', type=str, default="/content")
+    parser.add_argument('vid_dir_path', type=str, default="/content")
+    parser.add_argument('logit_dir_path', type=str, default="/content")
 
     return parser.parse_args()
 
 
-def gen_examples(args, generator, teacher, device, epoch, vid_dir_path:str, logit_dir:str):
+def gen_examples(args, generator, teacher, device, epoch):
     # TODO: Make sure running with no_grad!!
     counter = 0
     teacher.eval()
@@ -82,7 +82,7 @@ def gen_examples(args, generator, teacher, device, epoch, vid_dir_path:str, logi
             print(PIL_image.size)
             break
             os.mkdir(os.path.join(dir_path, str(counter)))
-            PIL_image.save(os.path.join(dir_path, str(counter), str(counter) + ".png"))
+            PIL_image.save(os.path.join(args.vid_dir_path, str(counter), str(counter) + ".png"))
             counter += 1
 
         for i in logits:
@@ -91,8 +91,8 @@ def gen_examples(args, generator, teacher, device, epoch, vid_dir_path:str, logi
         for j in logits_argmax:
             labs.extend(j.cpu().numpy())
         logs = torch.stack(logs)
-        pickle.dump(logs, open(os.path.join(logit_dir, "SwinT" + "_logits_" + "Cgan_gen_1" + ".pkl"), "wb"))
-        pickle.dump(labs, open(os.path.join(logit_dir, "SwinT" + "_logits_argmax_" + "Cgan_gen_1" + ".pkl"), "wb"))
+        pickle.dump(logs, open(os.path.join(args.logit_dir_path, "SwinT" + "_logits_" + "Cgan_gen_1" + ".pkl"), "wb"))
+        pickle.dump(labs, open(os.path.join(args.logit_dir_path, "SwinT" + "_logits_argmax_" + "Cgan_gen_1" + ".pkl"), "wb"))
 
 
 
@@ -158,7 +158,7 @@ def main():
 
     with torch.no_grad():
         for epoch in range(1, 25 + 1):
-            gen_examples(args, generator, teacher, device, epoch, args.vid_dir_path, args.logit_dir_path)
+            gen_examples(args, generator, teacher, device, epoch)
 
 
 if __name__ == '__main__':
