@@ -61,7 +61,7 @@ def gen_examples(args, generator, teacher, device, epoch, vid_dir_path:str=None,
         z = torch.randn((args.batch_size, args.nz)).to(device)
 
         fake = generator(z, label=labels_oh, pre_x=True).to(device)
-        fake = fake.unsqueeze(dim=2)
+#         fake = fake.unsqueeze(dim=2)
         fake = args.G_activation(fake)
         print(fake.shape)
         break
