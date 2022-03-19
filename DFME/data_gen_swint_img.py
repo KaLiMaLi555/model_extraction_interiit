@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from approximate_gradients_swint_img_pretrain import *
 from utils.wandb_utils import init_wandb
+import pickle
 
 print("torch version", torch.__version__)
 
@@ -60,7 +61,7 @@ def gen_examples(args, generator, teacher, device, epoch):
     distribution = []
     logs = []
     labs = []
-    for i in tqdm(range(50), position=0, leave=True):
+    for i in tqdm(range(1), position=0, leave=True):
         labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
         labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
         z = torch.randn((args.batch_size, args.nz)).to(device)
@@ -69,7 +70,7 @@ def gen_examples(args, generator, teacher, device, epoch):
         fake = fake.unsqueeze(dim=2)
         fake = args.G_activation(fake)
         vid = fake.squeeze(dim=2).cpu().numpy()
-        print(f'Vid_shape = {vid.shape}')
+        # print(f'Vid_shape = {vid.shape}')
         x_swin = network.swin.swin_transform(fake)
         logits = torch.Tensor(teacher(x_swin, return_loss=False)).to(device)
         logits_argmax = torch.argmax(logits.detach(), dim=1)
@@ -77,10 +78,10 @@ def gen_examples(args, generator, teacher, device, epoch):
 
         for img in vid:
             img = img.transpose(1, 2, 0)
-            print(img.shape)
+            # print(img.shape)
             PIL_image = Image.fromarray(np.uint8(img*255)).convert('RGB')
-            print(PIL_image.size)
-            break
+            # print(PIL_image.size)
+            # break
             os.mkdir(os.path.join(dir_path, str(counter)))
             PIL_image.save(os.path.join(args.vid_dir_path, str(counter), str(counter) + ".png"))
             counter += 1
