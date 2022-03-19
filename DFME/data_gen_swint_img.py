@@ -54,7 +54,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def gen_examples(args, generator, teacher, device, epoch):
+def gen_examples(args, generator, teacher, device, epoch=None):
     # TODO: Make sure running with no_grad!!
     counter = 0
     teacher.eval()
@@ -161,7 +161,7 @@ def main():
 
     with torch.no_grad():
         # for epoch in range(1, 25 + 1):
-        gen_examples(args, generator, teacher, device, epoch)
+        gen_examples(args, generator, teacher, device)
 
 
 if __name__ == '__main__':
