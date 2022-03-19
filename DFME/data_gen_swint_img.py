@@ -109,7 +109,8 @@ def gen_examples(args, generator, teacher, device, epoch):
         # TODO: save logits file
 
     c = Counter(list(np.array(distribution).flatten())).most_common()
-    wandb.run.summary[f'Distribution epoch {epoch}'] = c
+    if args.wandb:
+        wandb.run.summary[f'Distribution epoch {epoch}'] = c
     print('\n\n---------Distribution---------')
     print(c)
     print('---------Distribution---------\n\n')
