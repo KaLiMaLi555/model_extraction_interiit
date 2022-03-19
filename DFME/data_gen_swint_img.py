@@ -64,8 +64,8 @@ def gen_examples(args, generator, teacher, device, epoch=None):
     labs = []
     for i in tqdm(range(1), position=0, leave=True):
         # labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
-        labels = (torch.ones((args.batch_size))).to(device)
-        labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
+        labels = (torch.ones(args.batch_size)).to(device)
+        labels_oh = torch.nn.functional.one_hot(labels.to(torch.int64), args.num_classes)
         z = torch.randn((args.batch_size, args.nz)).to(device)
 
         fake = generator(z, label=labels_oh, pre_x=True).to(device)
