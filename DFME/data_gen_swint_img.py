@@ -158,7 +158,7 @@ def main():
 
     with torch.no_grad():
         for epoch in range(1, 25 + 1):
-            gen_examples(args, generator, teacher, device, epoch)
+            gen_examples(args, generator, teacher, device, epoch, args.vid_dir_path, args.logit_dir_path)
 
 
 if __name__ == '__main__':
