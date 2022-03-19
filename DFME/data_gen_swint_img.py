@@ -62,7 +62,7 @@ def gen_examples(args, generator, teacher, device, epoch=None):
     distribution = []
     logs = []
     labs = []
-    for i in tqdm(range(1), position=0, leave=True):
+    for i in tqdm(range(500), position=0, leave=True):
         labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
         labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
         z = torch.randn((args.batch_size, args.nz)).to(device)
@@ -91,7 +91,6 @@ def gen_examples(args, generator, teacher, device, epoch=None):
             counter += 1
 
         for i in logits:
-            print(i.shape)
             logs.append(i.cpu())
 
 
