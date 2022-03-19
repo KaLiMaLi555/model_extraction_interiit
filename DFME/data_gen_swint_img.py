@@ -83,7 +83,7 @@ def gen_examples(args, generator, teacher, device, epoch):
             PIL_image = Image.fromarray(np.uint8(img*255)).convert('RGB')
             # print(PIL_image.size)
             # break
-            os.mkdir(os.path.join(dir_path, str(counter)))
+            os.mkdir(os.path.join(args.vid_dir_path, str(counter)))
             PIL_image.save(os.path.join(args.vid_dir_path, str(counter), str(counter) + ".png"))
             counter += 1
 
