@@ -94,7 +94,7 @@ def gen_examples(args, generator, teacher, device, epoch=None):
             print(i.shape)
             logs.append(i.cpu())
 
-        print(logs.shape)
+
         
 
         logs = torch.stack(logs)
