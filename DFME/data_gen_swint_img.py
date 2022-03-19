@@ -59,6 +59,7 @@ def gen_examples(args, generator, teacher, device, epoch):
     generator.eval()
     distribution = []
     logs = []
+    labs = []
     for i in tqdm(range(50), position=0, leave=True):
         labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
         labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
