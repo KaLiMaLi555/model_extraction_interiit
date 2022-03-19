@@ -46,33 +46,55 @@ def parse_args():
     parser.add_argument('--checkpoint_path', type=str, default="/drive/MyDrive/DFAD_video_ckpts")
     parser.add_argument('--wandb_save', action="store_true")
 
+    parser.add_argument('vid_dir_path', type=str, default="/content")
+    parser.add_argument('logit_dir', type=str, default="/content")
+
     return parser.parse_args()
 
 
-def gen_examples(args, generator, teacher, device, epoch, vid_dir_path:str=None, logit_dir:str=None):
+def gen_examples(args, generator, teacher, device, epoch, vid_dir_path:str, logit_dir:str):
     # TODO: Make sure running with no_grad!!
+    counter = 0
     teacher.eval()
     generator.eval()
     distribution = []
-    logits = []
+    logs = []
     for i in tqdm(range(50), position=0, leave=True):
         labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
         labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
         z = torch.randn((args.batch_size, args.nz)).to(device)
 
         fake = generator(z, label=labels_oh, pre_x=True).to(device)
-#         fake = fake.unsqueeze(dim=2)
+        fake = fake.unsqueeze(dim=2)
         fake = args.G_activation(fake)
-        print(fake.shape)
-        break
-        PIL_image = Image.fromarray(np.uint8(fake)).convert('RGB')
-
-        os.mkdir(os.path.join(dir_path, str(i)))
-        PIL_image.save(os.path.join(dir_path, str(i), str(i) + ".png"))
+        fake = fake.squeeze(dim=2)
+        vid = fake.cpu().numpy()
+        print(f'Vid_shape = {vid.shape}')
         x_swin = network.swin.swin_transform(fake)
         logits = torch.Tensor(teacher(x_swin, return_loss=False)).to(device)
         logits_argmax = torch.argmax(logits.detach(), dim=1)
         distribution.append(logits_argmax.cpu().numpy())
+
+        for img in vid:
+            img = img.transpose(1, 2, 0)
+            print(img.shape)
+            PIL_image = Image.fromarray(np.uint8(img*255)).convert('RGB')
+            print(PIL_image.size)
+            break
+            os.mkdir(os.path.join(dir_path, str(counter)))
+            PIL_image.save(os.path.join(dir_path, str(counter), str(counter) + ".png"))
+            counter += 1
+
+        for i in logits:
+            logs.extend(i.cpu())
+        
+        for j in logits_argmax:
+            labs.extend(j.cpu().numpy())
+        logs = torch.stack(logs)
+        pickle.dump(logs, open(os.path.join(logit_dir, "SwinT" + "_logits_" + "Cgan_gen_1" + ".pkl"), "wb"))
+        pickle.dump(labs, open(os.path.join(logit_dir, "SwinT" + "_logits_argmax_" + "Cgan_gen_1" + ".pkl"), "wb"))
+
+
 
         print('Expected')
         print(labels)
@@ -80,7 +102,7 @@ def gen_examples(args, generator, teacher, device, epoch, vid_dir_path:str=None,
         print(logits_argmax)
         print('Confidences')
         print(logits.max(dim=1)[0])
-        pickle.dump(logits, open(os.path.join(logit_dir, "SwinT" + "_logits_" + "Cgan_gen_1" + ".pkl"), "wb"))
+        
 
         # TODO: mult image by 255 and save as png
         # TODO: save logits file
