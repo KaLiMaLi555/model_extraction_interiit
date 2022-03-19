@@ -46,8 +46,8 @@ def parse_args():
     parser.add_argument('--checkpoint_path', type=str, default="/drive/MyDrive/DFAD_video_ckpts")
     parser.add_argument('--wandb_save', action="store_true")
 
-    parser.add_argument('vid_dir_path', type=str, default="/content")
-    parser.add_argument('logit_dir', type=str, default="/content")
+    parser.add_argument('--vid_dir_path', type=str, default="/content")
+    parser.add_argument('--logit_dir', type=str, default="/content")
 
     return parser.parse_args()
 
