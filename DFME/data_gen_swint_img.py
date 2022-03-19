@@ -96,22 +96,22 @@ def gen_examples(args, generator, teacher, device, epoch=None):
 
         
 
-        logs = torch.stack(logs)
-        pickle.dump(logs, open(os.path.join(args.logit_dir_path, "SwinT" + "_logits_" + "Cgan_gen_500x64" + ".pkl"), "wb"))
-        pickle.dump(distribution, open(os.path.join(args.logit_dir_path, "SwinT" + "_logits_argmax_" + "Cgan_gen_500x64" + ".pkl"), "wb"))
+    logs = torch.stack(logs)
+    pickle.dump(logs, open(os.path.join(args.logit_dir_path, "SwinT" + "_logits_" + "Cgan_gen_500x64" + ".pkl"), "wb"))
+    pickle.dump(distribution, open(os.path.join(args.logit_dir_path, "SwinT" + "_logits_argmax_" + "Cgan_gen_500x64" + ".pkl"), "wb"))
 
 
 
-        print('Expected')
-        print(labels)
-        print('Predictions')
-        print(logits_argmax)
-        print('Confidences')
-        print(logits.max(dim=1)[0])
-        
+    print('Expected')
+    print(labels)
+    print('Predictions')
+    print(logits_argmax)
+    print('Confidences')
+    print(logits.max(dim=1)[0])
+    
 
-        # TODO: mult image by 255 and save as png
-        # TODO: save logits file
+    # TODO: mult image by 255 and save as png
+    # TODO: save logits file
 
     c = Counter(list(np.array(distribution).flatten())).most_common()
     if args.wandb:
