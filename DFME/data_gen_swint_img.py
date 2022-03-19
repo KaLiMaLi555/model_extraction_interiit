@@ -160,8 +160,8 @@ def main():
         init_wandb(generator, args.wandb_api_key, args.wandb_resume, args.wandb_name, args.wandb_project, args.wandb_run_id, args.wandb_watch)
 
     with torch.no_grad():
-        for epoch in range(1, 25 + 1):
-            gen_examples(args, generator, teacher, device, epoch)
+        # for epoch in range(1, 25 + 1):
+        gen_examples(args, generator, teacher, device, epoch)
 
 
 if __name__ == '__main__':
