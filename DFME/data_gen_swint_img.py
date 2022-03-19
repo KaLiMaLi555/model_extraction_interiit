@@ -74,7 +74,9 @@ def gen_examples(args, generator, teacher, device, epoch=None):
         # print(f'Vid_shape = {vid.shape}')
         x_swin = network.swin.swin_transform(fake)
         logits = torch.Tensor(teacher(x_swin, return_loss=False)).to(device)
+        print(f'Logits shape = {logits.shape}')
         logits_argmax = torch.argmax(logits.detach(), dim=1)
+
         distribution.append(logits_argmax.cpu().numpy())
 
         
@@ -89,6 +91,7 @@ def gen_examples(args, generator, teacher, device, epoch=None):
             counter += 1
 
         for i in logits:
+            print(i.shape)
             logs.extend(i.cpu())
         
 
