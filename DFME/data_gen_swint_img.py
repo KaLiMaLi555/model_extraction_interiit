@@ -2,7 +2,8 @@ import argparse
 import random
 from collections import Counter
 from pprint import pprint
-
+from PIL import Image
+import numpy as np
 import torch
 import wandb
 from mmaction.models import build_model
@@ -48,11 +49,12 @@ def parse_args():
     return parser.parse_args()
 
 
-def gen_examples(args, generator, teacher, device, epoch):
+def gen_examples(args, generator, teacher, device, epoch, vid_dir_path:str, logit_dir:str):
     # TODO: Make sure running with no_grad!!
     teacher.eval()
     generator.eval()
     distribution = []
+    logits = []
     for i in tqdm(range(50), position=0, leave=True):
         labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
         labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
@@ -60,8 +62,13 @@ def gen_examples(args, generator, teacher, device, epoch):
 
         fake = generator(z, label=labels_oh, pre_x=True).to(device)
         fake = fake.unsqueeze(dim=2)
-
         fake = args.G_activation(fake)
+        print(fake.shape)
+        break
+        PIL_image = Image.fromarray(np.uint8(fake)).convert('RGB')
+
+        os.mkdir(os.path.join(dir_path, str(i)))
+        PIL_image.save(os.path.join(dir_path, str(i), str(i) + ".png"))
         x_swin = network.swin.swin_transform(fake)
         logits = torch.Tensor(teacher(x_swin, return_loss=False)).to(device)
         logits_argmax = torch.argmax(logits.detach(), dim=1)
@@ -73,6 +80,7 @@ def gen_examples(args, generator, teacher, device, epoch):
         print(logits_argmax)
         print('Confidences')
         print(logits.max(dim=1)[0])
+        pickle.dump(logits, open(os.path.join(logit_dir, "SwinT" + "_logits_" + "Cgan_gen_1" + ".pkl"), "wb"))
 
         # TODO: mult image by 255 and save as png
         # TODO: save logits file
