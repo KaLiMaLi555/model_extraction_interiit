@@ -77,13 +77,14 @@ def gen_examples(args, generator, teacher, device, epoch):
         logits_argmax = torch.argmax(logits.detach(), dim=1)
         distribution.append(logits_argmax.cpu().numpy())
 
-        os.mkdir(os.path.join(args.vid_dir_path, str(counter)))
+        
         for img in vid:
             img = img.transpose(1, 2, 0)
             # print(img.shape)
             PIL_image = Image.fromarray(np.uint8(img*255)).convert('RGB')
             # print(PIL_image.size)
             # break
+            os.mkdir(os.path.join(args.vid_dir_path, str(counter)))
             PIL_image.save(os.path.join(args.vid_dir_path, str(counter), str(counter) + ".png"))
             counter += 1
 
