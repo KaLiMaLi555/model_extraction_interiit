@@ -49,7 +49,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def gen_examples(args, generator, teacher, device, epoch, vid_dir_path:str, logit_dir:str):
+def gen_examples(args, generator, teacher, device, epoch, vid_dir_path:str=None, logit_dir:str=None):
     # TODO: Make sure running with no_grad!!
     teacher.eval()
     generator.eval()
