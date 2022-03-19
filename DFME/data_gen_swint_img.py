@@ -88,11 +88,10 @@ def gen_examples(args, generator, teacher, device, epoch):
         for i in logits:
             logs.extend(i.cpu())
         
-        for j in logits_argmax:
-            labs.extend(j.cpu().numpy())
+
         logs = torch.stack(logs)
         pickle.dump(logs, open(os.path.join(args.logit_dir_path, "SwinT" + "_logits_" + "Cgan_gen_1" + ".pkl"), "wb"))
-        pickle.dump(labs, open(os.path.join(args.logit_dir_path, "SwinT" + "_logits_argmax_" + "Cgan_gen_1" + ".pkl"), "wb"))
+        pickle.dump(distribution, open(os.path.join(args.logit_dir_path, "SwinT" + "_logits_argmax_" + "Cgan_gen_1" + ".pkl"), "wb"))
 
 
 
