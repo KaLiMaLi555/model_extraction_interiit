@@ -111,19 +111,32 @@ def compute_gradient(args, teacher, x, labels=None, device="cpu", pre_x=False):
 
     x_copy = x.clone().detach().requires_grad_(True)
     x_ = x_copy.to(device)
+    labels = labels.to(device)
 
     if pre_x:
         x_ = args.G_activation(x_)
 
     x_swin = network.swin.swin_transform(x_)
-    pred_teacher, loss = teacher(x_swin, torch.nn.functional.one_hot(labels, 400))
+    loss = teacher(x_swin, torch.nn.functional.one_hot(labels, 400))['loss_cls']
+    loss.backward()
 
-    conditional_loss = F.cross_entropy(pred_teacher, labels, reduction='none')
-    loss_values = conditional_loss
-    # print("True mean loss", loss_values)
-    loss_values.backward()
+    with torch.no_grad():
+        wandb.log({'loss_G_conditional': loss.detach().cpu().numpy()})
+        pred_teacher = torch.Tensor(teacher(x_swin, return_loss=False)).to(device)
+        print('Expected Labels')
+        print(labels)
+        print('Teacher predictions')
+        print(torch.argmax(pred_teacher, dim=1))
 
-    return x_copy.grad, loss_values
+        t1 = 100 * accuracy(pred_teacher, labels, top_k=1)
+        t5 = 100 * accuracy(pred_teacher, labels, top_k=5)
+        print('T1 accuracy')
+        print(t1)
+        wandb.log({'T1': t1.detach().cpu().numpy()})
+        print('T5 accuracy')
+        print(t5)
+        wandb.log({'T5': t5.detach().cpu().numpy()})
+    return x_copy.grad, loss
 
 
 class Args(dict):
