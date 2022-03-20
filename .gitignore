@@ -1,3 +1,6 @@
+# Jetbrains project files
+**/.idea
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -127,3 +130,26 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+swin_tiny_patch244_window877_kinetics400_1k.pth
+/DFAD/checkpoint
+/DFAD/dataset
+/DFAD/images
+/DFAD/network/segmentation
+/DFAD/network/cnn_lstm.py
+/DFAD/network/gan.py
+/DFAD/network/lenet.py
+/DFAD/network/resnet_8x.py
+/DFAD/utils
+/DFAD/dataloader.py
+/DFAD/DFAD_caltech101.py
+/DFAD/DFAD_camvid_deeplab.py
+/DFAD/DFAD_cifar.py
+/DFAD/DFAD_mnist.py
+/DFAD/DFAD_nyu_deeplab.py
+/DFAD/get_results.py
+/DFAD/run_mnist.sh
+/DFAD/train_teacher_seg.py
+/DFAD/train_teacher.py
+
+data/

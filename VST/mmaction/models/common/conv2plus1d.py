@@ -3,7 +3,7 @@ from mmcv.cnn import CONV_LAYERS, build_norm_layer, constant_init, kaiming_init
 from torch.nn.modules.utils import _triple
 
 
-@CONV_LAYERS.register_module()
+# @CONV_LAYERS.register_module()
 class Conv2plus1d(nn.Module):
     """(2+1)d Conv module for R(2+1)d backbone.
 
