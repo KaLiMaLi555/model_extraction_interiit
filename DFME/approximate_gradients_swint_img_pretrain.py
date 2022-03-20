@@ -2,8 +2,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import wandb
-
 from torchmetrics.functional import accuracy
+
 import network
 
 
@@ -66,25 +66,26 @@ def estimate_gradient_objective(args, teacher, x, labels=None, epsilon=1e-7, m=5
         # u = u.to(device)
 
         conditional_loss = F.cross_entropy(pred_teacher, exp_labels, reduction='none').view(-1, m + 1).to(device)
-
-        with torch.no_grad():
-            print('Expected Labels')
-            print(labels)
-            print('Teacher predictions')
-            print(torch.argmax(pred_teacher, dim=1))
-
-            t1 = 100 * accuracy(pred_teacher, labels, top_k=1)
-            t5 = 100 * accuracy(pred_teacher, labels, top_k=5)
-            print('T1 accuracy')
-            print(t1)
-            wandb.log({'T1': t1.detach().cpu().numpy()})
-            print('T5 accuracy')
-            print(t5)
-            wandb.log({'T5': t5.detach().cpu().numpy()})
-
-            print(f'Conditional Loss: {conditional_loss[:, -1].mean().item()}')
-            wandb.log({'loss_G_conditional': conditional_loss[:, -1].mean().item()})
         loss_values = conditional_loss
+
+        print('Expected Labels')
+        print(labels)
+        print('Teacher predictions')
+        print(pred_teacher.argmax(dim=1))
+        print('Teacher confidence')
+        print(pred_teacher.max(dim=1)[0])
+
+        t1 = 100 * accuracy(pred_teacher, labels, top_k=1)
+        t5 = 100 * accuracy(pred_teacher, labels, top_k=5)
+        print('G T1 Accuracy')
+        print(t1)
+        wandb.log({'G_T1_Accuracy': t1.detach().cpu().numpy()})
+        print('CGenerator T5 Accuracy')
+        print(t5)
+        wandb.log({'G_T5_Accuracy': t5.detach().cpu().numpy()})
+
+        print(f'Conditional Loss: {conditional_loss[:, -1].mean().item()}')
+        wandb.log({'loss_G_conditional_verbose': conditional_loss[:, -1].mean().item()})
 
         # Compute difference following each direction
         differences = loss_values[:, :-1] - loss_values[:, -1].view(-1, 1)
