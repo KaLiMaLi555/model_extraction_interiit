@@ -113,7 +113,7 @@ def main():
         parameters,
         lr=cfg.learning_rate,
         momentum=cfg.momentum,
-        dampening=dampening,
+        dampening=cfg.dampening,
         weight_decay=cfg.weight_decay,
         nesterov=cfg.nesterov)
 
