@@ -1,82 +1,69 @@
-import torch
+from re import L
 import time
-import wandb
+from pygame import init
+from vidaug import augmentors as va
+
+import torch
 import torch.nn as nn
-from Datasets.datasets import VideoLogitDataset, VideoLabelDataset
+import torch.nn.functional as F
+import torch.optim as optim
+import torch.optim.lr_scheduler as lr_scheduler
+import wandb
+from torch.autograd import Variable
+from utils.wandb import init_wandb
+
+from Datasets.datasets import VideoLabelDataset, VideoLogitDataset
+from torch.utils.data import Dataset, DataLoader
 from models.MARS.model import generate_model
 from utils.mars_utils import *
 
-from torch.autograd import Variable
+def train(model, train_loader, val_loader, optimizer, criterion, epoch, scheduler=None):
+    model.train()
 
-
-def train(model, train_loader, val_loader, optimizer, criterion, epochs, device, scheduler=None):
-    best_val_acc = 0
-    for epoch in range(1, epochs + 1):
-
-        model.train()
-
-        batch_time = AverageMeter()
-        data_time = AverageMeter()
-        losses = AverageMeter()
-        accuracies = AverageMeter()
-
-        end_time = time.time()
-
-        for i, (inputs, targets) in enumerate(train_loader):
-            data_time.update(time.time() - end_time)
-            inputs = torch.permute(inputs, (0, 1, 4, 2, 3))
-            print(inputs.shape)
-            targets = targets.to(torch.float32).argmax(dim=1)
-            targets = targets.cuda(non_blocking=True)
-            inputs = Variable(inputs)
-            targets = Variable(targets)
-            outputs = model(inputs)
-
-            loss = criterion(outputs, targets)
-            acc = calculate_accuracy(outputs, F.one_hot(targets, num_classes=400))
-
-            losses.update(loss.item(), inputs.size(0))
-            accuracies.update(acc, inputs.size(0))
-
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-            batch_time.update(time.time() - end_time)
-            end_time = time.time()
-
-            print('Epoch: [{0}][{1}/{2}]\t'
-                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Acc {acc.val:.3f} ({acc.avg:.3f})'.format(
-                epoch,
-                i + 1,
-                len(train_loader),
-                batch_time=batch_time,
-                data_time=data_time,
-                loss=losses,
-                acc=accuracies))
-            wandb.log({
-                'Training loss': losses.avg,
-                'Training Accuracy': accuracies.avg, }, step=epoch)
-
-
-    model.eval()
-
-    batch_time = AverageMeter()
-    data_time = AverageMeter()
     losses = AverageMeter()
     accuracies = AverageMeter()
 
-    end_time = time.time()
+    for i, (inputs, targets) in enumerate(train_loader):
+        inputs = torch.permute(inputs, (0, 1, 4, 2, 3))
+        print(inputs.shape)
+        targets = targets.to(torch.float32).argmax(dim=1)
+        targets = targets.cuda(non_blocking=True)
+        inputs = Variable(inputs)
+        targets = Variable(targets)
+        outputs = model(inputs)
+
+        loss = criterion(outputs, targets)
+        acc = calculate_accuracy(outputs, F.one_hot(targets, num_classes=400))
+
+        losses.update(loss.item(), inputs.size(0))
+        accuracies.update(acc, inputs.size(0))
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        print('Epoch: [{0}][{1}/{2}]\t'
+                'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                'Acc {acc.val:.3f} ({acc.avg:.3f})'.format(
+            epoch,
+            i + 1,
+            len(train_loader),
+            loss=losses,
+            acc=accuracies))
+
+    return accuracies.avg
+
+def val(model, val_dataloader, criterion, epoch):
+    model.eval()
+
+    losses = AverageMeter()
+    accuracies = AverageMeter()
+
     with torch.no_grad():
-        for i, (inputs, targets) in enumerate(val_loader):
+        for i, (inputs, targets) in enumerate(val_dataloader):
             inputs = torch.permute(inputs, (0, 1, 4, 2, 3))
             targets = targets.to(torch.float32)
             targets = torch.nn.functional.softmax(targets)
-            # pdb.set_trace()
-            data_time.update(time.time() - end_time)
             targets = targets.cuda(non_blocking=True)
             inputs = Variable(inputs)
             targets = Variable(targets)
@@ -87,26 +74,60 @@ def train(model, train_loader, val_loader, optimizer, criterion, epochs, device,
             losses.update(loss.item(), inputs.size(0))
             accuracies.update(acc, inputs.size(0))
 
-            batch_time.update(time.time() - end_time)
-            end_time = time.time()
-
             print('Val_Epoch: [{0}][{1}/{2}]\t'
-                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                   'Acc {acc.val:.3f} ({acc.avg:.3f})'.format(
                 epoch,
                 i + 1,
                 len(val_dataloader),
-                batch_time=batch_time,
-                data_time=data_time,
                 loss=losses,
                 acc=accuracies))
-            wandb.log({
-                'Validation loss': losses.avg,
-                'Validation Accuracy': accuracies.avg, }, step=epoch)
-    if (accuracies.avg > best_val_acc):
-        best_val_acc = accuracies.avg
-        torch.save(model.module.state_dict(),
-                   '/content/drive/MyDrive/checkpoints/K400+UCF30k_SwinT_logit_best_model.pth')
-        # wandb.save('/content/drive/MyDrive/checkpoints/MARS_K600/Exp2/best_model.pth')
+
+    return accuracies.avg
+
+def main():
+
+    print("Creating Model")
+    model, parameters = generate_model(cfg.pretrain_path_ucf, cfg.n_finetune_classes)
+
+    init_wandb(model, parameters)
+
+    print("Creating Dataloaders")
+    if cfg.train_mode == 'logit':
+        finetune_dataset = VideoLogitDataset(cfg.train_video_path, cfg.train_video_name_path, cfg.train_logit_path)
+        val_dataset = VideoLabelDataset(cfg.val_video_path, cfg.val_class_file, cfg.val_label_file, cfg.n_finetune_classes)
+    elif cfg.train_mode == 'label':
+        finetune_dataset = VideoLabelDataset(cfg.train_video_path, cfg.train_video_name_path, cfg.train_label_path)
+        val_dataset = VideoLabelDataset(cfg.val_video_path, cfg.val_class_file, cfg.val_label_file, cfg.n_finetune_classes)
+    else:
+        raise ValueError('Unknown train mode: {}'.format(cfg.train_mode))
+
+    train_data = finetune_dataset
+    val_data = val_dataset    
+
+    train_dataloader = DataLoader(train_data, batch_size = cfg.batch_size, shuffle=True, num_workers = cfg.n_workers, pin_memory = True)
+    val_dataloader   = DataLoader(val_data, batch_size = cfg.batch_size, shuffle=True, num_workers = cfg.n_workers, pin_memory = True)
+
+    print("Creating Training Parameters")
+    optimizer = optim.SGD(
+        parameters,
+        lr=cfg.learning_rate,
+        momentum=cfg.momentum,
+        dampening=dampening,
+        weight_decay=cfg.weight_decay,
+        nesterov=cfg.nesterov)
+
+    criterion = nn.CrossEntropyLoss().cuda()
+    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=cfg.lr_patience)
+
+    best_val_acc = 0
+    for epoch in range(1, cfg.n_epochs + 1):
+        train_acc = train(model, train_dataloader, optimizer, criterion, epoch, device)
+        val_acc = val(model, val_dataloader, criterion, epoch, device)
+        scheduler.step(epoch)
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            torch.save(model.module.state_dict(), cfg.save_path)
+
+if __name__ == '__main__':
+    main()
