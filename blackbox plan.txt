@@ -1,0 +1,25 @@
+Subparts
+  DFME Movinet Image
+  DFME Movinet Video
+  DFME Swin-T Image
+  DFME Swin-T Video
+
+  cGAN Movinet Image Pretraining
+  cGAN Movinet Image Student Learning
+  cGAN K600 Dataset Gen
+
+- cGAN Swin-T Image Pretraining
+- cGAN Swin-T Image Student Learning
+- cGAN K400 Dataset Gen
+
+
+
+Files
+	DFME models -> One file. VideoGAN and ImageGenerator, Student
+	DFME Grad approx -> Common file, separate functions?
+	DFME pipeline -> Common file or 1 for movi and 1 for swin?
+
+	cGAN Models -> One file. GeneratorC, Student
+	cGAN Pretrainer -> Common file or 1 for movi and 1 for swin?
+	cGAN Dataset Gen -> Common file
+	Grad approx files from DFME

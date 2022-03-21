@@ -1,1 +1,1 @@
-# ImageGenerator and VideoGAN
+# ImageGenerator and VideoGAN, Student
