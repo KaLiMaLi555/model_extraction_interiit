@@ -1,0 +1,12 @@
+torch
+pickle
+os
+pathlib
+torchvision
+numpy
+pandas
+pillow
+matplotlib
+shutil
+wandb
+pytorch-lightning
