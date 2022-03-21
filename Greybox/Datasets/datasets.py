@@ -10,10 +10,9 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset
 from PIL import Image
 
-
 class VideoLogitDataset(Dataset):
 
-    def _init_(self, video_dir_path, video_name_file, logits_file, size: tuple = (224,224), transform=None):
+    def _init_(self, video_dir_path, video_name_file, logits_file, size: tuple = (224,224), transform=None, aug_list=None):
 
         self.video_dir_path = video_dir_path
         self.instances = []  # Tensor of image frames
@@ -25,6 +24,7 @@ class VideoLogitDataset(Dataset):
         self.num_instances = len(self.videos)
         self.transform = transform
         self.size = size
+        self.aug_list = aug_list
 
     def get_frames(self, video_path):
         images = sorted(os.listdir(video_path))
@@ -41,6 +41,9 @@ class VideoLogitDataset(Dataset):
 
     def _getitem_(self, idx):
         vid = self.get_frames(self.videos[idx])
+        if self.aug_list is not None:
+            aug_idx = np.random.randint(len(self.aug_list))
+            vid = torch.tensor(self.aug_list[aug_idx](vid.numpy()))
         if self.transform:
             vid = vid.permute(0, 3, 1, 2)
             vid = self.transform(vid)
@@ -54,7 +57,7 @@ class VideoLogitDataset(Dataset):
 
 class VideoLabelDataset(Dataset):
 
-    def _init_(self, video_dir_path, classes_file, labels_file, num_classes, size: tuple=(224,224), transform=None):
+    def _init_(self, video_dir_path, classes_file, labels_file, num_classes, size: tuple=(224,224), transform=None, aug_list=None):
 
         self.video_dir_path = video_dir_path
         self.classes_file = classes_file
@@ -77,8 +80,8 @@ class VideoLabelDataset(Dataset):
             if index == 0:
                 continue
             self.new_classes_dict[id] = self.label_dict[label]
-        print(self.new_classes_dict)
-        print(len(self.new_classes_dict))
+        
+        self.aug_list = aug_list
 
     def get_id(self, video_name):
         k = 0
@@ -117,6 +120,9 @@ class VideoLabelDataset(Dataset):
     def _getitem_(self, idx):
         video_path = os.path.join(self.video_dir_path, self.videos[idx])
         vid = self.get_frames(video_path)
+        if self.aug_list is not None:
+            aug_idx = np.random.randint(len(self.aug_list))
+            vid = torch.tensor(self.aug_list[aug_idx](vid.numpy()))
         if self.transform:
             vid = vid.permute(0, 3, 1, 2)
             vid = self.transform(vid)

@@ -6,10 +6,6 @@ from Datasets.datasets import VideoLogitDataset, VideoLabelDataset
 from models.MARS.model import generate_model
 from utils.mars_utils import *
 
-# from dataset.dataset import *
-#
-# from dataset.preprocess_data import *
-
 from torch.autograd import Variable
 
 
