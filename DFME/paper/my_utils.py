@@ -1,4 +1,4 @@
-from cifar10_models import *
+from model_extraction_interiit.DFME.paper.cifar10_models import *
 from approximate_gradients import *
 import network
 
