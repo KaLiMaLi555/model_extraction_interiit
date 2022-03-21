@@ -1,0 +1,30 @@
+Subparts
+  DFME Movinet Image
+  DFME Movinet Video
+  DFME Swin-T Image
+  DFME Swin-T Video
+
+  cGAN Movinet Image Pretraining
+  cGAN Movinet Image Student Learning
+  cGAN K600 Dataset Gen
+
+- cGAN Swin-T Image Pretraining
+- cGAN Swin-T Image Student Learning
+- cGAN K400 Dataset Gen
+
+
+
+Files
+    Common MARS Model file (can keep common with greybox or add to our models)
+
+    DFME
+	DFME models -> One file. VideoGAN and ImageGenerator, Student: CNNLSTM for Video, MARS (see above) and MobileNet for img
+	DFME Grad approx -> Common file, separate functions(?)
+	DFME pipeline -> Common file or 1 for movi and 1 for swin?
+
+    cGAN
+	cGAN Models -> One file. GeneratorC, Student: MARS, Mobilenet?
+	cGAN Pretrainer -> Common file or 1 for movi and 1 for swin?
+	cGAN Dataset Gen -> Common file (can have a common utils file for loading cGAN checkpoint with pipeline)
+	CGAN student pipeline -> Common file or 1 for movi and 1 for swin?
+	Grad approx files from DFME (can keep common or replicate. Imports might be ugly if common)
