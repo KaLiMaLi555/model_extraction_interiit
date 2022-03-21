@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 
 # PyTorch lightning
 import pytorch_lightning as pl
@@ -20,8 +20,7 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
 from custom_transformations import CustomResizeTransform
-from dataloader_train import VideoLogitDataset
-from dataloader_val import ValDataset
+from Dataset.Dataset import VideoLogitDataset, ValDataset, extrapolate
 from utils.config import process_config
 
 config = process_config("config/config1.json")
@@ -158,13 +157,6 @@ class WrapperModel(pl.LightningModule):
         self.log('train_accuracy', accuracy, on_step=True, on_epoch=True, logger=True, prog_bar=True)
         return {"loss": loss, "other_stuff": logits}
 
-    # def training_epoch_end(self, training_step_outputs):
-    #     # update and log
-    #     all_preds = torch.stack(training_step_outputs)
-    #     logits, y = training_step_outputs
-    #     self.accuracy(logits, y)
-    #     self.log('train_acc', self.accuracy, on_step=True, on_epoch=True, logger=True)
-
     def validation_step(self, batch, batch_idx):
         x, y = batch
         logits = self.forward(x)
@@ -176,10 +168,6 @@ class WrapperModel(pl.LightningModule):
         self.log('val_accuracy', accuracy, on_step=True, on_epoch=True, logger=True, prog_bar=True)
         return loss
 
-    # def validation_epoch_end(self, logits, y):
-    #     # update and log
-    #     self.accuracy(logits, y)
-    #     self.log('train_acc', self.accuracy, on_step=True, on_epoch=True, logger=True)
 
     def configure_optimizers(self):
         return optim.SGD(self.parameters(), lr=self.learning_rate)
