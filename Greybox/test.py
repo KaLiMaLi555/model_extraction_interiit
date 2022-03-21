@@ -17,7 +17,18 @@ from torch.utils.data import Dataset, DataLoader
 from models.MARS.model import generate_model
 from utils.mars_utils import *
 
-def test(model, test_dataloader, criterion, epoch):
+"""
+    Function to test the model
+
+    Parameters:
+        model (torch.nn.Module): The model to test
+        test_dataloader (torch.utils.data.DataLoader): The test data
+        criterion (torch.nn.modules.loss): The loss function to use
+
+    Returns:
+        float: The average validation accuracy
+"""
+def test(model, test_dataloader, criterion):
     model.eval()
 
     losses = AverageMeter()
@@ -41,7 +52,7 @@ def test(model, test_dataloader, criterion, epoch):
             print('Test_Epoch: [{0}][{1}/{2}]\t'
                   'Loss {loss.test:.4f} ({loss.avg:.4f})\t'
                   'Acc {acc.test:.3f} ({acc.avg:.3f})'.format(
-                epoch,
+                1,
                 i + 1,
                 len(test_dataloader),
                 loss=losses,
@@ -49,6 +60,9 @@ def test(model, test_dataloader, criterion, epoch):
 
     return accuracies.avg
 
+"""
+    Main function to run the program
+"""
 def main():
 
     print("Creating Model")

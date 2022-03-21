@@ -1,7 +1,5 @@
-from re import L
 import time
-from pygame import init
-from vidaug import augmentors as va
+from re import L
 
 import torch
 import torch.nn as nn
@@ -9,14 +7,32 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 import wandb
+from pygame import init
 from torch.autograd import Variable
-from utils.wandb import init_wandb
+from torch.utils.data import DataLoader, Dataset
+from vidaug import augmentors as va
+from options.train_options import *
 
 from Datasets.datasets import VideoLabelDataset, VideoLogitDataset
-from torch.utils.data import Dataset, DataLoader
 from models.MARS.model import generate_model
 from utils.mars_utils import *
+from utils.wandb import init_wandb
 
+"""
+    Function to train the model
+
+    Parameters:
+        model (torch.nn.Module): The model to train
+        train_loader (torch.utils.data.DataLoader): The training data
+        val_loader (torch.utils.data.DataLoader): The validation data
+        optimizer (torch.optim.Optimizer): The optimizer to use
+        criterion (torch.nn.modules.loss): The loss function to use
+        epochs (int): Current epoch
+        scheduler (torch.optim.lr_scheduler): The scheduler to use
+
+    Returns:
+        float: The average validation accuracy
+"""
 def train(model, train_loader, val_loader, optimizer, criterion, epoch, scheduler=None):
     model.train()
 
@@ -53,6 +69,18 @@ def train(model, train_loader, val_loader, optimizer, criterion, epoch, schedule
 
     return accuracies.avg
 
+"""
+    Function to evaluate the model on the validation set
+
+    Parameters:
+        model (torch.nn.Module): The model to evaluate
+        val_dataloader (torch.utils.data.DataLoader): The dataloader for the validation set
+        criterion (torch.nn.CrossEntropyLoss): The loss function
+        epoch (int): The current epoch
+
+    Returns:
+        float: The average validation loss
+"""
 def val(model, val_dataloader, criterion, epoch):
     model.eval()
 
@@ -85,7 +113,15 @@ def val(model, val_dataloader, criterion, epoch):
 
     return accuracies.avg
 
+"""
+    Main function to train the model
+"""
 def main():
+
+    opt = TrainOptions()
+    args = opt.initialize()
+    opt.print_options(args)
+    cfg = args
 
     print("Creating Model")
     model, parameters = generate_model(cfg.pretrain_path_ucf, cfg.n_finetune_classes)
@@ -93,14 +129,8 @@ def main():
     init_wandb(model, parameters)
 
     print("Creating Dataloaders")
-    if cfg.train_mode == 'logit':
-        finetune_dataset = VideoLogitDataset(cfg.train_video_path, cfg.train_video_name_path, cfg.train_logit_path)
-        val_dataset = VideoLabelDataset(cfg.val_video_path, cfg.val_class_file, cfg.val_label_file, cfg.n_finetune_classes)
-    elif cfg.train_mode == 'label':
-        finetune_dataset = VideoLabelDataset(cfg.train_video_path, cfg.train_video_name_path, cfg.train_label_path)
-        val_dataset = VideoLabelDataset(cfg.val_video_path, cfg.val_class_file, cfg.val_label_file, cfg.n_finetune_classes)
-    else:
-        raise ValueError('Unknown train mode: {}'.format(cfg.train_mode))
+    finetune_dataset = VideoLogitDataset(cfg.train_video_path, cfg.train_video_name_path, cfg.train_logit_path)
+    val_dataset = VideoLabelDataset(cfg.val_video_path, cfg.val_class_file, cfg.val_label_file, cfg.n_finetune_classes)
 
     train_data = finetune_dataset
     val_data = val_dataset    
@@ -122,8 +152,8 @@ def main():
 
     best_val_acc = 0
     for epoch in range(1, cfg.n_epochs + 1):
-        train_acc = train(model, train_dataloader, optimizer, criterion, epoch, device)
-        val_acc = val(model, val_dataloader, criterion, epoch, device)
+        train_acc = train(model, train_dataloader, optimizer, criterion, epoch, scheduler)
+        val_acc = val(model, val_dataloader, criterion, epoch)
         scheduler.step(epoch)
         if val_acc > best_val_acc:
             best_val_acc = val_acc
