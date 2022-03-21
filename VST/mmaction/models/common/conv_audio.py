@@ -4,7 +4,7 @@ from mmcv.cnn import CONV_LAYERS, ConvModule, constant_init, kaiming_init
 from torch.nn.modules.utils import _pair
 
 
-# @CONV_LAYERS.register_module()
+@CONV_LAYERS.register_module()
 class ConvAudio(nn.Module):
     """Conv2d module for AudioResNet backbone.
 

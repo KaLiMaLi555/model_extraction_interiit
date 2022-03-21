@@ -1,7 +1,7 @@
 _base_ = [
     '../../_base_/models/swin/swin_tiny.py', '../../_base_/default_runtime.py'
 ]
-model=dict(backbone=dict(patch_size=(2,4,4), drop_path_rate=0.1), test_cfg=dict(max_testing_views=4))
+model=dict(backbone=dict(patch_size=(2,4,4), drop_path_rate=0.1), test_cfg=dict())
 
 # dataset settings
 dataset_type = 'VideoDataset'

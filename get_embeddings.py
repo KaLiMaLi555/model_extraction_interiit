@@ -7,8 +7,8 @@ import numpy as np
 import torch.nn as nn
 from tqdm import tqdm
 from PIL import Image
-from env import set_seed
-from dataloader import Dataloader, VideoDatasetFromDisk
+from env import seed_all
+from dataloader import MovinetTransform, SwinTransform, VideoDataset, VideoDatasetFromDisk
 from torch.utils.data import TensorDataset, DataLoader, Dataset
 
 from mmcv import Config
@@ -33,6 +33,7 @@ def parse_args():
     parser.add_argument('--model_name', default = "swin_transformer", type = str, choices = ["movinet", "swin_transformer"])
     parser.add_argument('--dataset_type', default = "noise", type = str)
     parser.add_argument('--video_dir_path', default = "./data/data", type = str)
+    parser.add_argument('--video_names_file', default= "/content/video_names_file.txt", type=str)
     parser.add_argument('--from_folder', action='store_true')
 
     args = parser.parse_args()
@@ -45,12 +46,12 @@ def get_logits(model, model_name, dataloader, device):
     # labels = []
     model.eval()
     with torch.no_grad():
-        for idx, video_frames in tqdm(enumerate(dataloader), position = 0, leave = True):
-            shape = video_frames.shape
-            video_frames = video_frames.view((shape[0], shape[4], shape[1], shape[2], shape[3]))
-            
+        for idx, video_frames in tqdm(enumerate(dataloader), position = 0, leave = True):            
             video_frames.to(device)
-            outputs = model(video_frames)
+            if model_name == "swin_transformer":
+                outputs = model(video_frames, return_loss=False)
+            else:
+                outputs = model(video_frames)
             del video_frames
             logits.extend(outputs)
             # labels.extend(label)
@@ -69,7 +70,7 @@ def get_logits(model, model_name, dataloader, device):
 if __name__ == "__main__":
 
     args = parse_args()
-    set_seed(args.seed)
+    seed_all(args.seed)
 
     # if not os.path.exists(args.logit_dir):
     #     os.makedirs(args.logit_dir)
@@ -78,9 +79,15 @@ if __name__ == "__main__":
     # dataloader = Dataloader(args.video_dir_path, num_classes = args.num_classes)
 
     if args.from_folder:
-        tensor_dataset = VideoDatasetFromDisk(args.video_dir_path)
+        if args.model_name == "swin_transformer":
+            tensor_dataset = VideoDatasetFromDisk(args.video_dir_path, args.video_names_file, transforms=SwinTransform())
+        else:
+            tensor_dataset = VideoDatasetFromDisk(args.video_dir_path, args.video_names_file, transforms=MovinetTransform())
     else:
-        tensor_dataset = VideoDataset(args.video_dir_path)
+        if args.model_name == "swin_transformer":
+            tensor_dataset = VideoDataset(args.video_dir_path, args.video_names_file, transforms=SwinTransform())
+        else:
+            tensor_dataset = VideoDataset(args.video_dir_path, args.video_names_file, transforms=MovinetTransform())
     tensor_dataloader = DataLoader(tensor_dataset, batch_size = args.batch_size, shuffle = False, num_workers = 0)
 
     if torch.cuda.is_available:
@@ -92,7 +99,7 @@ if __name__ == "__main__":
         model = MoViNet(_C.MODEL.MoViNetA2, causal = True, pretrained = True)
     elif args.model_name == "swin_transformer":
         print("\n")
-        config = "./VST/configs/_base_/models/swin/swin_tiny.py"
+        config = "./Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py"
         checkpoint = "/content/swin_tiny_patch244_window877_kinetics400_1k.pth"
         cfg = Config.fromfile(config)
         model = build_model(cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))

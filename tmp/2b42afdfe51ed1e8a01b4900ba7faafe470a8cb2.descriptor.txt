@@ -1,3 +1,0 @@
-Module: https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3
-Download Time: 2022-03-13 16:31:40.790308
-Downloader Hostname: cpusrv-gpu-112 (PID:19965)

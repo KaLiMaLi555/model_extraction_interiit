@@ -7,7 +7,6 @@ from .builder import (BACKBONES, DETECTORS, HEADS, LOCALIZERS, LOSSES, NECKS,
                       build_localizer, build_loss, build_model, build_neck,
                       build_recognizer)
 from .common import LFB, TAM, Conv2plus1d, ConvAudio
-# from .common import TAM
 from .heads import (ACRNHead, AudioTSNHead, AVARoIHead, BaseHead, BBoxHeadAVA,
                     FBOHead, I3DHead, LFBInferHead, SlowFastHead, TPNHead,
                     TRNHead, TSMHead, TSNHead, X3DHead)

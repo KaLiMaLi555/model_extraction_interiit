@@ -438,10 +438,6 @@ class PatchEmbed3D(nn.Module):
     def forward(self, x):
         """Forward function."""
         # padding
-        # print(x.shape)
-
-        # x = x.view((int(x.shape[0]/3), 3, x.shape[1], x.shape[2], x.shape[3]))
-        # exit(0)
         _, _, D, H, W = x.size()
         if W % self.patch_size[2] != 0:
             x = F.pad(x, (0, self.patch_size[2] - W % self.patch_size[2]))
@@ -653,8 +649,6 @@ class SwinTransformer3D(nn.Module):
 
     def forward(self, x):
         """Forward function."""
-        shape = x.shape
-        x = x.view((shape[0]//3, 3, shape[1], shape[2], shape[3]))
         x = self.patch_embed(x)
 
         x = self.pos_drop(x)
