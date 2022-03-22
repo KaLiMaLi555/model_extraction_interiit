@@ -1,8 +1,11 @@
 #!/bin/bash
 
+VID_DIR=$1
+TARGZ_DIR=$2
+
 # Download directories vars
-root_dl="k600"
-root_dl_targz="k600_targz"
+root_dl="$VID_DIR"
+root_dl_targz="$TARGZ_DIR"
 
 # Make root directories
 [ ! -d $root_dl_targz ] && echo -e "\nRun k600_downloaders.sh"

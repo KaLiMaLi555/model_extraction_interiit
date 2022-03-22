@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
-import wandb
+
 
 from torch.autograd import Variable
 from torch.utils.data import DataLoader, Dataset
@@ -13,7 +13,7 @@ from options.train_options import *
 from Datasets.datasets import VideoLabelDataset, VideoLogitDataset
 from models.MARS.model import generate_model
 from utils.mars_utils import *
-from utils.wandb import init_wandb
+
 
 """
     Function to train the model
@@ -21,7 +21,6 @@ from utils.wandb import init_wandb
     Parameters:
         model (torch.nn.Module): The model to train
         train_loader (torch.utils.data.DataLoader): The training data
-        val_loader (torch.utils.data.DataLoader): The validation data
         optimizer (torch.optim.Optimizer): The optimizer to use
         criterion (torch.nn.modules.loss): The loss function to use
         epochs (int): Current epoch
@@ -32,7 +31,7 @@ from utils.wandb import init_wandb
 """
 
 
-def train(model, train_loader, val_loader, optimizer, criterion, epoch, scheduler=None):
+def train(model, train_loader, optimizer, criterion, epoch, scheduler=None):
     model.train()
 
     losses = AverageMeter()
@@ -59,12 +58,11 @@ def train(model, train_loader, val_loader, optimizer, criterion, epoch, schedule
 
         print('Epoch: [{0}][{1}/{2}]\t'
               'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-              'Acc {acc.val:.3f} ({acc.avg:.3f})'.format(
-            epoch,
-            i + 1,
-            len(train_loader),
-            loss=losses,
-            acc=accuracies))
+              'Acc {acc.val:.3f} ({acc.avg:.3f})'.format(epoch,
+                                                         i + 1,
+                                                         len(train_loader),
+                                                         loss=losses,
+                                                         acc=accuracies))
 
     return accuracies.avg
 
@@ -106,12 +104,11 @@ def val(model, val_dataloader, criterion, epoch):
 
             print('Val_Epoch: [{0}][{1}/{2}]\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Acc {acc.val:.3f} ({acc.avg:.3f})'.format(
-                epoch,
-                i + 1,
-                len(val_dataloader),
-                loss=losses,
-                acc=accuracies))
+                  'Acc {acc.val:.3f} ({acc.avg:.3f})'.format(epoch,
+                                                             i + 1,
+                                                             len(val_dataloader),
+                                                             loss=losses,
+                                                             acc=accuracies))
 
     return accuracies.avg
 
@@ -128,8 +125,6 @@ def main():
 
     print("Creating Model")
     model, parameters = generate_model(cfg.pretrain_path_ucf, cfg.n_finetune_classes)
-
-    init_wandb(model, parameters)
 
     print("Creating Dataloaders")
     finetune_dataset = VideoLogitDataset(cfg.train_video_path, cfg.train_video_name_path, cfg.train_logit_path)

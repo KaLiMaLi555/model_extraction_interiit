@@ -30,11 +30,6 @@ class TrainOptions():
         parser.add_argument("--test_vid_dir", type=str, default="", help="Path to the testing videos")
         parser.add_argument("--ckpts_dir", type=str, default="", help="Path to the testing logits file")
 
-        parser.add_argument("--wandb_bool", type=bool, default=False, help="Log to wandb or not")
-        parser.add_argument("--wandb_project", type=str, default="model_extraction", help="Project name for wandb")
-        parser.add_argument("--wandb_id", type=str,  help="Run name for wandb")
-        parser.add_argument("--wandb_api_key", type=str, default="", help="API key for wandb")
-
         parser.add_argument("--epochs", type=int, default=100, help="Number of epochs to train")
         parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
         parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
@@ -51,10 +46,7 @@ class TrainOptions():
 
         cfg = cfg_parser(osp.join("config", args.version + '.json'))
 
-        cfg['experiment'].wandb_bool = args.wandb_bool
-        cfg['experiment'].wandb_project = args.wandb_project
-        cfg['experiment'].wandb_id = args.wandb_id
-        cfg['experiment'].wandb_api_key = args.wandb_api_key
+
         cfg['experiment'].train_vid_dir = args.train_vid_dir
         cfg['experiment'].train_logits_file = args.train_logits_file
         cfg['experiment'].val_vid_dir = args.val_vid_dir
