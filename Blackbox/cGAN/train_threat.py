@@ -141,15 +141,15 @@ def train(args, victim_model, threat_model, generator, device, device_tf, optimi
         for _ in range(args.g_iter):
             # Sample Random Noise
             labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
-            labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
+            labels_onehot = torch.nn.functional.one_hot(labels, args.num_classes)
             z = torch.randn((args.batch_size, args.nz)).to(device)
             optimizer_G.zero_grad()
             generator.train()
             # Get fake image from generator
-            fake = generator(z, label=labels_oh, pre_x=args.approx_grad)  # pre_x returns the output of G before applying the activation
+            fake = generator(z, label=labels_onehot, pre_x=args.approx_grad)  # pre_x returns the output of G before applying the activation
             fake = fake.unsqueeze(dim=2)
 
-            ## APPOX GRADIENT
+            # Approximate gradient
             approx_grad_wrt_x, loss_G = approximate_gradients(
                 args, victim_model, threat_model, fake,
                 epsilon=args.grad_epsilon, m=args.grad_m,
@@ -164,13 +164,10 @@ def train(args, victim_model, threat_model, generator, device, device_tf, optimi
 
         for _ in range(args.d_iter):
             labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
-            labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
+            labels_onehot = torch.nn.functional.one_hot(labels, args.num_classes)
             z = torch.randn((args.batch_size, args.nz)).to(device)
-            fake = generator(z, label=labels_oh).detach()
-            # print(fake)
-            # with open("weird_tens.pkl", "wb+") as f:
-            #   pickle.dump(fake.cpu(), f)
-            # exit(0)
+
+            fake = generator(z, label=labels_onehot).detach()
             fake = fake.unsqueeze(dim=2)
             optimizer_S.zero_grad()
 
