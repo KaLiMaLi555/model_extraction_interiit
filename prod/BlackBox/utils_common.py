@@ -1,13 +1,13 @@
 # TODO: Add set_seed util
-# TODO: Maybe add some logging stuff since we're removing wandb 
-# TODO: Add MARS_Utils
+# TODO: Maybe add some logging stuff since we're removing wandb
 
 # MARS UTILS
-
-from __future__ import division
+# TODO: Keep only stuff actually being used
+# TODO: Refactor this stuff
 import csv
-import numpy as np
 import os
+
+import numpy as np
 
 
 class AverageMeter(object):
