@@ -18,8 +18,8 @@ from mmcv.runner import load_checkpoint
 from torchmetrics import accuracy
 from tqdm.notebook import tqdm
 
-from model_extraction_interiit.prod.BlackBox.approximate_gradients import approximate_gradients
-from model_extraction_interiit.prod.BlackBox.utils_common import swin_transform
+from model_extraction_interiit.Blackbox.approximate_gradients import approximate_gradients
+from model_extraction_interiit.Blackbox.utils_common import swin_transform
 from models import ConditionalGenerator
 
 

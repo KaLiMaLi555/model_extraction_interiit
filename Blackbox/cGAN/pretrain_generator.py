@@ -15,7 +15,7 @@ from mmcv.runner import load_checkpoint
 from tqdm.notebook import tqdm
 
 # TODO: Fix import in the final code
-from model_extraction_interiit.prod.BlackBox.approximate_gradients import approximate_gradients_conditional
+from model_extraction_interiit.Blackbox.approximate_gradients import approximate_gradients_conditional
 from models import ConditionalGenerator
 
 
