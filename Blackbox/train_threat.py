@@ -22,6 +22,8 @@ from tqdm.notebook import tqdm
 from approximate_gradients import approximate_gradients
 from utils_common import swin_transform
 from cGAN.models import ConditionalGenerator
+
+from MARS.model import generate_model
 # from utils_common import 
 
 
@@ -203,7 +205,7 @@ def train(args, victim_model, threat_model, generator, device, device_tf, optimi
                 elif args.logit_correction == 'mean':
                     logits -= logits.mean(dim=1).view(-1, 1).detach()
 
-            s_logit = torch.nn.Softmax(dim=1)(threat_model(fake[:, :, 0, :, :]))
+            s_logit = torch.nn.Softmax(dim=1)(threat_model(fake))
             loss_S = threat_loss(args, s_logit, logits)
             loss_S.backward()
             optimizer_S.step()
@@ -316,7 +318,8 @@ def main():
         victim_model = tf.keras.Model(inputs, outputs, name='movinet')
 
     # TODO: Load MARS as threat model
-    threat_model = torchvision.models.mobilenet_v2()
+    threat_model, threat_parameters = generate_model(args.num_classes)
+    # threat_model = torchvision.models.mobilenet_v2()
     threat_model = threat_model.to(device)
 
     generator = ConditionalGenerator(nz=args.nz, nc=3, img_size=224, num_classes=400, activation=args.G_activation)
@@ -344,7 +347,7 @@ def main():
     print("Cost per iterations: ", args.cost_per_iteration)
     print("Total number of epochs: ", number_epochs)
 
-    optimizer_S = optim.SGD(threat_model.parameters(), lr=args.lr_S, weight_decay=args.weight_decay, momentum=0.9)
+    optimizer_S = optim.SGD(threat_parameters, lr=args.lr_S, weight_decay=args.weight_decay, momentum=0.9)
     optimizer_G = optim.Adam(generator.parameters(), lr=args.lr_G)
 
     steps = sorted([int(step * number_epochs) for step in args.steps])

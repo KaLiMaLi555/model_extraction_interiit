@@ -35,7 +35,7 @@ def get_evaluation_points(x, N, C, L, S, m, dim, epsilon, pre_x, G_activation):
 def get_swint_pts(victim_model, pts):
     swin_pts = swin_transform(pts)
     pred_victim_pts = victim_model(swin_pts.cuda(), return_loss=False)
-    return pred_victim_pts
+    return torch.tensor(pred_victim_pts)
 
 
 def get_movinet_pts(victim_model, pts, N, C, L, S, device, device_tf):
@@ -62,7 +62,7 @@ def get_grad_estimates(args, loss_vals, dim, epsilon, u, m, C, L, S):
     if args.loss == "kl":
         grad_estimates = grad_estimates.mean(dim=1).view(-1, C, L, S, S)
     else:
-        raise ValueError(args.loss)
+        grad_estimates = grad_estimates.mean(dim = 1).view(-1, C, L, S, S) / (args.num_classes * grad_estimates.size(0)) 
 
     return grad_estimates.detach()
 
@@ -135,7 +135,7 @@ def approximate_gradients(
             loss_vals = - loss_fn(pred_threat, pred_victim, reduction='none')
             loss_vals = loss_vals.sum(dim=1).view(-1, m + 1)
         else:
-            raise ValueError(args.loss)
+            loss_vals = - loss_fn(pred_threat, pred_victim, reduction='none').mean(dim = 1).view(-1, m + 1) 
 
         grad_estimates = get_grad_estimates(
             args, loss_vals, dim, epsilon, u, m, C, L, S)
@@ -213,7 +213,7 @@ def approximate_gradients_conditional(
             loss_vals = - loss_fn(pred_threat, pred_victim, reduction='none')
             loss_vals = loss_vals.sum(dim=1).view(-1, m + 1)
         else:
-            raise ValueError(args.loss)
+            loss_vals = - loss_fn(pred_threat, pred_victim, reduction='none').mean(dim = 1).view(-1, m + 1) 
 
         grad_estimates = get_grad_estimates(
             args, loss_vals, dim, epsilon, u, m, C, L, S)
