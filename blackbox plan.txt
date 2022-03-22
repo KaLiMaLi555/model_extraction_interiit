@@ -4,17 +4,17 @@ Subparts
 [ ] DFME Swin-T Image
 [ ] DFME Swin-T Video
 
-[ ] cGAN Movinet Image Pretraining
+[ ] cGAN Movinet Image Generator Pretraining
 [ ] cGAN Movinet Image Student Learning
-[ ] cGAN K600 Dataset Gen
+[ ] cGAN K600 Dataset Generation
 
-[ ] cGAN Swin-T Image Pretraining
+[ ] cGAN Swin-T Image Generator Pretraining
 [ ] cGAN Swin-T Image Student Learning
-[ ] cGAN K400 Dataset Gen
+[ ] cGAN K400 Dataset Generation
 
 
 Files
-[ ] Common MARS Model file (can keep common with greybox?)
+[ ] Common MARS Model file (@Manideep)
 [X] Common Grad Approx -> Common file for swin and movi
 
     DFME
@@ -25,4 +25,7 @@ Files
 [X] cGAN Models -> One file. GeneratorC, Student: MARS (common)
 [ ] cGAN Pretrainer -> Common file (diff teachers, both with same GeneratorC)
 [ ] cGAN Dataset Gen -> Common file (can have a common utils file for loading cGAN checkpoint with pipeline)
-[ ] CGAN student pipeline -> Common file
+[.] CGAN student pipeline -> Common file
+
+
+TESTING
