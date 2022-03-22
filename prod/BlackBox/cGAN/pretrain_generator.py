@@ -115,11 +115,8 @@ def pretrain(args, victim_model, generator, device, device_tf, optimizer):
             fake.backward(approx_grad_wrt_x)
             optimizer.step()
 
-        # update query budget
-        args.query_budget -= args.cost_per_iteration
-
-        if args.query_budget < args.cost_per_iteration:
-            break
+            # REVIEW: Can probably print a T1/T5 Generator accuracy via Victim,
+            #         should we? Look at train_threat for code.
 
 
 def main():

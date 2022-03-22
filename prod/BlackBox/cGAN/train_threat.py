@@ -6,15 +6,18 @@ from pprint import pprint
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
 from approximate_gradients_swint_img import *
 from mmaction.models import build_model
 from mmcv import Config
 from mmcv.runner import load_checkpoint
+from torchmetrics import accuracy
 from tqdm.notebook import tqdm
 
 from model_extraction_interiit.prod.BlackBox.approximate_gradients import approximate_gradients
+from model_extraction_interiit.prod.BlackBox.utils_common import swin_transform
 from models import ConditionalGenerator
 
 
@@ -44,7 +47,7 @@ def parse_args():
 
     # parser.add_argument('--dataset', type=str, default='cifar10', choices=['svhn', 'cifar10'], help='dataset name (default: cifar10)')
     parser.add_argument('--data_root', type=str, default='data')
-    parser.add_argument('--model', type=str, default='resnet34_8x', choices=classifiers, help='Target model name (default: resnet34_8x)')
+    parser.add_argument('--model', type=str, default='resnet34_8x', choices=[''], help='Target model name (default: resnet34_8x)')
     parser.add_argument('--weight_decay', type=float, default=5e-4)
     parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
                         help='SGD momentum (default: 0.9)')
@@ -52,9 +55,7 @@ def parse_args():
                         help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=42, metavar='S',
                         help='random seed (default: 1)')
-    # parser.add_argument('--ckpt', type=str, default='checkpoint/teacher/cifar10-resnet34_8x.pt')
 
-    parser.add_argument('--student_load_path', type=str, default=None)
     parser.add_argument('--model_id', type=str, default="debug")
 
     parser.add_argument('--device', type=int, default=0)
@@ -102,10 +103,25 @@ def parse_args():
     parser.add_argument('--checkpoint_path', type=str, default="/drive/MyDrive/DFAD_video_ckpts")
     parser.add_argument('--wandb_save', action="store_true")
 
-    # parser.add_argument('--student_model', type=str, default='resnet18_8x',
-    #                     help='Student model architecture (default: resnet18_8x)')
-
     return parser.parse_args()
+
+
+def threat_loss(args, s_logit, t_logit, return_t_logits=False):
+    """Kl/ L1 Loss for Threat Model"""
+    if args.loss == "l1":
+        loss_fn = F.l1_loss
+        loss = loss_fn(s_logit, t_logit.detach())
+    elif args.loss == "kl":
+        loss_fn = F.kl_div
+        s_logit = F.log_softmax(s_logit, dim=1)
+        loss = loss_fn(s_logit, t_logit.detach(), reduction="batchmean")
+    else:
+        raise ValueError(args.loss)
+
+    if return_t_logits:
+        return loss, t_logit.detach()
+    else:
+        return loss
 
 
 def train(args, victim_model, threat_model, generator, device, device_tf, optimizer, epoch):
@@ -168,26 +184,22 @@ def train(args, victim_model, threat_model, generator, device, device_tf, optimi
                 # t_t5 = 100 * accuracy(logits, labels, top_k=5)
 
             # Correction for the fake logits
-            # if args.loss == "l1" and args.no_logits:
-            #     logits = torch.log(logits).detach()
-            #     if args.logit_correction == 'min':
-            #         logits -= logits.min(dim=1).values.view(-1, 1).detach()
-            #     elif args.logit_correction == 'mean':
-            #         logits -= logits.mean(dim=1).view(-1, 1).detach()
+            if args.loss == "l1" and args.no_logits:
+                logits = torch.log(logits).detach()
+                if args.logit_correction == 'min':
+                    logits -= logits.min(dim=1).values.view(-1, 1).detach()
+                elif args.logit_correction == 'mean':
+                    logits -= logits.mean(dim=1).view(-1, 1).detach()
 
             s_logit = torch.nn.Softmax(dim=1)(threat_model(fake[:, :, 0, :, :]))
-            loss_S = student_loss(args, s_logit, logits)
+            loss_S = threat_loss(args, s_logit, logits)
             loss_S.backward()
             optimizer_S.step()
 
             total_loss_S += loss_S.item()
-            wandb.log({'loss_S_verbose': loss_S.item()})
 
-            print('Student output:')
-            print(s_logit.argmax(dim=1))
-            print('Student confidences')
-            print(s_logit.max(dim=1)[0])
-
+            # REVIEW: Are we printing this stuff? This is some of the only
+            #         val we can do as it doesn't involve loading real data
             t1 = 100 * accuracy(s_logit, t_argmax, top_k=1)
             t5 = 100 * accuracy(s_logit, t_argmax, top_k=5)
 
