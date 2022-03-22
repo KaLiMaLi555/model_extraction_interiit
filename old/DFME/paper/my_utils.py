@@ -54,7 +54,7 @@ def get_classifier(classifier, pretrained=True, num_classes=10):
 
 def measure_true_grad_norm(args, x):
     # Compute true gradient of loss wrt x
-    true_grad, _ = compute_gradient(args, args.teacher, args.student, x, pre_x=True, device=args.device)
+    true_grad, _ = compute_gradient(args, args.victim_model, args.threat_model, x, pre_x=True, device=args.device)
     true_grad = true_grad.view(-1, 3072)
 
     # Compute norm of gradients
