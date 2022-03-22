@@ -40,6 +40,12 @@ Kinetics:
             └── replacement
 ```
 
+UCF-101
+
+```bash 
+wget https://www.crcv.ucf.edu/data/UCF101/UCF101.rar
+```
+
 ## Logit Generation
 
 ```bash
