@@ -1,21 +1,25 @@
-# TODO: cGAN pretraining loop with teacher, I'll do this
 import argparse
 import json
 import os
 import random
 from pprint import pprint
 
+import numpy as np
+import tensorflow as tf
+import tensorflow_hub as hub
 import torch
 import torch.optim as optim
-import wandb
 from mmaction.models import build_model
 from mmcv import Config
 from mmcv.runner import load_checkpoint
-from tqdm import tqdm
+from tqdm.notebook import tqdm
 
+# TODO: Fix import in the final code
 from model_extraction_interiit.prod.BlackBox.approximate_gradients import approximate_gradients_conditional
+from models import ConditionalGenerator
 
 
+# TODO: convert to cfg args
 def parse_args():
     # Training settings
     parser = argparse.ArgumentParser(description='DFAD Swin-T Image')
@@ -43,7 +47,6 @@ def parse_args():
                         help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=42, metavar='S',
                         help='random seed (default: 1)')
-    # parser.add_argument('--ckpt', type=str, default='checkpoint/teacher/cifar10-resnet34_8x.pt')
 
     parser.add_argument('--model_id', type=str, default="debug")
 
@@ -79,18 +82,14 @@ def parse_args():
     parser.add_argument('--checkpoint_path', type=str, default="/drive/MyDrive/DFAD_video_ckpts")
     parser.add_argument('--wandb_save', action="store_true")
 
-    # parser.add_argument('--student_model', type=str, default='resnet18_8x',
-    #                     help='Student model architecture (default: resnet18_8x)')
-
     return parser.parse_args()
 
 
-def pretrain(args, victim_model, generator, device, device_tf, optimizer, epoch):
+def pretrain(args, victim_model, generator, device, device_tf, optimizer):
     """Main Loop for one epoch of Pretraining Generator"""
     if args.model == 'swin-t':
         victim_model.eval()
     victim_model.eval()
-    total_loss = 0
 
     for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
         """Repeat epoch_itrs times per epoch"""
@@ -112,25 +111,9 @@ def pretrain(args, victim_model, generator, device, device_tf, optimizer, epoch)
                 args, victim_model, fake, labels=labels,
                 epsilon=args.grad_epsilon, m=args.grad_m,
                 device=device, device_tf=device_tf, pre_x=True)
-            args, victim_model, labels, x, epsilon = 1e-7, m = 5, device = 'cpu', device_tf = '/device:GPU:0', pre_x = False
 
             fake.backward(approx_grad_wrt_x)
             optimizer.step()
-
-            total_loss += loss.item()
-            wandb.log({'loss_G_verbose': loss.item()})
-
-        wandb.log({'loss_G_inner': total_loss / (i + 1)})
-        print(f'Total loss G:', total_loss / (i + 1))
-
-        # if debug_distribution:
-        # TODO: Also print confidence, possibly for T-5 predicted classes
-        #  might be useful to understand the exact nature of mode collapse
-        # distribution.append(torch.argmax(t_logit.detach(), dim=1).cpu().numpy())
-
-        # Log Results
-        if i % args.log_interval == 0:
-            print(f'Train Epoch: {epoch} [{i}/{args.epoch_itrs} ({100 * float(i) / float(args.epoch_itrs):.0f}%)]\tG_Loss: {loss.item():.6f}')
 
         # update query budget
         args.query_budget -= args.cost_per_iteration
@@ -138,41 +121,32 @@ def pretrain(args, victim_model, generator, device, device_tf, optimizer, epoch)
         if args.query_budget < args.cost_per_iteration:
             break
 
-        checkpoint = {
-            'outer_epoch': epoch,
-            'inner_epoch': i + 1,
-            'optimizer_G': optimizer.state_dict(),
-            'generator': generator.state_dict(),
-            # 'scheduler':scheduler.state_dict(),
-            # 'criterion': criterion.state_dict()
-        }
-        if args.wandb_save:
-            save_ckp(checkpoint, epoch, args.checkpoint_path, args.checkpoint_base, args.wandb_save)
-
-    # if debug_distribution:
-    #     c_t = Counter(list(np.array(distribution).flatten())).most_common()
-    #     c_s = Counter(list(np.array(dist_s).flatten())).most_common()
-    #     wandb.run.summary[f'Teacher distribution epoch {epoch}'] = c_t
-    #     wandb.run.summary[f'Student distribution epoch {epoch}'] = c_s
-    #     print(f'Teacher distribution epoch {epoch}:', c_t)
-    #     print(f'Student distribution epoch {epoch}:', c_s)
-
-
-def compute_grad_norms(generator):
-    G_grad = []
-    for n, p in generator.named_parameters():
-        if "weight" in n:
-            # print('===========\ngradient{}\n----------\n{}'.format(n, p.grad.norm().to("cpu")))
-            G_grad.append(p.grad.norm().to("cpu"))
-    return np.mean(G_grad)
-
 
 def main():
+    # TODO: Replace with cfg parser stuff
     args = parse_args()
 
+    # TODO: Use common set_env util
+    # Prepare the environment
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    # REVIEW: Decide if we're keeping this query budget stuff
     args.query_budget *= 10 ** 6
     args.query_budget = int(args.query_budget)
 
+    threat_options = ['rescnnlstm', 'mars', 'mobilenet']
+    victim_options = ['swin-t', 'movinet']
+    mode_options = ['image', 'video']
+    # TODO: Add asserts that cfg options are from this list
+
+    # REVIEW: Decide if we're keeping or throwing this logging dir stuff
+    pprint(args, width=80)
+    print(args.log_dir)
     os.makedirs(args.log_dir, exist_ok=True)
 
     if args.store_checkpoints:
@@ -194,76 +168,85 @@ def main():
 
     with open("latest_experiments.txt", "a") as f:
         f.write(args.log_dir + "\n")
+
+    # REVIEW: Decide if we're keeping or throwing logging dir stuff above
+
     use_cuda = not args.no_cuda and torch.cuda.is_available()
+    device = torch.device('cuda:%d' % args.device if use_cuda else 'cpu')
+    device_tf = '/device:GPU:%d' % args.device if use_cuda else '/device:CPU'
+    args.device, args.device_tf = device, device_tf
 
-    # Prepare the environment
-    torch.manual_seed(args.seed)
-    torch.cuda.manual_seed(args.seed)
-    np.random.seed(args.seed)
-    random.seed(args.seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    # REVIEW: Decide if we're keeping or throwing this stuff
+    # Preparing checkpoints for the best Threat model
+    global file
+    model_dir = f"checkpoint/threat_{args.model_id}";
+    args.model_dir = model_dir
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+    with open(f"{model_dir}/model_info.txt", "w") as f:
+        json.dump(args.__dict__, f, indent=2)
+    file = open(f"{args.model_dir}/logs.txt", "w")
+    print(args)
 
-    device = torch.device("cuda:%d" % args.device if use_cuda else "cpu")
-    kwargs = {'num_workers': 2, 'pin_memory': True} if use_cuda else {}
+    # Eigen values and vectors of the covariance matrix
+    # _, test_loader = get_dataloader(args)
 
-    args.device = device
-
+    # TODO: cfg parser stuff
     args.normalization_coefs = None
     args.G_activation = torch.sigmoid
-
     args.num_classes = 400
 
-    pprint(args, width=80)
-    config = "./Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py"
-    checkpoint = "../swin_tiny_patch244_window877_kinetics400_1k.pth"
-    cfg = Config.fromfile(config)
-    teacher = build_model(cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))
-    load_checkpoint(teacher, checkpoint, map_location=device)
+    # TODO: Convert this to cfg parser
+    if args.victim_model == 'swin-t':
+        config = "./Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py"
+        checkpoint = "/content/swin_tiny_patch244_window877_kinetics400_1k.pth"
+        cfg = Config.fromfile(config)
+        victim_model = build_model(cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))
+        load_checkpoint(victim_model, checkpoint, map_location=device)
+        victim_model.eval()
+        victim_model = victim_model.to(device)
+    else:
+        hub_url = "https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3"
 
-    teacher.eval()
-    teacher = teacher.to(device)
+        encoder = hub.KerasLayer(hub_url, trainable=False)
+        inputs = tf.keras.layers.Input(shape=[None, None, None, 3], dtype=tf.float32, name='image')
 
-    generator = network.gan.GeneratorC(nz=args.nz, nc=3, img_size=224, num_classes=400, activation=args.G_activation)
+        # [batch_size, 600]
+        outputs = encoder(dict(image=inputs))
+        victim_model = tf.keras.Model(inputs, outputs, name='movinet')
 
+    generator = ConditionalGenerator(nz=args.nz, nc=3, img_size=224, num_classes=400, activation=args.G_activation)
     generator = generator.to(device)
 
     args.generator = generator
-    args.teacher = teacher
-
-    ## Compute the number of epochs with the given query budget:
-    args.cost_per_iteration = args.batch_size * (args.g_iter * (args.grad_m + 1))
-
-    number_epochs = args.query_budget // (args.cost_per_iteration * args.epoch_itrs) + 1
-
-    print(f"\nTotal budget: {args.query_budget // 1000}k")
-    print("Cost per iterations: ", args.cost_per_iteration)
-    print("Total number of epochs: ", number_epochs)
+    args.victim_model = victim_model
 
     optimizer_G = optim.Adam(generator.parameters(), lr=args.lr_G)
 
-    steps = sorted([int(step * number_epochs) for step in args.steps])
+    # TODO: args -> cfg
+    steps = sorted([int(step * args.epochs) for step in args.steps])
     print("Learning rate scheduling at steps: ", steps)
     print()
 
     if args.scheduler == "multistep":
         scheduler_G = optim.lr_scheduler.MultiStepLR(optimizer_G, steps, args.scale)
     elif args.scheduler == "cosine":
-        scheduler_G = optim.lr_scheduler.CosineAnnealingLR(optimizer_G, number_epochs)
+        scheduler_G = optim.lr_scheduler.CosineAnnealingLR(optimizer_G, args.epochs)
 
-    if args.wandb:
-        init_wandb(generator, args.wandb_api_key, args.wandb_resume, args.wandb_name, args.wandb_project, args.wandb_run_id, args.wandb_watch)
-
-    for epoch in range(1, number_epochs + 1):
+    for epoch in range(1, args.epochs + 1):
         # Train
         if args.scheduler != "none":
             scheduler_G.step()
 
-        pretrain(args, victim_model=teacher, generator=generator, device=device, optimizer=optimizer_G, epoch=epoch)
-
-        # Validating student on K400
-        # if epoch % args.val_epoch == 0:
-        #     print("################### Evaluating Student Model ###################\n")
+        pretrain(args, victim_model=victim_model, generator=generator,
+                 device=device, device_tf=device_tf, optimizer=optimizer_G)
+        checkpoint = {
+            'outer_epoch': epoch,
+            'optimizer_G': optimizer_G.state_dict(),
+            'generator': generator.state_dict(),
+            'scheduler': scheduler_G.state_dict()
+        }
+        # TODO: Save checkpoint
 
 
 if __name__ == '__main__':

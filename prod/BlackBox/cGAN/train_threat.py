@@ -12,11 +12,13 @@ from approximate_gradients_swint_img import *
 from mmaction.models import build_model
 from mmcv import Config
 from mmcv.runner import load_checkpoint
+from tqdm.notebook import tqdm
 
+from model_extraction_interiit.prod.BlackBox.approximate_gradients import approximate_gradients
 from models import ConditionalGenerator
 
 
-# TODO: Get MARS working once addded
+# TODO: Get MARS working once added
 # from model_extraction_interiit.prod.BlackBox import MARS
 
 def parse_args():
@@ -106,8 +108,90 @@ def parse_args():
     return parser.parse_args()
 
 
-def train():
-    pass
+def train(args, victim_model, threat_model, generator, device, device_tf, optimizer, epoch):
+    """Main Loop for one epoch of Training Generator and Threat Models"""
+    victim_model.eval()
+    threat_model.train()
+
+    optimizer_S, optimizer_G = optimizer
+
+    total_loss_S = 0
+    total_loss_G = 0
+
+    for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
+        """Repeat epoch_itrs times per epoch"""
+        for _ in range(args.g_iter):
+            # Sample Random Noise
+            labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
+            labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
+            z = torch.randn((args.batch_size, args.nz)).to(device)
+            optimizer_G.zero_grad()
+            generator.train()
+            # Get fake image from generator
+            fake = generator(z, label=labels_oh, pre_x=args.approx_grad)  # pre_x returns the output of G before applying the activation
+            fake = fake.unsqueeze(dim=2)
+
+            ## APPOX GRADIENT
+            approx_grad_wrt_x, loss_G = approximate_gradients(
+                args, victim_model, threat_model, fake,
+                epsilon=args.grad_epsilon, m=args.grad_m,
+                device=device, device_tf=device_tf, pre_x=True)
+
+            fake.backward(approx_grad_wrt_x)
+            optimizer_G.step()
+
+            total_loss_G += loss_G.item()
+
+        print(f'Total loss G:', total_loss_G / (i + 1))
+
+        for _ in range(args.d_iter):
+            labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
+            labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
+            z = torch.randn((args.batch_size, args.nz)).to(device)
+            fake = generator(z, label=labels_oh).detach()
+            # print(fake)
+            # with open("weird_tens.pkl", "wb+") as f:
+            #   pickle.dump(fake.cpu(), f)
+            # exit(0)
+            fake = fake.unsqueeze(dim=2)
+            optimizer_S.zero_grad()
+
+            with torch.no_grad():
+                fake_swin = swin_transform(fake.detach())
+                logits = victim_model(fake_swin, return_loss=False)
+                logits = torch.Tensor(logits).to(device)
+                t_argmax = logits.argmax(axis=1)
+
+                # REVIEW: Are we printing this stuff? This is some of the only
+                #         val we can do as it doesn't involve loading real data
+                # t_t1 = 100 * accuracy(logits, labels, top_k=1)
+                # t_t5 = 100 * accuracy(logits, labels, top_k=5)
+
+            # Correction for the fake logits
+            # if args.loss == "l1" and args.no_logits:
+            #     logits = torch.log(logits).detach()
+            #     if args.logit_correction == 'min':
+            #         logits -= logits.min(dim=1).values.view(-1, 1).detach()
+            #     elif args.logit_correction == 'mean':
+            #         logits -= logits.mean(dim=1).view(-1, 1).detach()
+
+            s_logit = torch.nn.Softmax(dim=1)(threat_model(fake[:, :, 0, :, :]))
+            loss_S = student_loss(args, s_logit, logits)
+            loss_S.backward()
+            optimizer_S.step()
+
+            total_loss_S += loss_S.item()
+            wandb.log({'loss_S_verbose': loss_S.item()})
+
+            print('Student output:')
+            print(s_logit.argmax(dim=1))
+            print('Student confidences')
+            print(s_logit.max(dim=1)[0])
+
+            t1 = 100 * accuracy(s_logit, t_argmax, top_k=1)
+            t5 = 100 * accuracy(s_logit, t_argmax, top_k=5)
+
+        print(f'Total loss S:', total_loss_S / (i + 1))
 
 
 def main():
@@ -201,25 +285,23 @@ def main():
         pass
 
     # TODO: Load MARS as threat model
-    student = torchvision.models.mobilenet_v2()
-    student.classifier[1] = torch.nn.Linear(in_features=student.classifier[1].in_features, out_features=400)
+    threat_model = torchvision.models.mobilenet_v2()
+    threat_model = threat_model.to(device)
 
     generator = ConditionalGenerator(nz=args.nz, nc=3, img_size=224, num_classes=400, activation=args.G_activation)
     generator = generator.to(device)
 
-    student = student.to(device)
-
     args.generator = generator
-    args.student = student
-    args.teacher = victim_model
+    args.threat_model = threat_model
+    args.victim_model = victim_model
 
-    # REVIEW: Decide if we're adding functionality to load a student from checkpoint
+    # REVIEW: Decide if we're adding functionality to load a threat_model from checkpoint
     #   probably need this somewhere, at least in some eval script
     # if args.student_load_path :
     #     # "checkpoint/student_no-grad/cifar10-resnet34_8x.pt"
-    #     student.load_state_dict( torch.load( args.student_load_path ) )
+    #     threat_model.load_state_dict( torch.load( args.student_load_path ) )
     #     myprint("Student initialized from %s"%(args.student_load_path))
-    #     acc = test(args, student=student, generator=generator, device = device, test_loader = test_loader)
+    #     acc = test(args, threat_model=threat_model, generator=generator, device = device, test_loader = test_loader)
 
     ## Compute the number of epochs with the given query budget:
     # REVIEW: Decide if we're keeping this query budget stuff
@@ -231,7 +313,7 @@ def main():
     print("Cost per iterations: ", args.cost_per_iteration)
     print("Total number of epochs: ", number_epochs)
 
-    optimizer_S = optim.SGD(student.parameters(), lr=args.lr_S, weight_decay=args.weight_decay, momentum=0.9)
+    optimizer_S = optim.SGD(threat_model.parameters(), lr=args.lr_S, weight_decay=args.weight_decay, momentum=0.9)
     optimizer_G = optim.Adam(generator.parameters(), lr=args.lr_G)
 
     steps = sorted([int(step * number_epochs) for step in args.steps])
@@ -258,8 +340,20 @@ def main():
             scheduler_S.step()
             scheduler_G.step()
 
-        train(args, teacher=victim_model, student=student, generator=generator, device=device, optimizer=[optimizer_S, optimizer_G], epoch=epoch)
+        train(args, victim_model=victim_model, threat_model=threat_model,
+              generator=generator, device=device, device_tf=device_tf,
+              optimizer=[optimizer_S, optimizer_G], epoch=epoch)
 
+        checkpoint = {
+            'outer_epoch': epoch,
+            'optimizer_S': optimizer_S.state_dict(),
+            'optimizer_G': optimizer_G.state_dict(),
+            'generator': generator.state_dict(),
+            'student': threat_model.state_dict(),
+            'scheduler_S': scheduler_S.state_dict(),
+            'scheduler_G': scheduler_G.state_dict(),
+            # 'criterion': criterion.state_dict()
+        }
         # TODO: Add checkpoint saving stuff, possibly check wandb_utils
         # TODO: Get rid of all validation/dataloader stuff as not allowed
 
