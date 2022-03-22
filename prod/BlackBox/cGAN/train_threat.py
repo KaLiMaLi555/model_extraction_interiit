@@ -2,31 +2,25 @@ import argparse
 import json
 import os
 import random
-from collections import Counter
 from pprint import pprint
 
+import numpy as np
 import torch
-import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
-import wandb
+from approximate_gradients_swint_img import *
 from mmaction.models import build_model
 from mmcv import Config
 from mmcv.runner import load_checkpoint
-from torch.utils.data import DataLoader
-from torchmetrics.functional import accuracy
-from tqdm import tqdm
 
-from approximate_gradients_swint_img import *
-# from my_utils import *
-from utils.wandb_utils import init_wandb, save_ckp
-from val_utils import metrics
-from val_utils.custom_transformations import CustomStudentImageTransform
-from val_utils.dataloader_val import ValDataset
+from models import ConditionalGenerator
 
 
-# TODO: Replace with cfg parser stuff
+# TODO: Get MARS working once addded
+# from model_extraction_interiit.prod.BlackBox import MARS
+
 def parse_args():
+    # TODO: Replace with cfg parser stuff
     # Training settings
     parser = argparse.ArgumentParser(description='DFAD Swin-T Image')
     parser.add_argument('--batch_size', type=int, default=16, metavar='N', help='input batch size for training (default: 256)')
@@ -112,6 +106,10 @@ def parse_args():
     return parser.parse_args()
 
 
+def train():
+    pass
+
+
 def main():
     # TODO: Replace with cfg parser stuff
     args = parse_args()
@@ -125,6 +123,7 @@ def main():
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
+    # REVIEW: Decide if we're keeping this query budget stuff
     args.query_budget *= 10 ** 6
     args.query_budget = int(args.query_budget)
 
@@ -164,10 +163,11 @@ def main():
     # REVIEW: Decide if we're keeping or throwing logging dir stuff above
 
     use_cuda = not args.no_cuda and torch.cuda.is_available()
+    device = torch.device('cuda:%d' % args.device if use_cuda else 'cpu')
+    device_tf = '/device:GPU:%d' % args.device if use_cuda else '/device:CPU'
+    args.device, args.device_tf = device, device_tf
 
-    device = torch.device("cuda:%d" % args.device if use_cuda else "cpu")
-    kwargs = {'num_workers': 2, 'pin_memory': True} if use_cuda else {}
-
+    # REVIEW: Decide if we're keeping or throwing this stuff
     # Preparing checkpoints for the best Student
     global file
     model_dir = f"checkpoint/student_{args.model_id}";
@@ -177,62 +177,44 @@ def main():
     with open(f"{model_dir}/model_info.txt", "w") as f:
         json.dump(args.__dict__, f, indent=2)
     file = open(f"{args.model_dir}/logs.txt", "w")
-
     print(args)
-
-    args.device = device
 
     # Eigen values and vectors of the covariance matrix
     # _, test_loader = get_dataloader(args)
 
+    # TODO: cfg parser stuff
     args.normalization_coefs = None
     args.G_activation = torch.sigmoid
-
-    # num_classes = 10 if args.dataset in ['cifar10', 'svhn'] else 100
     args.num_classes = 400
 
-    # if args.model == 'resnet34_8x':
-    #     teacher = network.resnet_8x.ResNet34_8x(num_classes=num_classes)
-    #     if args.dataset == 'svhn':
-    #         print("Loading SVHN TEACHER")
-    #         args.ckpt = 'checkpoint/teacher/svhn-resnet34_8x.pt'
-    #     teacher.load_state_dict( torch.load( args.ckpt, map_location=device) )
-    # else:
-    #     teacher = get_classifier(args.model, pretrained=True, num_classes=args.num_classes)
+    # TODO: Convert this to cfg parser
+    if args.victim_model == 'swin-t':
+        config = "./Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py"
+        checkpoint = "/content/swin_tiny_patch244_window877_kinetics400_1k.pth"
+        cfg = Config.fromfile(config)
+        victim_model = build_model(cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))
+        load_checkpoint(victim_model, checkpoint, map_location=device)
+        victim_model.eval()
+        victim_model = victim_model.to(device)
+    else:
+        # TODO: Load movinet
+        pass
 
-    config = "./Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py"
-    checkpoint = "/content/swin_tiny_patch244_window877_kinetics400_1k.pth"
-    cfg = Config.fromfile(config)
-    teacher = build_model(cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))
-    load_checkpoint(teacher, checkpoint, map_location=device)
-
-    teacher.eval()
-    teacher = teacher.to(device)
-    # myprint("Teacher restored from %s"%(args.ckpt))
-    # print(f"\n\t\tTraining with {args.model} as a Target\n")
-    # correct = 0
-    # with torch.no_grad():
-    #     for i, (data, target) in enumerate(test_loader):
-    #         data, target = data.to(device), target.to(device)
-    #         output = teacher(data)
-    #         pred = output.argmax(dim=1, keepdim=True) # get the index of the max log-probability
-    #         correct += pred.eq(target.view_as(pred)).sum().item()
-    # accuracy = 100. * correct / len(test_loader.dataset)
-    # print('\nTeacher - Test set: Accuracy: {}/{} ({:.4f}%)\n'.format(correct, len(test_loader.dataset),accuracy))
-
-    # student = get_classifier(args.student_model, pretrained=False, num_classes=args.num_classes)
+    # TODO: Load MARS as threat model
     student = torchvision.models.mobilenet_v2()
     student.classifier[1] = torch.nn.Linear(in_features=student.classifier[1].in_features, out_features=400)
 
-    generator = network.gan.GeneratorC(nz=args.nz, nc=3, img_size=224, num_classes=400, activation=args.G_activation)
+    generator = ConditionalGenerator(nz=args.nz, nc=3, img_size=224, num_classes=400, activation=args.G_activation)
+    generator = generator.to(device)
 
     student = student.to(device)
-    generator = generator.to(device)
 
     args.generator = generator
     args.student = student
-    args.teacher = teacher
+    args.teacher = victim_model
 
+    # REVIEW: Decide if we're adding functionality to load a student from checkpoint
+    #   probably need this somewhere, at least in some eval script
     # if args.student_load_path :
     #     # "checkpoint/student_no-grad/cifar10-resnet34_8x.pt"
     #     student.load_state_dict( torch.load( args.student_load_path ) )
@@ -240,6 +222,7 @@ def main():
     #     acc = test(args, student=student, generator=generator, device = device, test_loader = test_loader)
 
     ## Compute the number of epochs with the given query budget:
+    # REVIEW: Decide if we're keeping this query budget stuff
     args.cost_per_iteration = args.batch_size * (args.g_iter * (args.grad_m + 1) + args.d_iter)
 
     number_epochs = args.query_budget // (args.cost_per_iteration * args.epoch_itrs) + 1
@@ -249,18 +232,7 @@ def main():
     print("Total number of epochs: ", number_epochs)
 
     optimizer_S = optim.SGD(student.parameters(), lr=args.lr_S, weight_decay=args.weight_decay, momentum=0.9)
-
-    if args.MAZE:
-        optimizer_G = optim.SGD(generator.parameters(), lr=args.lr_G, weight_decay=args.weight_decay, momentum=0.9)
-    else:
-        optimizer_G = optim.Adam(generator.parameters(), lr=args.lr_G)
-
-    if args.generator_checkpoint:
-        checkpoint = torch.load(args.generator_checkpoint, map_location=device)
-        generator.load_state_dict(checkpoint['generator'])
-        optimizer_G.load_state_dict(checkpoint['optimizer_G'])
-        for g in optimizer_G.param_groups:
-            g['lr'] = args.lr_G
+    optimizer_G = optim.Adam(generator.parameters(), lr=args.lr_G)
 
     steps = sorted([int(step * number_epochs) for step in args.steps])
     print("Learning rate scheduling at steps: ", steps)
@@ -273,36 +245,12 @@ def main():
         scheduler_S = optim.lr_scheduler.CosineAnnealingLR(optimizer_S, number_epochs)
         scheduler_G = optim.lr_scheduler.CosineAnnealingLR(optimizer_G, number_epochs)
 
-    best_acc = 0
-    acc_list = []
-
-    if args.val_scale == 1:
-        args.val_scale = 1 / args.val_scale_inv
-    # val_data = ValDataset(args.val_data_dir, args.val_classes_file,
-    #                       args.val_labels_file, args.num_classes,
-    #                       transform=CustomMobilenetTransform(size=args.image_size),
-    #                       scale=args.val_scale, shift=args.val_shift)
-    val_data = ValDataset(args.val_data_dir, args.val_classes_file,
-                          args.val_labels_file, args.num_classes,
-                          transform=CustomStudentImageTransform(size=224),
-                          scale=args.val_scale, shift=args.val_shift)
-
-    val_loader = DataLoader(val_data, batch_size=args.val_batch_size,
-                            shuffle=False, drop_last=False,
-                            num_workers=args.val_num_workers)
-    if args.wandb:
-        init_wandb(student, args.wandb_api_key, args.wandb_resume, args.wandb_name, args.wandb_project, args.wandb_run_id, args.wandb_watch)
-
-    # print("################### Evaluating Student Model ###################\n")
-    # student.eval()
-    # with torch.no_grad():
-    #     acc_1, acc_5 = val(student, val_loader, device)
-    #     acc_1 = 100 * acc_1.detach().cpu().numpy()
-    #     acc_5 = 100 * acc_5.detach().cpu().numpy()
-    # print(f'\nEpoch {epoch}')
-    # print(f'Top-1: {str(acc_1)}, Top-5: {str(acc_5)}\n')
-    # wandb.log({'val_T1': acc_1, 'epoch': epoch})
-    # wandb.log({'val_T5': acc_5, 'epoch': epoch})
+    if args.generator_checkpoint:
+        checkpoint = torch.load(args.generator_checkpoint, map_location=device)
+        generator.load_state_dict(checkpoint['generator'])
+        optimizer_G.load_state_dict(checkpoint['optimizer_G'])
+        for g in optimizer_G.param_groups:
+            g['lr'] = args.lr_G
 
     for epoch in range(1, number_epochs + 1):
         # Train
@@ -310,37 +258,10 @@ def main():
             scheduler_S.step()
             scheduler_G.step()
 
-        train(args, teacher=teacher, student=student, generator=generator, device=device, optimizer=[optimizer_S, optimizer_G], epoch=epoch)
+        train(args, teacher=victim_model, student=student, generator=generator, device=device, optimizer=[optimizer_S, optimizer_G], epoch=epoch)
 
-        # Validating student on K400
-        if epoch % args.val_epoch == 0:
-            print("################### Evaluating Student Model ###################\n")
-            student.eval()
-            with torch.no_grad():
-                acc_1, acc_5 = val(student, val_loader, device)
-                acc_1 = 100 * acc_1.detach().cpu().numpy()
-                acc_5 = 100 * acc_5.detach().cpu().numpy()
-            print(f'\nEpoch {epoch}')
-            print(f'Top-1: {str(acc_1)}, Top-5: {str(acc_5)}\n')
-            wandb.log({'val_T1': acc_1, 'epoch': epoch})
-            wandb.log({'val_T5': acc_5, 'epoch': epoch})
-
-        # Test
-        # acc = test(args, student=student, generator=generator, device = device, test_loader = test_loader, epoch=epoch)
-        # acc_list.append(acc)
-        # if acc>best_acc:
-        #     best_acc = acc
-        #     name = 'mobilenetV2'
-        #     torch.save(student.state_dict(),f"checkpoint/student_{args.model_id}/{args.dataset}-{name}.pt")
-        #     torch.save(generator.state_dict(),f"checkpoint/student_{args.model_id}/{args.dataset}-{name}-generator.pt")
-        # # vp.add_scalar('Acc', epoch, acc)
-        # if args.store_checkpoints:
-        #     torch.save(student.state_dict(), args.log_dir + f"/checkpoint/student.pt")
-        #     torch.save(generator.state_dict(), args.log_dir + f"/checkpoint/generator.pt")
-    # myprint("Best Acc=%.6f"%best_acc)
-
-    # with open(args.log_dir + "/Max_accuracy = %f"%best_acc, "w") as f:
-    #     f.write(" ")
+        # TODO: Add checkpoint saving stuff, possibly check wandb_utils
+        # TODO: Get rid of all validation/dataloader stuff as not allowed
 
 
 if __name__ == '__main__':
