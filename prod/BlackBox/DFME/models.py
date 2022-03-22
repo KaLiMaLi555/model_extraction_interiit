@@ -16,14 +16,14 @@ def get_mobilenet(num_classes):
 # 2D CNN encoder using ResNet-50 architecture
 class ResCNNEncoder(nn.Module):
     def __init__(self, fc_hidden1=512, fc_hidden2=512, drop_p=0.3, CNN_embed_dim=300):
-        """Load the ResNet-152 architecture and replace top fc layer."""
+        """Load the ResNet-50 architecture and replace top fc layer."""
         super(ResCNNEncoder, self).__init__()
 
         self.fc_hidden1, self.fc_hidden2 = fc_hidden1, fc_hidden2
         self.drop_p = drop_p
 
         resnet = torchvision.models.resnet50(pretrained=False)
-        modules = list(resnet.children())[:-1]  # delete the last fc layer.
+        modules = list(resnet.children())[:-1]  # Delete the last FC layer
         self.resnet = nn.Sequential(*modules)
         self.fc1 = nn.Linear(resnet.fc.in_features, fc_hidden1)
         self.bn1 = nn.BatchNorm1d(fc_hidden1, momentum=0.01)
@@ -97,7 +97,6 @@ class LSTMDecoder(nn.Module):
 # ResCNN-LSTM model for video classification
 class ResCNNLSTM(nn.Module):
     def __init__(self, fc_hidden1=512, fc_hidden2=512, drop_p=0.3, CNN_embed_dim=300, h_RNN_layers=3, h_RNN=256, h_FC_dim=128, num_classes=400):
-        """Load the ResNet-152"""
         super(ResCNNLSTM, self).__init__()
 
         self.encoder = ResCNNEncoder(fc_hidden1=fc_hidden1, fc_hidden2=fc_hidden2, drop_p=drop_p, CNN_embed_dim=CNN_embed_dim)
