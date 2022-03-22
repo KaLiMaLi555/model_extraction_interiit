@@ -7,7 +7,7 @@ import torch.optim.lr_scheduler as lr_scheduler
 
 from torch.autograd import Variable
 from torch.utils.data import DataLoader, Dataset
-from vidaug import augmentors as va
+# from vidaug import augmentors as va
 from options.train_options import *
 
 from Datasets.datasets import VideoLabelDataset, VideoLogitDataset

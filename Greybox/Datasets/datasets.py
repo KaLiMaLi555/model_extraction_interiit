@@ -16,11 +16,15 @@ class VideoLogitDataset(Dataset):
 
         self.video_dir_path = video_dir_path
         self.instances = []  # Tensor of image frames
-        self.logits = pickle.load(open(logits_file, 'rb'))
+        if logits_file is not None:
+            self.logits = pickle.load(open(logits_file, 'rb'))
+        else:
+            self.logits = None
 
         with open(video_name_file) as f:
             self.videos = [os.path.join(video_dir_path, x[:-1]) for x in f.readlines()]
 
+        self.instances = torch.stack(self.instances)
         self.num_instances = len(self.videos)
         self.transform = transform
         self.size = size
@@ -131,4 +135,43 @@ class VideoLabelDataset(Dataset):
         return vid, self.get_label(idx)
 
     def _len_(self):
+        return self.num_instances
+
+
+class VideoOnlyDataset(Dataset):
+
+    def __init__(self, video_dir_path, video_names_file, transforms, logits_file=None):
+
+        self.video_dir_path = video_dir_path
+        self.transform = transforms
+        if logits_file is not None:
+            self.logits = pickle.load(open(logits_file, 'rb'))
+        else:
+            self.logits = None
+
+        with open(video_names_file) as f:
+            self.videos = [os.path.join(video_dir_path, x[:-1]) for x in f.readlines()]
+        self.num_instances = len(self.videos)
+
+    def get_frames(self, video_path):
+        images = os.listdir(video_path)
+        image_frames = []
+
+        for image_name in images:
+            image = Image.open(os.path.join(video_path, image_name))
+            image = np.array(image, dtype = np.uint8)
+            image_frames.append(torch.tensor(image))
+        if len(image_frames) > 0:
+            return torch.stack(image_frames)
+        else:
+            return torch.zeros((16, 224, 224, 3))
+
+    def __getitem__(self, idx):
+        vid = self.get_frames(self.videos[idx])
+        # print(vid.shape, vid)
+        if self.logits is not None:
+            return self.transform(vid), self.logits[idx]
+        return self.transform(vid)
+
+    def __len__(self):
         return self.num_instances
