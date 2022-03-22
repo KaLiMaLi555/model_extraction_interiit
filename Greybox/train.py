@@ -1,13 +1,10 @@
-import time
-from re import L
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 import wandb
-from pygame import init
+
 from torch.autograd import Variable
 from torch.utils.data import DataLoader, Dataset
 from vidaug import augmentors as va
@@ -33,6 +30,8 @@ from utils.wandb import init_wandb
     Returns:
         float: The average validation accuracy
 """
+
+
 def train(model, train_loader, val_loader, optimizer, criterion, epoch, scheduler=None):
     model.train()
 
@@ -59,8 +58,8 @@ def train(model, train_loader, val_loader, optimizer, criterion, epoch, schedule
         optimizer.step()
 
         print('Epoch: [{0}][{1}/{2}]\t'
-                'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                'Acc {acc.val:.3f} ({acc.avg:.3f})'.format(
+              'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+              'Acc {acc.val:.3f} ({acc.avg:.3f})'.format(
             epoch,
             i + 1,
             len(train_loader),
@@ -68,6 +67,7 @@ def train(model, train_loader, val_loader, optimizer, criterion, epoch, schedule
             acc=accuracies))
 
     return accuracies.avg
+
 
 """
     Function to evaluate the model on the validation set
@@ -81,6 +81,8 @@ def train(model, train_loader, val_loader, optimizer, criterion, epoch, schedule
     Returns:
         float: The average validation loss
 """
+
+
 def val(model, val_dataloader, criterion, epoch):
     model.eval()
 
@@ -113,15 +115,16 @@ def val(model, val_dataloader, criterion, epoch):
 
     return accuracies.avg
 
+
 """
     Main function to train the model
 """
-def main():
 
+
+def main():
     opt = TrainOptions()
-    args = opt.initialize()
-    opt.print_options(args)
-    cfg = args
+    cfg = opt.initialize()
+    opt.print_options(cfg)
 
     print("Creating Model")
     model, parameters = generate_model(cfg.pretrain_path_ucf, cfg.n_finetune_classes)
@@ -133,10 +136,12 @@ def main():
     val_dataset = VideoLabelDataset(cfg.val_video_path, cfg.val_class_file, cfg.val_label_file, cfg.n_finetune_classes)
 
     train_data = finetune_dataset
-    val_data = val_dataset    
+    val_data = val_dataset
 
-    train_dataloader = DataLoader(train_data, batch_size = cfg.batch_size, shuffle=True, num_workers = cfg.n_workers, pin_memory = True)
-    val_dataloader   = DataLoader(val_data, batch_size = cfg.batch_size, shuffle=True, num_workers = cfg.n_workers, pin_memory = True)
+    train_dataloader = DataLoader(train_data, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.n_workers,
+                                  pin_memory=True)
+    val_dataloader = DataLoader(val_data, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.n_workers,
+                                pin_memory=True)
 
     print("Creating Training Parameters")
     optimizer = optim.SGD(
@@ -158,6 +163,7 @@ def main():
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             torch.save(model.module.state_dict(), cfg.save_path)
+
 
 if __name__ == '__main__':
     main()

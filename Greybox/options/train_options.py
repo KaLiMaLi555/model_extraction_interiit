@@ -2,48 +2,80 @@ import argparse
 import os
 import os.path as osp
 import datetime
-from config.cfg_parser import cfg_parser
+from Greybox.config.cfg_parser import cfg_parser
 
 
 class TrainOptions():
-    """ 
+    """
     Training options for commandline
     """
 
     def initialize(self):
-        """ 
+        """
         Parameter definitions
         Returns:
             ArgumentParser.parse_args: Params values for training
             Command line arguments:
-            --version [str]: name of the config file to use
+            --train_vid_dir: Path to the training videos
             --wandb [bool]: Log to wandb or not
+            ...
         """
 
-        parser = argparse.ArgumentParser(
-            description="training script for InterIIT Trafic Sign Recognition")
-        parser.add_argument(
-            "-v",
-            "--version",
-            type=str,
-            default="params",
-            help="name of the config file to use.",
-        )
-        parser.add_argument(
-            "-w", "--wandb", action="store_true", help="Log to wandb or not"
-        )
+        parser = argparse.ArgumentParser(description="GreyBox")
+
+        parser.add_argument("--train_vid_dir", type=str, default="", help="Path to the training videos")
+        parser.add_argument("--train_logits_file", type=str, default="", help="Path to the training logits file")
+        parser.add_argument("--val_vid_dir", type=str, default="", help="Path to the training videos")
+        parser.add_argument("--val_logits_file", type=str, default="", help="Path to the training logits file")
+        parser.add_argument("--test_vid_dir", type=str, default="", help="Path to the testing videos")
+        parser.add_argument("--ckpts_dir", type=str, default="", help="Path to the testing logits file")
+
+        parser.add_argument("--wandb_bool", type=bool, default=False, help="Log to wandb or not")
+        parser.add_argument("--wandb_project", type=str, default="model_extraction", help="Project name for wandb")
+        parser.add_argument("--wandb_id", type=str,  help="Run name for wandb")
+        parser.add_argument("--wandb_api_key", type=str, default="", help="API key for wandb")
+
+        parser.add_argument("--epochs", type=int, default=100, help="Number of epochs to train")
+        parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
+        parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
+        parser.add_argument("--num_workers", type=int, default=4, help="Num_workers for dataloader")
+        parser.add_argument("--lr_decay", type=float, default=0.5, help="Learning rate decay")
+        parser.add_argument("--lr_decay_step", type=int, default=5, help="Learning rate decay step")
+        parser.add_argument("--momentum", type=float, default=0.9, help="Momentum")
+        parser.add_argument("--weight_decay", type=float, default=10, help="Weight decay")
+
+        parser.add_argument("dataset", type=str, default="k400", help="Dataset use")
+        parser.add_argument("num_classes", type=int, default=400, help="Number of classes")
+
         args = parser.parse_args()
 
         cfg = cfg_parser(osp.join("config", args.version + '.json'))
-        cfg['experiment'].wandb = args.wandb
-        cfg['experiment'].version = args.version
-        cfg['experiment'].snapshot_dir = os.path.join(
-            cfg['experiment'].snapshot_dir, args.version)
+
+        cfg['experiment'].wandb_bool = args.wandb_bool
+        cfg['experiment'].wandb_project = args.wandb_project
+        cfg['experiment'].wandb_id = args.wandb_id
+        cfg['experiment'].wandb_api_key = args.wandb_api_key
+        cfg['experiment'].train_vid_dir = args.train_vid_dir
+        cfg['experiment'].train_logits_file = args.train_logits_file
+        cfg['experiment'].val_vid_dir = args.val_vid_dir
+        cfg['experiment'].val_logits_file = args.val_logits_file
+        cfg['experiment'].test_vid_dir = args.test_vid_dir
+        cfg['experiment'].ckpts_dir = args.ckpts_dir
+        cfg['experiment'].epochs = args.epochs
+        cfg['experiment'].batch_size = args.batch_size
+        cfg['experiment'].lr = args.lr
+        cfg['experiment'].num_workers = args.num_workers
+        cfg['experiment'].lr_decay = args.lr_decay
+        cfg['experiment'].lr_decay_step = args.lr_decay_step
+        cfg['experiment'].momentum = args.momentum
+        cfg['experiment'].weight_decay = args.weight_decay
+        cfg['experiment'].dataset = args.dataset
+        cfg['experiment'].num_classes = args.num_classes
 
         return cfg
 
     def print_options(self, args):
-        """ 
+        """
         Function that prints and saves the output
         """
 

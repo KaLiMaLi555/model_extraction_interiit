@@ -1,30 +1,33 @@
 {
     "experiment": {
-	    "model": "micronet",
-	    "device": "cuda",
-	    "snapshot_dir": "checkpoints/logs",
-	    "data_dir": "dataset/GTSRB",
-        "extra_path": null,
-	    "size": [48,48],
-	    "batch_size": 128,
-	    "epochs": 100,
-	    "epochs_stop": 100,
-	    "num_workers": 4,
-	    "learning_rate": 0.007,
-	    "momentum": 0.9,
-	    "weight_decay": 5e-4,
-	    "power": 0.9,
-	    "num_classes": 43,
-	    "init_weights":null,
-	    "restore_from":null,
-	    "save_pred_every": 5,
-	    "print_freq": 5,
-	    "wandb_api_key": null,
-        "wandb_name": null,
-	    "wandb_id": null,
-	    "class_weights":null,
-	    "lr_decay_step": 5,
-	    "seed": 42
+
+      "train_vid_dir": " ",
+      "train_logits_file": " ",
+      "val_vid_dir": " ",
+      "val_logits_file": " ",
+      "test_vid_dir": " ",
+      "ckpts_dir": " ",
+      "device": "cuda",
+      "wandb_bool": false,
+      "wandb_project": null,
+      "wandb_id": null,
+      "wandb_api_key": null,
+      "epochs": 100,
+      "batch_size": 128,
+      "num_workers": 4,
+      "lr": 0.01,
+      "lr_decay": 0.5,
+      "momentum": 0.9,
+      "weight_decay": 5e-4,
+      "dataset": "k400",
+      "num_classes": 400,
+
+      "save_pred_every": 5,
+      "print_freq": 5,
+
+
+      "lr_decay_step": 5,
+      "seed": 42
     },
     "augmentations": {
         "Use": {
