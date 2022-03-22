@@ -1,16 +1,7 @@
-# Import the required libraries
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
-
-
-# MobileNet-v2 with last layer replaced
-def get_mobilenet(num_classes):
-    mobilenet = torchvision.models.mobilenet_v2()
-    final_layer = torch.nn.Linear(in_features=mobilenet.classifier[1].in_features, out_features=num_classes)
-    mobilenet.classifier[1] = final_layer
-    return mobilenet
 
 
 # 2D CNN encoder using ResNet-50 architecture
@@ -104,91 +95,3 @@ class ResCNNLSTM(nn.Module):
 
     def forward(self, x_3d):
         return self.decoder(self.encoder(x_3d))
-
-
-# VideoGAN with background process removed
-class VideoGAN(nn.Module):
-    def __init__(self, zdim=100):
-        super(VideoGAN, self).__init__()
-
-        self.zdim = zdim
-
-        # Foreground
-        self.conv1 = nn.ConvTranspose3d(zdim, 512, [1, 7, 7], [1, 1, 1])
-        self.bn1 = nn.BatchNorm3d(512)
-
-        self.conv2 = nn.ConvTranspose3d(512, 256, [1, 4, 4], [1, 2, 2], [0, 1, 1])
-        self.bn2 = nn.BatchNorm3d(256)
-
-        self.conv3 = nn.ConvTranspose3d(256, 128, [4, 4, 4], [2, 2, 2], [1, 1, 1])
-        self.bn3 = nn.BatchNorm3d(128)
-
-        self.conv4 = nn.ConvTranspose3d(128, 64, [4, 4, 4], [2, 2, 2], [1, 1, 1])
-        self.bn4 = nn.BatchNorm3d(64)
-
-        self.conv5 = nn.ConvTranspose3d(64, 32, [4, 4, 4], [2, 2, 2], [1, 1, 1])
-        self.bn5 = nn.BatchNorm3d(32)
-
-        self.conv6 = nn.ConvTranspose3d(32, 3, [4, 4, 4], [2, 2, 2], [1, 1, 1])
-
-        # Init weights
-        for m in self.modules():
-            classname = m.__class__.__name__
-            if classname.lower().find('conv') != -1:
-                nn.init.normal_(m.weight, mean=0, std=0.01)
-                nn.init.constant_(m.bias, 0)
-            elif classname.lower().find('bn') != -1:
-                nn.init.normal_(m.weight, mean=1, std=0.02)
-                nn.init.constant_(m.bias, 0)
-
-    def forward(self, z):
-        # Foreground
-        z_unsqueezed = z.unsqueeze(2).unsqueeze(3).unsqueeze(4)
-        f = F.leaky_relu(self.bn1(self.conv1(z_unsqueezed)))
-        f = F.leaky_relu(self.bn2(self.conv2(f)))
-        f = F.leaky_relu(self.bn3(self.conv3(f)))
-        f = F.leaky_relu(self.bn4(self.conv4(f)))
-        f = F.leaky_relu(self.bn5(self.conv5(f)))
-
-        out = self.conv6(f)  # b, 3, 32, 64, 64
-        return out
-
-
-# REVIEW: Use DCGAN instead? Would it be easier to defend?
-#   Will be able to give a sense of the size of the model through name only,
-#   can be a good thing or a bad thing.
-# ImageGenerator
-class ImageGenerator(nn.Module):
-    def __init__(self, ngpu, nc=3, nz=100, ngf=64):
-        super(ImageGenerator, self).__init__()
-        self.ngpu = ngpu
-
-        self.main = nn.Sequential(
-            # input is Z, going into a convolution
-            nn.ConvTranspose2d(nz, ngf * 8, 4, 1, 0, bias=False),
-            nn.BatchNorm2d(ngf * 8),
-            nn.LeakyReLU(inplace=True),
-            # State size: (ngf*8) x 4 x 4
-
-            nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ngf * 4),
-            nn.LeakyReLU(inplace=True),
-            # State size: (ngf*4) x 8 x 8
-
-            nn.ConvTranspose2d(ngf * 4, ngf * 2, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ngf * 2),
-            nn.LeakyReLU(inplace=True),
-            # State size: (ngf*2) x 16 x 16
-
-            nn.ConvTranspose2d(ngf * 2, ngf, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ngf),
-            nn.LeakyReLU(inplace=True),
-            nn.ConvTranspose2d(ngf, nc, kernel_size=1, stride=1, padding=0, bias=False),
-        )
-
-    def forward(self, x):
-        if x.is_cuda and self.ngpu > 1:
-            output = nn.parallel.data_parallel(self.main, x, range(self.ngpu))
-        else:
-            output = self.main(x)
-        return output
