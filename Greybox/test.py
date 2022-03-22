@@ -66,7 +66,7 @@ def test(model, test_dataloader, criterion):
 def main():
 
     print("Creating Model")
-    model, parameters = generate_model(cfg.pretrain_path_ucf, cfg.n_finetune_classes)
+    model, parameters = generate_model(cfg.n_finetune_classes)
 
     print("Creating Dataloaders")
     test_dataset = VideoLabelDataset(cfg.val_video_path, cfg.val_class_file, cfg.val_label_file, cfg.n_finetune_classes)

@@ -124,7 +124,7 @@ def main():
     opt.print_options(cfg)
 
     print("Creating Model")
-    model, parameters = generate_model(cfg.pretrain_path_ucf, cfg.n_finetune_classes)
+    model, parameters = generate_model(cfg.n_finetune_classes)
 
     print("Creating Dataloaders")
     finetune_dataset = VideoLogitDataset(cfg.train_video_path, cfg.train_video_name_path, cfg.train_logit_path)
