@@ -13,7 +13,7 @@ from mmcv import Config
 from mmcv.runner import load_checkpoint
 from tqdm import tqdm
 
-from model_extraction_interiit.prod.BlackBox.approximate_gradients import approximate_gradients
+from model_extraction_interiit.prod.BlackBox.approximate_gradients import approximate_gradients_conditional
 
 
 def parse_args():
@@ -85,18 +85,11 @@ def parse_args():
     return parser.parse_args()
 
 
-# def generator_loss(args, s_logit, t_logit,  z = None, z_logit = None, reduction="mean"):
-#     assert 0
-#     loss = - F.l1_loss( s_logit, t_logit , reduction=reduction)
-#     return loss
-
-
-def pretrain(args, teacher, generator, device, optimizer, epoch):
-    """Main Loop for one epoch of Training Generator and Student"""
-    teacher.eval()
-
-    debug_distribution = True
-    distribution = []
+def pretrain(args, victim_model, generator, device, device_tf, optimizer, epoch):
+    """Main Loop for one epoch of Pretraining Generator"""
+    if args.model == 'swin-t':
+        victim_model.eval()
+    victim_model.eval()
     total_loss = 0
 
     for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
@@ -104,44 +97,22 @@ def pretrain(args, teacher, generator, device, optimizer, epoch):
         for _ in range(args.g_iter):
             # Sample Random Noise
             labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
-            labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
+            labels_onehot = torch.nn.functional.one_hot(labels, args.num_classes)
             z = torch.randn((args.batch_size, args.nz)).to(device)
             optimizer.zero_grad()
             generator.train()
+
             # Get fake image from generator
-            fake = generator(z, label=labels_oh, pre_x=True)  # pre_x returns the output of G before applying the activation
+            # pre_x returns the output of G before applying the activation
+            fake = generator(z, label=labels_onehot, pre_x=True)
             fake = fake.unsqueeze(dim=2)
 
-            ## APPOX GRADIENT
-            approx_grad_wrt_x, loss = estimate_gradient_objective(
-                args, teacher, fake, labels=labels, epsilon=args.grad_epsilon,
-                m=args.grad_m, num_classes=args.num_classes,
-                device=device, pre_x=True)
-
-            if i == 0 and _ == 0:
-                grad_wrt_x, loss_bp = compute_gradient(args, teacher, fake, labels=labels, device=device, pre_x=True)
-                print()
-                print('Shapes')
-                print(approx_grad_wrt_x.shape, grad_wrt_x.shape)
-                print('Approximated gradient')
-                print(approx_grad_wrt_x)
-                print('Backprop Gradient')
-                print(grad_wrt_x)
-                print('Losses')
-                print(loss, loss_bp)
-                print('Grad diff')
-                print(approx_grad_wrt_x - grad_wrt_x)
-                print((approx_grad_wrt_x - grad_wrt_x).sum())
-
-            # print()
-            # print(approx_grad_wrt_x.shape)
-            # print(grad_wrt_x.shape)
-            # print(loss)
-            # print(loss_conf)
-            # print(loss - loss_conf)
-            # print(np.sum(loss - loss_conf))
-            # print(approx_grad_wrt_x - grad_wrt_x)
-            # print(np.sum(approx_grad_wrt_x - grad_wrt_x))
+            # Perform gradient approximation
+            approx_grad_wrt_x, loss = approximate_gradients_conditional(
+                args, victim_model, fake, labels=labels,
+                epsilon=args.grad_epsilon, m=args.grad_m,
+                device=device, device_tf=device_tf, pre_x=True)
+            args, victim_model, labels, x, epsilon = 1e-7, m = 5, device = 'cpu', device_tf = '/device:GPU:0', pre_x = False
 
             fake.backward(approx_grad_wrt_x)
             optimizer.step()
@@ -288,7 +259,7 @@ def main():
         if args.scheduler != "none":
             scheduler_G.step()
 
-        pretrain(args, teacher=teacher, generator=generator, device=device, optimizer=optimizer_G, epoch=epoch)
+        pretrain(args, victim_model=teacher, generator=generator, device=device, optimizer=optimizer_G, epoch=epoch)
 
         # Validating student on K400
         # if epoch % args.val_epoch == 0:
