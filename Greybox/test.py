@@ -1,7 +1,5 @@
-from re import L
 import time
-from pygame import init
-from vidaug import augmentors as va
+from re import L
 
 import torch
 import torch.nn as nn
@@ -9,12 +7,14 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 import wandb
+from pygame import init
 from torch.autograd import Variable
-from utils.wandb import init_wandb
+from torch.utils.data import DataLoader, Dataset
+from vidaug import augmentors as va
 
 from Datasets.datasets import VideoLabelDataset, VideoLogitDataset
-from torch.utils.data import Dataset, DataLoader
 from models.MARS.model import generate_model
+from options.test_options import TestOptions
 from utils.mars_utils import *
 
 """
@@ -64,6 +64,10 @@ def test(model, test_dataloader, criterion):
     Main function to run the program
 """
 def main():
+    opt = TestOptions()
+    cfg = opt.initialize()
+    cfg = cfg["experiment"]
+    opt.print_options(cfg)
 
     print("Creating Model")
     model, parameters = generate_model(cfg.n_finetune_classes)

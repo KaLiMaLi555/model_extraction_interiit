@@ -1,19 +1,17 @@
+from torch.utils.data import DataLoader, Dataset
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
+import torch.nn.functional as F
 import torch.optim.lr_scheduler as lr_scheduler
-
-
 from torch.autograd import Variable
-from torch.utils.data import DataLoader, Dataset
-# from vidaug import augmentors as va
-from options.train_options import *
 
 from Datasets.datasets import VideoLabelDataset, VideoLogitDataset
 from models.MARS.model import generate_model
+# from vidaug import augmentors as va
+from options.train_options import *
 from utils.mars_utils import *
-
+from utils.augment import va_augment
 
 """
     Function to train the model
@@ -31,7 +29,7 @@ from utils.mars_utils import *
 """
 
 
-def train(model, train_loader, optimizer, criterion, epoch, scheduler=None):
+def train(cfg, model, train_loader, optimizer, criterion, epoch, scheduler=None):
     model.train()
 
     losses = AverageMeter()
@@ -47,7 +45,7 @@ def train(model, train_loader, optimizer, criterion, epoch, scheduler=None):
         outputs = model(inputs)
 
         loss = criterion(outputs, targets)
-        acc = calculate_accuracy(outputs, F.one_hot(targets, num_classes=400))
+        acc = calculate_accuracy(outputs, F.one_hot(targets, num_classes=cfg.num_classes))
 
         losses.update(loss.item(), inputs.size(0))
         accuracies.update(acc, inputs.size(0))
@@ -121,13 +119,23 @@ def val(model, val_dataloader, criterion, epoch):
 def main():
     opt = TrainOptions()
     cfg = opt.initialize()
+    cfg = cfg["experiment"]
     opt.print_options(cfg)
 
     print("Creating Model")
     model, parameters = generate_model(cfg.n_finetune_classes)
 
+    if cfg.train_mode == "finetune":
+        print("Loading pretrained model")
+
+
     print("Creating Dataloaders")
-    finetune_dataset = VideoLogitDataset(cfg.train_video_path, cfg.train_video_name_path, cfg.train_logit_path)
+    if cfg.augmentation:
+        augs_list = cfg.augmentation
+        va_aug = va_augment(augs_list)
+        finetune_dataset = VideoLabelDataset(cfg.train_path, cfg.train_label_path, cfg.train_video_path, va_aug)
+    else:
+        finetune_dataset = VideoLogitDataset(cfg.train_video_path, cfg.train_video_name_path, cfg.train_logit_path)
     val_dataset = VideoLabelDataset(cfg.val_video_path, cfg.val_class_file, cfg.val_label_file, cfg.n_finetune_classes)
 
     train_data = finetune_dataset
@@ -155,9 +163,12 @@ def main():
         train_acc = train(model, train_dataloader, optimizer, criterion, epoch, scheduler)
         val_acc = val(model, val_dataloader, criterion, epoch)
         scheduler.step(epoch)
+        save_path = os.path.join(cfg.save_path, "model_epoch_" + str(epoch) + ".pth")
+        torch.save(model.state_dict(), save_path)
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            torch.save(model.module.state_dict(), cfg.save_path)
+            best_save_path = os.path.join(cfg.ckpts_dir, "best_model.pth")
+            torch.save(model.state_dict(), best_save_path)
 
 
 if __name__ == '__main__':

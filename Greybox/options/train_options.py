@@ -28,7 +28,9 @@ class TrainOptions():
         parser.add_argument("--val_vid_dir", type=str, default="", help="Path to the training videos")
         parser.add_argument("--val_logits_file", type=str, default="", help="Path to the training logits file")
         parser.add_argument("--test_vid_dir", type=str, default="", help="Path to the testing videos")
-        parser.add_argument("--ckpts_dir", type=str, default="", help="Path to the testing logits file")
+        parser.add_argument("--ckpts_dir", type=str, default="", help="Path to save the checkpoints") 
+        parser.add_argument("--train_mode", type=str, default="finetune", help="Mode for training: finetuning or pretraining")
+        parser.add_argument("--augmentations", type=list, default=[], help="Augmentation list")
 
         parser.add_argument("--epochs", type=int, default=100, help="Number of epochs to train")
         parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
@@ -63,6 +65,8 @@ class TrainOptions():
         cfg['experiment'].weight_decay = args.weight_decay
         cfg['experiment'].dataset = args.dataset
         cfg['experiment'].num_classes = args.num_classes
+        cfg['experiment'].train_mode = args.train_mode
+        cfg['experiment'].augmentations = args.augmentations
 
         return cfg
 
