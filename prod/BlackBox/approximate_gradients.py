@@ -4,6 +4,10 @@ import tensorflow as tf
 import torch
 import torch.nn.functional as F
 
+# TODO: Factor more of approx_grad and approx_grad_conditional into reusable
+#       functions to reduce repetition.
+#       Alternatively combine both functions, not sure if better
+
 
 def get_evaluation_points(x, N, C, L, S, m, dim, epsilon, pre_x, G_activation):
     u = np.random.randn(N * m * dim).reshape(-1, m, dim)  # generate random points from normal distribution
