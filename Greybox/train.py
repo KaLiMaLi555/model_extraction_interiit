@@ -126,8 +126,7 @@ def main():
     model, parameters = generate_model(cfg.n_finetune_classes)
 
     if cfg.train_mode == "finetune":
-        print("Loading pretrained model")
-
+        model.load_state_dict(torch.load(cfg.pretrained_ckpt_path))
 
     print("Creating Dataloaders")
     if cfg.augmentation:
@@ -169,6 +168,9 @@ def main():
             best_val_acc = val_acc
             best_save_path = os.path.join(cfg.ckpts_dir, "best_model.pth")
             torch.save(model.state_dict(), best_save_path)
+
+    if cfg.mode == "pretrain":
+        torch.save(model.state_dict(), os.path.join(cfg.pretrained_ckpt_path))
 
 
 if __name__ == '__main__':

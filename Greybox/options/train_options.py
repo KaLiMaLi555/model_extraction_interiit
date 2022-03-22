@@ -30,6 +30,7 @@ class TrainOptions():
         parser.add_argument("--test_vid_dir", type=str, default="", help="Path to the testing videos")
         parser.add_argument("--ckpts_dir", type=str, default="", help="Path to save the checkpoints") 
         parser.add_argument("--train_mode", type=str, default="finetune", help="Mode for training: finetuning or pretraining")
+        parser.add_argument("--pretrained_ckpt_path", type=str, default="", help="Path to the pretrained checkpoint")
         parser.add_argument("--augmentations", type=list, default=[], help="Augmentation list")
 
         parser.add_argument("--epochs", type=int, default=100, help="Number of epochs to train")
@@ -67,6 +68,7 @@ class TrainOptions():
         cfg['experiment'].num_classes = args.num_classes
         cfg['experiment'].train_mode = args.train_mode
         cfg['experiment'].augmentations = args.augmentations
+        cfg['experiment'].pretrained_ckpt_path = args.pretrained_ckpt_path
 
         return cfg
 
