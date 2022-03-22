@@ -1,0 +1,42 @@
+experiment:
+  batch_size: 16
+  query_budget: 20
+  epoch_itrs: 50
+  g_iter: 10
+  d_iter: 5
+  lr_S: 0.001
+  lr_G: 1e-4
+  nz: 256
+  log_interval: 10
+  generator_checkpoint: 
+  loss: l1
+  scheduler: multistep
+  steps: 
+    - 0.1
+    - 0.3
+    - 0.5
+  scale: 3e-1
+  dataset: k400
+  data_root: data
+  model: swin-t
+  student_model: mars
+  device: 0
+  approx_grad: 1
+  grad_m: 1
+  grad_epsilon: 1e-3
+  forward_differences: 1
+  no_logits: 1
+  logit_correction: mean
+  rec_grad_norm: 1
+  MAZE: 0
+  store_checkpoints: 1
+  val_data_dir: '/content/val_data/k400_16_frames_uniform'
+  val_classes_file: '/content/val_data/k400_16_frames_uniform/classes.csv'
+  val_labels_file: '/content/val_data/k400_16_frames_uniform/labels.csv'
+  val_num_workers: 2
+  val_epoch: 5
+  val_batch_size: 8
+  val_scale: 1
+  val_scale_inv: 255.0
+  val_shift: 0
+  
