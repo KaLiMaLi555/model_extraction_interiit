@@ -32,11 +32,11 @@ def cfg_parser(cfg_file: str) -> dict:
     Returns:
         exp_cfg (dict) : dictionary of config file
     """
-    cfg = yaml.load(open(root_dir + cfg_file))
+    cfg = yaml.load(open(root_dir + cfg_file), Loader=yaml.FullLoader)
 
     exp_cfg = {
         "experiment": Config(cfg_file, cfg['experiment']),
-        "augmentations": Config(cfg_file, cfg['augmentations'])
+        # "augmentations": Config(cfg_file, cfg['augmentations'])
     }
 
     return exp_cfg

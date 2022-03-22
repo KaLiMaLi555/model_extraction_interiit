@@ -16,7 +16,7 @@ from mmaction.models import build_model
 from mmcv import Config
 from mmcv.runner import load_checkpoint
 from config.cfg_parser import cfg_parser
-from torchmetrics import accuracy
+from torchmetrics.functional import accuracy
 from tqdm.notebook import tqdm
 
 from approximate_gradients import approximate_gradients
@@ -28,7 +28,7 @@ from cGAN.models import ConditionalGenerator
 # TODO: Get MARS working once added
 # from model_extraction_interiit.prod.BlackBox import MARS
 
-def config():
+def get_config():
     # TODO: Replace with cfg parser stuff
     # Training settings
     parser = argparse.ArgumentParser()
@@ -220,7 +220,7 @@ def train(args, victim_model, threat_model, generator, device, device_tf, optimi
 
 def main():
     # TODO: Replace with cfg parser stuff
-    args = config()["experiment"]
+    args = get_config()["experiment"]
 
     # TODO: Use common set_env util
     # Prepare the environment
@@ -277,15 +277,15 @@ def main():
 
     # REVIEW: Decide if we're keeping or throwing this stuff
     # Preparing checkpoints for the best Student
-    global file
-    model_dir = f"checkpoint/student_{args.model_id}";
-    args.model_dir = model_dir
-    if not os.path.exists(model_dir):
-        os.makedirs(model_dir)
-    with open(f"{model_dir}/model_info.txt", "w") as f:
-        json.dump(args.__dict__, f, indent=2)
-    file = open(f"{args.model_dir}/logs.txt", "w")
-    print(args)
+    # global file
+    # model_dir = f"checkpoint/student_{args.model_id}";
+    # args.model_dir = model_dir
+    # if not os.path.exists(model_dir):
+    #     os.makedirs(model_dir)
+    # with open(f"{model_dir}/model_info.txt", "w") as f:
+    #     json.dump(args.__dict__, f, indent=2)
+    # file = open(f"{args.model_dir}/logs.txt", "w")
+    # print(args)
 
     # Eigen values and vectors of the covariance matrix
     # _, test_loader = get_dataloader(args)
@@ -298,7 +298,7 @@ def main():
     # TODO: Convert this to cfg parser
     if args.victim_model == 'swin-t':
         # TODO: cfg parser for VST file paths
-        config = "./Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py"
+        config = "../Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py"
         checkpoint = "/content/swin_tiny_patch244_window877_kinetics400_1k.pth"
         cfg = Config.fromfile(config)
         victim_model = build_model(cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))

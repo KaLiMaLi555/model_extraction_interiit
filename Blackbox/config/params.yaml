@@ -1,11 +1,12 @@
 experiment:
+  seed: 42
   batch_size: 16
   query_budget: 20
   epoch_itrs: 50
   g_iter: 10
   d_iter: 5
   lr_S: 0.001
-  lr_G: 1e-4
+  lr_G: 1.0e-4
   nz: 256
   log_interval: 10
   generator_checkpoint: 
@@ -15,7 +16,7 @@ experiment:
     - 0.1
     - 0.3
     - 0.5
-  scale: 3e-1
+  scale: 0.3
   dataset: k400
   data_root: data
   model: swin-t
@@ -23,7 +24,7 @@ experiment:
   device: 0
   approx_grad: 1
   grad_m: 1
-  grad_epsilon: 1e-3
+  grad_epsilon: 1.0e-3
   forward_differences: 1
   no_logits: 1
   logit_correction: mean
@@ -39,4 +40,8 @@ experiment:
   val_scale: 1
   val_scale_inv: 255.0
   val_shift: 0
-  
+  log_dir: /content/logs
+  no_cuda: 0
+  model_id: mars
+  victim_model: swin-t
+  weight_decay: 5.0e-4

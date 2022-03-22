@@ -34,7 +34,7 @@ def get_evaluation_points(x, N, C, L, S, m, dim, epsilon, pre_x, G_activation):
 
 def get_swint_pts(victim_model, pts):
     swin_pts = swin_transform(pts)
-    pred_victim_pts = victim_model(swin_pts).detach()
+    pred_victim_pts = victim_model(swin_pts.cuda(), return_loss=False)
     return pred_victim_pts
 
 
@@ -82,7 +82,7 @@ def approximate_gradients(
 
         # Get points to evaluate model at
         u, evaluation_points = get_evaluation_points(
-            N, C, L, S, m, dim, epsilon, pre_x, x, args)
+            x, N, C, L, S, m, dim, epsilon, pre_x, args.G_activation)
 
         # Compute the approximation sequentially to allow large values of m
         pred_victim, pred_threat = [], []

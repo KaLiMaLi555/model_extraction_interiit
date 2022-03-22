@@ -1,1 +1,1 @@
-from conditional_generator import ConditionalGenerator
+from .conditional_generator import ConditionalGenerator
