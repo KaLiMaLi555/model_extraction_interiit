@@ -195,6 +195,7 @@ def main():
 
     # TODO: Convert this to cfg parser
     if args.victim_model == 'swin-t':
+        # TODO: cfg parser for VST file paths
         config = "./Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py"
         checkpoint = "/content/swin_tiny_patch244_window877_kinetics400_1k.pth"
         cfg = Config.fromfile(config)

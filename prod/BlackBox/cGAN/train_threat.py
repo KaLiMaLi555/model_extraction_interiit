@@ -5,6 +5,8 @@ import random
 from pprint import pprint
 
 import numpy as np
+import tensorflow as tf
+import tensorflow_hub as hub
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
@@ -285,6 +287,7 @@ def main():
 
     # TODO: Convert this to cfg parser
     if args.victim_model == 'swin-t':
+        # TODO: cfg parser for VST file paths
         config = "./Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py"
         checkpoint = "/content/swin_tiny_patch244_window877_kinetics400_1k.pth"
         cfg = Config.fromfile(config)
@@ -293,8 +296,14 @@ def main():
         victim_model.eval()
         victim_model = victim_model.to(device)
     else:
-        # TODO: Load movinet
-        pass
+        hub_url = "https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3"
+
+        encoder = hub.KerasLayer(hub_url, trainable=False)
+        inputs = tf.keras.layers.Input(shape=[None, None, None, 3], dtype=tf.float32, name='image')
+
+        # [batch_size, 600]
+        outputs = encoder(dict(image=inputs))
+        victim_model = tf.keras.Model(inputs, outputs, name='movinet')
 
     # TODO: Load MARS as threat model
     threat_model = torchvision.models.mobilenet_v2()
