@@ -126,15 +126,15 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
             # Print accuracy of Generator via Victim's logits
             g_t1 = 100 * accuracy(logits_victim, labels, top_k=1)
             g_t5 = 100 * accuracy(logits_victim, labels, top_k=5)
-            g_t1_list.append(g_t1)
-            g_t5_list.append(g_t5)
+            g_t1_list.append(g_t1.detach().cpu().numpy())
+            g_t5_list.append(g_t5.detach().cpu().numpy())
 
             # Print accuracy of Threat Model via Victim's logits
             victim_argmax = logits_victim.argmax(axis=1)
             t_t1 = 100 * accuracy(logits_threat, victim_argmax, top_k=1)
             t_t5 = 100 * accuracy(logits_threat, victim_argmax, top_k=5)
-            t_t1_list.append(t_t1)
-            t_t5_list.append(t_t5)
+            t_t1_list.append(t_t1.detach().cpu().numpy())
+            t_t5_list.append(t_t5.detach().cpu().numpy())
 
             # Correction for the fake logits
             if args.loss == "l1" and args.no_logits:
