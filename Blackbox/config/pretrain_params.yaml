@@ -9,10 +9,11 @@ experiment:
   lr_G: 1.0e-4
   nz: 20
   log_interval: 10
-  generator_checkpoint: 
+  generator_checkpoint:
+  checkpoint_path: "/content/pretrained_cgan_checkpoints"
   loss: cross-entropy
   scheduler: multistep
-  steps: 
+  steps:
     - 0.1
     - 0.3
     - 0.5
@@ -30,9 +31,9 @@ experiment:
   rec_grad_norm: 1
   MAZE: 0
   store_checkpoints: 1
-  val_data_dir: '/content/val_data/k400_16_frames_uniform'
-  val_classes_file: '/content/val_data/k400_16_frames_uniform/classes.csv'
-  val_labels_file: '/content/val_data/k400_16_frames_uniform/labels.csv'
+  val_data_dir: "/content/val_data/k400_16_frames_uniform"
+  val_classes_file: "/content/val_data/k400_16_frames_uniform/classes.csv"
+  val_labels_file: "/content/val_data/k400_16_frames_uniform/labels.csv"
   val_num_workers: 2
   val_epoch: 5
   val_batch_size: 8

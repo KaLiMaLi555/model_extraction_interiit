@@ -9,10 +9,10 @@ experiment:
   lr_G: 1.0e-4
   nz: 20
   log_interval: 10
-  generator_checkpoint: 
+  generator_checkpoint:
   loss: l1
   scheduler: multistep
-  steps: 
+  steps:
     - 0.1
     - 0.3
     - 0.5
