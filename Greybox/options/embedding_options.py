@@ -2,7 +2,7 @@ import argparse
 import os
 import os.path as osp
 import datetime
-from Greybox.config.cfg_parser import cfg_parser
+from config.cfg_parser import cfg_parser
 
 class EmbeddingOptions():
     def initialize(self):
@@ -26,11 +26,9 @@ class EmbeddingOptions():
         parser.add_argument('--video_names_file', default=" ", type=str)
         parser.add_argument('--classes_file', default=" ", type=str)
         parser.add_argument('--labels_file', default=" ", type=str)
- 
-
         args = parser.parse_args()
 
-        cfg = cfg_parser(osp.join("config", args.version + '.json'))
+        cfg = cfg_parser(osp.join("config", 'params.json'))
 
         cfg["embeddings"].batch_size = args.batch_size
         cfg["embeddings"].logit_dir = args.logit_dir

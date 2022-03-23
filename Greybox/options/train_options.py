@@ -10,15 +10,6 @@ class TrainOptions():
     """
 
     def initialize(self):
-        """
-        Parameter definitions
-        Returns:
-            ArgumentParser.parse_args: Params values for training
-            Command line arguments:
-            --train_vid_dir: Path to the training videos
-            --wandb [bool]: Log to wandb or not
-            ...
-        """
 
         parser = argparse.ArgumentParser(description="GreyBox")
 

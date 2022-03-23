@@ -247,9 +247,6 @@ def resnet152(**kwargs):
     return model
 
 
-
-
-
 def generate_model(n_finetune_classes=None):
     model = resnet101(
         num_classes=101,
