@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
         this_dir_name, _ = os.path.split(os.path.abspath(__file__))
         file_name = "extract_frames.sh"
-        script_path = os.path.join(this_dir_name, file_name)
+        script_path = os.path.join(this_dir_name, args.set_name, file_name)
         script_path = script_path + " %s %s %s"
         errors = 0
         for vid in tqdm(input_dir_list):
