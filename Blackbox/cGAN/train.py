@@ -27,7 +27,7 @@ from utils_common import set_seed, swin_transform
 def get_config():
     # Training settings
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default="config/params_swint.yaml")
+    parser.add_argument("--config", type=str, default="config/params_cgan_swint.yaml")
 
     cfg = cfg_parser(parser.parse_args().config)
 

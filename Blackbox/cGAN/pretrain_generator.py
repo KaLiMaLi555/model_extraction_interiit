@@ -22,7 +22,7 @@ from utils_common import set_seed
 def get_config():
     # Training settings
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default="config/pretrain_params.yaml")
+    parser.add_argument('--config', type=str, default='config/params_pretrain_swint.yaml')
 
     cfg = cfg_parser(parser.parse_args().config)
 
