@@ -12,7 +12,7 @@ from PIL import Image
 
 class VideoLogitDataset(Dataset):
 
-    def _init_(self, video_dir_path, video_name_file, logits_file, size: tuple = (224,224), transform=None, va_augments=None):
+    def __init__(self, video_dir_path, video_name_file, logits_file, size: tuple = (224,224), transform=None, va_augments=None):
 
         self.video_dir_path = video_dir_path
         self.instances = []  # Tensor of image frames
@@ -42,7 +42,7 @@ class VideoLogitDataset(Dataset):
 
         return torch.stack(image_frames)
 
-    def _getitem_(self, idx):
+    def __getitem__(self, idx):
         vid = self.get_frames(self.videos[idx])
         if self.va_augments is not None:
             vid = self.va_augments(vid)
@@ -53,13 +53,13 @@ class VideoLogitDataset(Dataset):
         vid = vid.swapaxes(0, 3)
         return vid, self.logits[idx]
 
-    def _len_(self):
+    def __len__(self):
         return self.num_instances
 
 
 class VideoLabelDataset(Dataset):
 
-    def _init_(self, video_dir_path, classes_file, labels_file, num_classes, size: tuple=(224,224), transform=None, va_augments=None):
+    def __init__(self, video_dir_path, classes_file, labels_file, num_classes, size: tuple=(224,224), transform=None, va_augments=None):
 
         self.video_dir_path = video_dir_path
         self.classes_file = classes_file
@@ -119,7 +119,7 @@ class VideoLabelDataset(Dataset):
 
         return torch.stack(image_frames)
 
-    def _getitem_(self, idx):
+    def __getitem__(self, idx):
         video_path = os.path.join(self.video_dir_path, self.videos[idx])
         vid = self.get_frames(video_path)
         if self.va_augments is not None:
@@ -131,7 +131,7 @@ class VideoLabelDataset(Dataset):
         vid = vid.swapaxes(0, 3)
         return vid, self.get_label(idx)
 
-    def _len_(self):
+    def __len__(self):
         return self.num_instances
 
 

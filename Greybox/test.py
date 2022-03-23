@@ -71,7 +71,7 @@ def main():
 
     print("Creating Model")
     model, parameters = generate_model(cfg.num_classes)
-    model.load_state_dict(torch.load(cfg.restore_from))
+    model.module.load_state_dict(torch.load(cfg.restore_from))
 
 
     print("Creating Dataloaders")
