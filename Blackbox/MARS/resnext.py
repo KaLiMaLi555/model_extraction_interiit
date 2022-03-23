@@ -1,12 +1,10 @@
-from __future__ import division
+import math
+from functools import partial
+
 import torch
-from torch.nn import init
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-import math
-from functools import partial
-import pdb
 
 __all__ = ['ResNeXt', 'resnet50', 'resnet101', 'get_fine_tuning_parameters']
 

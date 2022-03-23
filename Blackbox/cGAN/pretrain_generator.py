@@ -35,7 +35,7 @@ def pretrain(args, victim_model, generator, device, device_tf, optimizer):
     if args.victim_model == 'swin-t':
         victim_model.eval()
 
-        # Repeat epoch_itrs times per epoch
+    # Repeat epoch_itrs times per epoch
     for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
         # Generate labels for Conditional Generator
         labels = torch.randn((args.batch_size, args.num_classes)).to(device)
