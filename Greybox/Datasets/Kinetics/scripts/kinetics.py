@@ -14,11 +14,11 @@ def call_bash(dir_path: str,
               max_workers: int = 8):
 
     vid_path = os.path.join(dir_path, set_name)
-    targz_path = os.path.join(vid_path, f"{set_name}_targz")
+    targz_path = os.path.join(dir_path, f"{set_name}_targz")
     errors = 0
     this_dir_name, _ = os.path.split(os.path.abspath(__file__))
     file_name = f"{set_name}_{part}_{typ}.sh"
-    script_path = os.path.join(this_dir_name, file_name)
+    script_path = os.path.join(this_dir_name, set_name, file_name)
     script_path = script_path + " %s %s "
     try:
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
@@ -84,36 +84,38 @@ if __name__ == "__main__":
     parser.add_argument('--set_name', type=str, default='k400')
     parser.add_argument('--part', type=str, default='full')
     parser.add_argument('--max_workers', type=int, default=8)
-    parser.add_argument('--extract_frames', type=bool, action='store_true')
+    parser.add_argument('--extract_frames', type=bool, default=True)
     parser.add_argument('--extend, type=int, default=0')
     args = parser.parse_args()
 
-    call_bash(args.dir_path, args.set_name, "downloader", args.part, args.max_workers)
-    call_bash(args.dir_path, args.set_name, "extractor", args.part, args.max_workers)
+    # call_bash(args.dir_path, args.set_name, "downloader", args.part, args.max_workers)
+    # call_bash(args.dir_path, args.set_name, "extractor", args.part, args.max_workers)
 
     if args.extract_frames:
-        input_dir_path = os.path.join(args.dir_path, args.set_name, "test")
-        input_dir_list = os.listdir(input_dir_path)
-        output_dir_path = os.path.join(args.dir_path, f"{args.set_name}_{args.part}_frames_extracted")
-        os.mkdir(output_dir_path)
-
-        this_dir_name, _ = os.path.split(os.path.abspath(__file__))
-        file_name = "extract_frames.sh"
-        script_path = os.path.join(this_dir_name, file_name)
-        script_path = script_path + " %s %s %s"
-        errors = 0
-        for vid in tqdm(input_dir_list):
-            try:
-                with ProcessPoolExecutor() as executor:
-                    executor.map(subprocess.check_call(script_path % (vid, input_dir_path, output_dir_path),
-                                                       shell=True))
-            except subprocess.CalledProcessError:
-                errors += 1
-        if errors > 0:
-            print(f'Failed to extract {errors} videos!!!!')
-
-        if args.extend > 0:
-            output_dir_path = os.path.join(args.dir_path, f"{args.set_name}_{args.part}_{args.extend}_frames_extended")
+        for folder in os.path.join(args.dir_path, args.set_name):
+            input_dir_path = os.path.join(args.dir_path, args.set_name, folder)
+            input_dir_list = os.listdir(input_dir_path)
+            output_dir_path = os.path.join(args.dir_path, f"{args.set_name}_{folder}_frames_extracted")
+            print(f'----> Extraction of frames from {folder}')
             os.mkdir(output_dir_path)
-            extrapolate(os.path.join(args.dir_path, f"{args.set_name}_{args.part}_frames_extracted"), output_dir_path,
-                        args.extend)
+
+            this_dir_name, _ = os.path.split(os.path.abspath(__file__))
+            file_name = "extract_frames.sh"
+            script_path = os.path.join(this_dir_name, args.set_name, file_name)
+            script_path = script_path + " %s %s %s"
+            errors = 0
+            for vid in tqdm(input_dir_list):
+                try:
+                    with ProcessPoolExecutor() as executor:
+                        executor.map(subprocess.check_call(script_path % (vid, input_dir_path, output_dir_path),
+                                                           shell=True))
+                except subprocess.CalledProcessError:
+                    errors += 1
+            if errors > 0:
+                print(f'Failed to extract {errors} videos!!!!')
+
+            if args.extend > 0:
+                output_dir_path = os.path.join(args.dir_path, f"{args.set_name}_{folder}_{args.extend}_frames_extended")
+                os.mkdir(output_dir_path)
+                extrapolate(os.path.join(args.dir_path, f"{args.set_name}_{folder}_frames_extracted"), output_dir_path,
+                            args.extend)
