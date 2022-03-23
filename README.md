@@ -17,13 +17,13 @@ pip install -r requirements.txt
 * #### Kinetics-400/Kinetics-600
 
 ```bash
-python Datasets/Kinetics/scripts/kinetics.py \
-	[--dir_path <save_dir_path>]             \
-    [--set_name k400/k600]                   \
-	[--part full/train/test/val/replacement/annotations] \
-	[--max_workers 8]						 \
-    [--extract_frames true]                  \
-	[--extend 16]
+python Datasets/Kinetics/scripts/kinetics.py             \
+    [--dir_path <save_dir_path>]                         \
+    [--set_name k400/k600]                               \
+    [--part full/train/test/val/replacement/annotations] \
+    [--max_workers 8]                                    \
+    [--extract_frames true]                              \
+    [--extend 16]
 ```
 
 Once finished, the folder `save_dir_path` should be like this:
@@ -33,11 +33,11 @@ Kinetics:
     data  
     └── k400
         └── train
-            ├── video_1
+            └── video_1
                 └── frame_1
                 └── frame_2
                 ...
-            ├── video_2
+            └── video_2
                 └── frame_1
                 └── frame_2
                 ...
@@ -76,26 +76,26 @@ python3 test.py
 
 ## Black Box Setting
 
-Download the weights of swin-t. URL: https://github.com/SwinTransformer/storage/releases/download/v1.0.4/swin_tiny_patch244_window877_kinetics400_1k.pth
+Download the weights of swin-t. URL: [Link](https://github.com/SwinTransformer/storage/releases/download/v1.0.4/swin_tiny_patch244_window877_kinetics400_1k.pth)
+
+model_name = `swint` or `movinet`
 
 ### Data Free Model Extraction
 
-Modify the `config/params_dfme_swint.yaml` or `config/params_dfme_movinet.yaml` file to use the options as desired for Swin-T or MoViNet respectively and then ```python DFME/train.py --config path-to-config-yaml```  
-OR  
-Create a new config file to use the options as desired and then ```python DFME/train.py --config path-to-config-yaml```  
-NOTE: Make sure to properly set the model checkpoints path in the config.
+* Modify the `config/params_dfme_<model_name>.yaml` file to use the options as desired for Swin-T or MoViNet respectively.
+
+* Train using command `python DFME/train.py --config path-to-config-yaml`
 
 ### Data Free Model Extraction with Conditional GAN
 
 * #### Pretraining cGAN
-Modify the `config/params_pretrain_swint.yaml` or `config/params_pretrain_movinet.yaml` file to use the options as desired for Swin-T or MoViNet respectively and then ```python cGAN/pretrain_generator.py --config path-to-config-yaml```  
-OR  
-Create a new config file to use the options as desired and then ```python cGAN/pretrain_generator.py --config path-to-config-yaml```  
-NOTE: Make sure to properly set the path of datasets and model checkpoint path in the config.
+
+  * Modify the `config/params_pretrain_<model_name>.yaml` file to use the options as desired for Swin-T or MoViNet respectively.
+
+  * Run experiment using `python cGAN/pretrain_generator.py --config path-to-config-yaml`  
 
 * #### Training Threat Model with Single Frame
 
-Modify the `config/params_cgan_swint.yaml` or `config/params_cgan_movinet.yaml` file to use the options as desired for Swin-T or MoViNet respectively and then ```python cGAN/train.py --config path-to-config-yaml```  
-OR  
-Create a new config file to use the options as desired and then ```python cGAN/train.py --config path-to-config-yaml```  
-NOTE: Make sure to properly set the path of datasets and model checkpoint path in the config.
+  * Modify the `config/params_cgan_<model_name>.yaml` file to use the options as desired for Swin-T or MoViNet respectively.
+
+  * Run experiment using `python cGAN/train.py --config path-to-config-yaml`
