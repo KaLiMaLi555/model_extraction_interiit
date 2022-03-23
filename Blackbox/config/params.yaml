@@ -10,6 +10,7 @@ experiment:
   nz: 20
   log_interval: 10
   generator_checkpoint:
+  threat_checkpoint:
   loss: l1
   scheduler: multistep
   steps:

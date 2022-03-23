@@ -189,13 +189,9 @@ def main():
 
     threat_model, threat_parameters = generate_model(args.num_classes)
     threat_model = threat_model.to(device)
-
-    # TODO: Get snippet from Mradul to load pretrained MARS
-    # if args.student_load_path :
-    #     # "checkpoint/student_no-grad/cifar10-resnet34_8x.pt"
-    #     threat_model.load_state_dict( torch.load( args.student_load_path ) )
-    #     myprint("Student initialized from %s"%(args.student_load_path))
-    #     acc = test(args, threat_model=threat_model, generator=generator, device = device, test_loader = test_loader)
+    # Allow loading a pretrained checkpoint to resume training
+    if args.threat_checkpoint:
+        threat_model.module.load_state_dict(torch.load(args.threat_checkpoint))
 
     optimizer_T = optim.SGD(threat_parameters, lr=args.lr_S,
                             weight_decay=args.weight_decay, momentum=0.9)
