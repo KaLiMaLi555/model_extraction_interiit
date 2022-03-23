@@ -15,7 +15,7 @@ from mmcv.runner import load_checkpoint
 from torchmetrics.functional import accuracy
 from tqdm.notebook import tqdm
 
-from models import VideoGAN
+from models.video_gan import VideoGAN
 
 repackage.up()
 from MARS.model import generate_model
@@ -91,7 +91,6 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
         print(f'Total loss Generator:', total_loss_G / (i + 1))
 
         # Arrays to accumulate accuracies
-        g_t1_list, g_t5_list = [], []
         t_t1_list, t_t5_list = [], []
 
         for _ in range(args.d_iter):
@@ -142,9 +141,7 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
         print(f'Total loss Threat:', total_loss_T / (i + 1))
 
         # Print inner epoch accuracies
-        g_t1, g_t5 = np.array(g_t1_list).mean(), np.array(g_t5_list).mean()
         t_t1, t_t5 = np.array(t_t1_list).mean(), np.array(t_t5_list).mean()
-        print(f'Generator accuracy. T1: {g_t1}, T5: {g_t5}')
         print(f'Threat accuracy. T1: {t_t1}, T5: {t_t5}')
 
 

@@ -1,4 +1,5 @@
 # Import the required libraries
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -38,7 +39,7 @@ class VideoGAN(nn.Module):
                 nn.init.normal_(m.weight, mean=1, std=0.02)
                 nn.init.constant_(m.bias, 0)
 
-    def forward(self, z, pre_x):
+    def forward(self, z, pre_x=False):
         # Foreground
         z_unsqueezed = z.unsqueeze(2).unsqueeze(3).unsqueeze(4)
         f = F.leaky_relu(self.bn1(self.conv1(z_unsqueezed)))
