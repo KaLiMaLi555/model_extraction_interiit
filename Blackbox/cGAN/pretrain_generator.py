@@ -199,7 +199,16 @@ def main():
             'generator': generator.state_dict(),
             'scheduler': scheduler.state_dict()
         }
-        # TODO: Save checkpoint
+
+        # Generate and save checkpoint
+        checkpoint = {
+            'outer_epoch': epoch,
+            'optimizer': optimizer.state_dict(),
+            'generator': generator.state_dict(),
+            'scheduler': scheduler.state_dict()
+        }
+        f_path = os.path.join(args.checkpoint_path, 'Epoch_' + str(epoch) + '.pth')
+        torch.save(checkpoint, f_path)
 
 
 if __name__ == '__main__':

@@ -267,6 +267,7 @@ def main():
               generator=generator, device=device, device_tf=device_tf,
               optimizer=[optimizer_T, optimizer_G], epoch=epoch)
 
+        # Generate and save checkpoint
         checkpoint = {
             'outer_epoch': epoch,
             'optimizer_T': optimizer_T.state_dict(),
@@ -275,11 +276,9 @@ def main():
             'threat': threat_model.state_dict(),
             'scheduler_T': scheduler_T.state_dict(),
             'scheduler_G': scheduler_G.state_dict(),
-            # 'criterion': criterion.state_dict()
         }
-
-        # TODO: Add checkpoint saving stuff, possibly check wandb_utils
-        # TODO: Get rid of all validation/dataloader stuff as not allowed
+        f_path = os.path.join(args.checkpoint_path, 'Epoch_' + str(epoch) + '.pth')
+        torch.save(checkpoint, f_path)
 
 
 if __name__ == '__main__':
