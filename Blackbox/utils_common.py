@@ -39,7 +39,7 @@ def swin_transform(fake):  # N, C, L, S, S
     fake_teacher = torch.stack(fake_teacher_batch)  # N, 1, C, L, S, S
     return fake_teacher
 
-
+'''
 # MARS UTILS
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -176,3 +176,4 @@ def calculate_accuracy_video(output_buffer, i):
     # print(pred_value)
     # print("accuracy = ", 1*(np.equal(true_value, pred_value)).sum()/len(true_value))
     return 1 * (np.equal(true_value, pred_value)).sum() / len(true_value)
+'''
