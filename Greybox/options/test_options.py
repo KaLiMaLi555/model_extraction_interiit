@@ -7,7 +7,7 @@ from config.cfg_parser import cfg_parser
 class TestOptions():
     def initialize(self):
 
-        parser = argparse.ArgumentParser(description="test segmentation network")
+        parser = argparse.ArgumentParser(description="Test the model")
         parser.add_argument("--videos_dir", type=str, help="Path to the videos")
         parser.add_argument("--classes_file", type=str, help="Path to the classes file")
         parser.add_argument("--labels_file", type=str, help="Path to the labels file")

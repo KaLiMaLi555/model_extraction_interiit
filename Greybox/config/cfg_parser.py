@@ -13,6 +13,8 @@ def cfg_parser(cfg_file: str) -> dict:
 
     exp_cfg = {
         "experiment": Config(cfg_file, cfg['experiment']),
+        "test": Config(cfg_file, cfg['test']),
+        "embeddings": Config(cfg_file, cfg['embeddings']),
     }
 
     return exp_cfg

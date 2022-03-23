@@ -6,11 +6,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
-import wandb
 from pygame import init
 from torch.autograd import Variable
 from torch.utils.data import DataLoader, Dataset
-from vidaug import augmentors as va
 
 from Datasets.datasets import VideoLabelDataset, VideoLogitDataset
 from models.MARS.model import generate_model
