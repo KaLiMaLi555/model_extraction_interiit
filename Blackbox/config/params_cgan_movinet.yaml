@@ -10,8 +10,8 @@ experiment:
   lr_G: 1.0e-4
   nz: 100
   generator_checkpoint:
-  checkpoint_path: "/content/pretrained_cgan_movinet_checkpoints"
-  loss: cross-entropy
+  threat_checkpoint:
+  loss: l1
   scheduler: multistep
   steps:
     - 0.1
