@@ -1,8 +1,12 @@
 import argparse
+import datetime
 import os
 import os.path as osp
-import datetime
-from BlackBox.config.cfg_parser import cfg_parser
+
+import repackage
+
+repackage.up()
+from config.cfg_parser import cfg_parser
 
 
 class TrainOptions():

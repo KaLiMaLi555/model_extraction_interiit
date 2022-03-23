@@ -190,8 +190,7 @@ def main():
     threat_model, threat_parameters = generate_model(args.num_classes)
     threat_model = threat_model.to(device)
 
-    # REVIEW: Decide if we're adding functionality to load a threat_model from checkpoint
-    #   probably need this somewhere, at least in some eval script
+    # TODO: Get snippet from Mradul to load pretrained MARS
     # if args.student_load_path :
     #     # "checkpoint/student_no-grad/cifar10-resnet34_8x.pt"
     #     threat_model.load_state_dict( torch.load( args.student_load_path ) )
