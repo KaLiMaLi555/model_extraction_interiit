@@ -5,12 +5,6 @@ import torch.nn.functional as F
 
 from utils_common import swin_transform
 
-
-# TODO: Factor more of approx_grad and approx_grad_conditional into reusable
-#       functions to reduce repetition.
-#       Alternatively combine both functions, not sure if better
-
-
 def get_evaluation_points(x, N, C, L, S, m, dim, epsilon, pre_x, G_activation):
     # Generate random points from normal distribution
     u = np.random.randn(N * m * dim).reshape(-1, m, dim)
@@ -58,11 +52,10 @@ def get_grad_estimates(args, loss_vals, dim, epsilon, u, m, C, L, S):
     if args.forward_differences:
         grad_estimates *= dim
 
-    # TODO: Decide if we're keeping l1 or other funcs, add conditionals for it
-    if args.loss == "kl":
-        grad_estimates = grad_estimates.mean(dim=1).view(-1, C, L, S, S)
-    else:
-        grad_estimates = grad_estimates.mean(dim=1).view(-1, C, L, S, S) / (args.num_classes * grad_estimates.size(0))
+    grad_estimates = grad_estimates.mean(dim=1).view(-1, C, L, S, S)
+    if args.loss != "kl":
+        norm_factor = args.num_classes * grad_estimates.size(0)
+        grad_estimates = grad_estimates / norm_factor
 
     return grad_estimates.detach()
 
@@ -130,10 +123,11 @@ def approximate_gradients(
 
         # Compute loss
         if args.loss == "kl":
-            loss_vals = - loss_fn(pred_threat, pred_victim, reduction='none')
+            loss_vals = -loss_fn(pred_threat, pred_victim, reduction='none')
             loss_vals = loss_vals.sum(dim=1).view(-1, m + 1)
         else:
-            loss_vals = - loss_fn(pred_threat, pred_victim, reduction='none').mean(dim=1).view(-1, m + 1)
+            loss_vals = -loss_fn(pred_threat, pred_victim, reduction='none')
+            loss_vals = loss_vals.mean(dim=1).view(-1, m + 1)
 
         grad_estimates = get_grad_estimates(
             args, loss_vals, dim, epsilon, u, m, C, L, S)
@@ -168,7 +162,6 @@ def approximate_gradients_conditional(
         for i in (range(N * m // max_points + 1)):
             pts = evaluation_points[i * max_points:(i + 1) * max_points]
 
-            # TODO: Update this to work with cfg parser
             if args.victim_model == 'swin-t':
                 pred_victim_pts = get_swint_pts(victim_model, pts)
             else:
@@ -183,7 +176,8 @@ def approximate_gradients_conditional(
 
         if args.loss == "cross-entropy":
             loss_fn = F.cross_entropy
-            loss_vals = loss_fn(pred_victim, labels, reduction='none').view(-1, m + 1)
+            loss_vals = loss_fn(pred_victim, labels, reduction='none')
+            loss_vals = loss_vals.view(-1, m + 1)
         else:
             raise ValueError(args.loss)
 
