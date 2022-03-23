@@ -85,14 +85,14 @@ if __name__ == "__main__":
     parser.add_argument('--part', type=str, default='full')
     parser.add_argument('--max_workers', type=int, default=8)
     parser.add_argument('--extract_frames', type=bool, default=True)
-    parser.add_argument('--extend, type=int, default=0')
+    parser.add_argument('--extend', type=int, default=0)
     args = parser.parse_args()
 
-    # call_bash(args.dir_path, args.set_name, "downloader", args.part, args.max_workers)
-    # call_bash(args.dir_path, args.set_name, "extractor", args.part, args.max_workers)
+    call_bash(args.dir_path, args.set_name, "downloader", args.part, args.max_workers)
+    call_bash(args.dir_path, args.set_name, "extractor", args.part, args.max_workers)
 
     if args.extract_frames:
-        for folder in os.path.join(args.dir_path, args.set_name):
+        for folder in os.listdir(os.path.join(args.dir_path, args.set_name)):
             input_dir_path = os.path.join(args.dir_path, args.set_name, folder)
             input_dir_list = os.listdir(input_dir_path)
             output_dir_path = os.path.join(args.dir_path, f"{args.set_name}_{folder}_frames_extracted")
