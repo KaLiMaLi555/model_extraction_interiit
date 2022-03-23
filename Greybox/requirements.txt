@@ -1,0 +1,16 @@
+mmaction
+mmcv
+numpy
+pandas
+Pillow
+tensorflow
+tensorflow_hub
+torch
+torchvision
+tqdm
+vidaug
+wandb
+wget
+pytorch-lightning
+visdom
+timm
