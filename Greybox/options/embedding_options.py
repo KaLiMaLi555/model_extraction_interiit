@@ -21,14 +21,13 @@ class EmbeddingOptions():
         parser = argparse.ArgumentParser(description="test segmentation network")
 
         parser.add_argument('--batch_size', default=16, type=int)
-        parser.add_argument('--logit_dir', default=None, type=str)
+        parser.add_argument('--logit_dir', default="/path-to-logit-directory/", type=str)
         parser.add_argument('--is_random', default=True, type=bool)
-        parser.add_argument('--num_classes', default=5, type=int)
+        parser.add_argument('--num_classes', default=400, type=int)
         parser.add_argument('--seed', default=42, type=int)
         parser.add_argument('--model_name', default="swin_transformer", type=str, choices=["movinet", "swin_transformer"])
-        # parser.add_argument('--dataset_type', default="noise", type=str)
-        parser.add_argument('--video_dir_path', default="./data/data", type=str)
-        parser.add_argument('--video_names_file', default="/content/video_names_file.txt", type=str)
+        parser.add_argument('--video_dir_path', default="/path-to-video-directory/", type=str)
+        parser.add_argument('--video_names_file', default="/path-to-video_names_file.txt", type=str)
         # parser.add_argument('--from_folder', action='store_true')
 
         return parser.parse_args()
