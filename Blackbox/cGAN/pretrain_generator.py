@@ -14,10 +14,20 @@ from mmcv import Config
 from mmcv.runner import load_checkpoint
 from tqdm.notebook import tqdm
 
+from config import cfg_parser
 # TODO: Fix import in the final code
-from model_extraction_interiit.Blackbox.approximate_gradients import approximate_gradients_conditional
-from models import ConditionalGenerator
+from approximate_gradients import approximate_gradients_conditional
+from cGAN.models import ConditionalGenerator
 
+
+def get_config():
+    # Training settings
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", type=str, default="config/params.yaml")
+
+    cfg = cfg_parser(parser.parse_args().config)
+
+    return cfg
 
 # TODO: convert to cfg args
 def parse_args():
@@ -113,12 +123,13 @@ def pretrain(args, victim_model, generator, device, device_tf, optimizer):
         fake.backward(approx_grad_wrt_x)
         optimizer.step()
 
+            # REVIEW: Can probably print a T1/T5 Generator accuracy via Victim,
+            #         should we? Look at train_threat for code.
+
 
 def main():
-    # TODO: Replace with cfg parser stuff
-    args = parse_args()
+    args = get_config()["experiment"]
 
-    # TODO: Use common set_env util
     # Prepare the environment
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed(args.seed)
@@ -127,7 +138,6 @@ def main():
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    # REVIEW: Decide if we're keeping this query budget stuff
     args.query_budget *= 10 ** 6
     args.query_budget = int(args.query_budget)
 
