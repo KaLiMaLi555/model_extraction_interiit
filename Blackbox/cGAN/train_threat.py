@@ -149,8 +149,6 @@ def main():
     # Prepare the environment
     args = get_config()["experiment"]
     set_seed(args.seed)
-    print(args.victim_model)
-    print(args.victim_model == 'swin-t')
 
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     device = torch.device('cuda:%d' % args.device if use_cuda else 'cpu')
