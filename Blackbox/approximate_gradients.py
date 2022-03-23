@@ -40,7 +40,7 @@ def get_swint_pts(victim_model, pts):
 
 def get_movinet_pts(victim_model, pts, N, C, L, S, device, device_tf):
     # Movinet expects: b, f, h, w, c = N, L, S, S, C
-    pts_tf = pts.reshape(N, L, S, S, C).detach().cpu().numpy()
+    pts_tf = pts.reshape(-1, L, S, S, C).detach().cpu().numpy()
     with tf.device(device_tf):
         tf_tensor = tf.convert_to_tensor(pts_tf)
         pred_victim_pts = victim_model(tf_tensor).numpy()
@@ -86,15 +86,14 @@ def approximate_gradients(
 
         # Compute the approximation sequentially to allow large values of m
         pred_victim, pred_threat = [], []
-        # TODO: Make this a cfg arg
         # Value to split the large evaluation_points tensor to fit in GPU
-        max_points = 32
+        max_points = args.max_points
 
         for i in (range(N * m // max_points + 1)):
             pts = evaluation_points[i * max_points:(i + 1) * max_points]
 
             # TODO: Update this to work with cfg parser
-            if args.model == 'swin-t':
+            if args.victim_model == 'swin-t':
                 pred_victim_pts = get_swint_pts(victim_model, pts)
             else:
                 pred_victim_pts = get_movinet_pts(
@@ -156,24 +155,22 @@ def approximate_gradients_conditional(
         N, C, L, S, _ = x.shape
         dim = S ** 2 * C * L
 
+        labels = labels.unsqueeze(0).repeat(m + 1, 1).transpose(0, 1).reshape(-1)
+
         # Get points to evaluate model at
         u, evaluation_points = get_evaluation_points(
-            N, C, L, S, m, dim, epsilon, pre_x, x, args)
-        # TODO: Test this and then remove
-        print('DEBUG, remove before submission:', evaluation_points.shape, labels.shape)
-        print('verify that the first dim of the above 2 are the same, if not then changes needed')
+            x, N, C, L, S, m, dim, epsilon, pre_x, args.G_activation)
 
         # Compute the approximation sequentially to allow large values of m
         pred_victim, pred_threat = [], []
-        # TODO: Make this a cfg arg
         # Value to split the large evaluation_points tensor to fit in GPU
-        max_points = 32
+        max_points = args.max_points
 
         for i in (range(N * m // max_points + 1)):
             pts = evaluation_points[i * max_points:(i + 1) * max_points]
 
             # TODO: Update this to work with cfg parser
-            if args.model == 'swin-t':
+            if args.victim_model == 'swin-t':
                 pred_victim_pts = get_swint_pts(victim_model, pts)
             else:
                 pred_victim_pts = get_movinet_pts(
@@ -186,34 +183,36 @@ def approximate_gradients_conditional(
         u = u.to(device)
 
         # TODO: Remove this if we're not adding l1 below
-        if args.loss == "l1":
-            loss_fn = F.l1_loss
-            if args.no_logits:
-                pred_victim = torch.log(pred_victim)
-                if args.logit_correction == 'min':
-                    pred_victim -= pred_victim.min(dim=1).values.view(-1, 1)
-                elif args.logit_correction == 'mean':
-                    pred_victim -= pred_victim.mean(dim=1).view(-1, 1)
-                pred_victim = pred_victim.detach()
+        # if args.loss == "l1":
+        #     loss_fn = F.l1_loss
+        #     if args.no_logits:
+        #         pred_victim = torch.log(pred_victim)
+        #         if args.logit_correction == 'min':
+        #             pred_victim -= pred_victim.min(dim=1).values.view(-1, 1)
+        #         elif args.logit_correction == 'mean':
+        #             pred_victim -= pred_victim.mean(dim=1).view(-1, 1)
+        #         pred_victim = pred_victim.detach()
 
-        # TODO: Verify that KL Div doesn't have an issue with values being 0.
-        #       labels is a one-hot vector, can't use this if
-        #       log_softmax/kldiv/anything has an issue with it
-        elif args.loss == "kl":
-            loss_fn = F.kl_div
-            pred_threat = F.log_softmax(labels, dim=1)
-            pred_victim = pred_victim.detach()
+        # # TODO: Verify that KL Div doesn't have an issue with values being 0.
+        # #       labels is a one-hot vector, can't use this if
+        # #       log_softmax/kldiv/anything has an issue with it
+        # elif args.loss == "kl":
+        #     loss_fn = F.kl_div
+        #     pred_threat = F.log_softmax(labels, dim=1)
+        #     pred_victim = pred_victim.detach()
 
+        if args.loss == "cross-entropy":
+            loss_fn = F.cross_entropy
         else:
             raise ValueError(args.loss)
 
         # Compute loss
         # TODO: Decide if we're keeping l1 or other funcs, add conditionals for it
         if args.loss == "kl":
-            loss_vals = -loss_fn(pred_threat, pred_victim, reduction='none')
+            loss_vals = loss_fn(pred_victim, labels, reduction='none')
             loss_vals = loss_vals.sum(dim=1).view(-1, m + 1)
         else:
-            loss_vals = -loss_fn(pred_threat, pred_victim, reduction='none').mean(dim=1).view(-1, m + 1)
+            loss_vals = loss_fn(pred_victim, labels, reduction='none').view(-1, m + 1)
 
         grad_estimates = get_grad_estimates(
             args, loss_vals, dim, epsilon, u, m, C, L, S)

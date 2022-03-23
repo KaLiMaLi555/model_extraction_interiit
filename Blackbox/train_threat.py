@@ -56,7 +56,7 @@ def threat_loss(args, s_logit, t_logit, return_t_logits=False):
 
 def train(args, victim_model, threat_model, generator, device, device_tf, optimizer, epoch):
     """Main Loop for one epoch of Training Generator and Threat Models"""
-    if args.model == 'swin-t':
+    if args.victim_model == 'swin-t':
         victim_model.eval()
     threat_model.train()
 
@@ -109,7 +109,7 @@ def train(args, victim_model, threat_model, generator, device, device_tf, optimi
                     fake_tf = fake.reshape(N, L, S, S, C)
                     with tf.device(device_tf):
                         tf_tensor = tf.convert_to_tensor(fake_tf.cpu().numpy())
-                        logits_victim = threat_model(tf_tensor).numpy()
+                        logits_victim = victim_model(tf_tensor).numpy()
                 logits_victim = torch.tensor(logits_victim).to(device)
 
             # Correction for the fake logits
@@ -187,9 +187,9 @@ def main():
 
     args.normalization_coefs = None
     args.G_activation = torch.sigmoid
-    args.num_classes = 400
 
     if args.victim_model == 'swin-t':
+        args.num_classes = 400
         config = args.swin_t_config
         checkpoint = args.swin_t_checkpoint
         cfg = Config.fromfile(config)
@@ -198,6 +198,7 @@ def main():
         victim_model.eval()
         victim_model = victim_model.to(device)
     else:
+        args.num_classes = 600
         hub_url = "https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3"
 
         encoder = hub.KerasLayer(hub_url, trainable=False)
@@ -212,7 +213,7 @@ def main():
     # threat_model = torchvision.models.mobilenet_v2()
     threat_model = threat_model.to(device)
 
-    generator = ConditionalGenerator(nz=args.nz, nc=3, img_size=224, num_classes=400, activation=args.G_activation)
+    generator = ConditionalGenerator(nz=args.nz, nc=3, img_size=224, num_classes=args.num_classes, activation=args.G_activation)
     generator = generator.to(device)
 
     args.generator = generator
