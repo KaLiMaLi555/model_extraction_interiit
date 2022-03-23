@@ -9,7 +9,7 @@ import torch.optim as optim
 from mmaction.models import build_model
 from mmcv import Config
 from mmcv.runner import load_checkpoint
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 from models import ConditionalGenerator
 
@@ -111,6 +111,8 @@ def main():
     elif args.scheduler == 'cosine':
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
 
+    if not os.path.exists(args.checkpoint_path):
+        os.mkdir(args.checkpoint_path)
     # Train loop
     for epoch in range(1, args.epochs + 1):
         if args.scheduler != 'none':
