@@ -14,7 +14,7 @@ pip install -r requirements.txt
 
 ### Dataset Setup
 
-* #### Kinetics-400/Kinetics-600
+#### Kinetics-400/Kinetics-600
 
 
 
