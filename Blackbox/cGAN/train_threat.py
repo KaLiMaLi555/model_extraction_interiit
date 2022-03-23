@@ -59,7 +59,7 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
 
     optimizer_T, optimizer_G = optimizer
 
-    total_loss_S = 0
+    total_loss_T = 0
     total_loss_G = 0
 
     # Repeat epoch_itrs times per outer epoch
@@ -89,7 +89,7 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
 
             total_loss_G += loss_G.item()
 
-        print(f'Total loss G:', total_loss_G / (i + 1))
+        print(f'Total loss Generator:', total_loss_G / (i + 1))
 
         for _ in range(args.d_iter):
             # Generate labels for Conditional Generator
@@ -109,27 +109,27 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
                     fake_swin = swin_transform(fake.detach())
                     logits_victim = victim_model(fake_swin, return_loss=False)
                 else:
-                    fake_tf = fake.reshape(N, L, S, S, C)
+                    fake_tf = fake.reshape(N, L, S, S, C).cpu().numpy()
                     with tf.device(device_tf):
-                        tf_tensor = tf.convert_to_tensor(fake_tf.cpu().numpy())
+                        tf_tensor = tf.convert_to_tensor(fake_tf)
                         logits_victim = victim_model(tf_tensor).numpy()
                 logits_victim = torch.tensor(logits_victim).to(device)
 
             # Correction for the fake logits
-            if args.loss == "l1" and args.no_logits:
-                logits_victim = torch.log(logits_victim)
-                if args.logit_correction == 'min':
-                    logits_victim -= logits_victim.min(dim=1).values.view(-1, 1)
-                elif args.logit_correction == 'mean':
-                    logits_victim -= logits_victim.mean(dim=1).view(-1, 1)
-                logits_victim = logits_victim.detach()
+            # if args.loss == "l1" and args.no_logits:
+            #     logits_victim = torch.log(logits_victim)
+            #     if args.logit_correction == 'min':
+            #         logits_victim -= logits_victim.min(dim=1).values.view(-1, 1)
+            #     elif args.logit_correction == 'mean':
+            #         logits_victim -= logits_victim.mean(dim=1).view(-1, 1)
+            #     logits_victim = logits_victim.detach()
 
             logits_threat = torch.nn.Softmax(dim=1)(threat_model(fake))
-            loss_S = threat_loss(args, logits_threat, logits_victim)
-            loss_S.backward()
+            loss_T = threat_loss(args, logits_threat, logits_victim)
+            loss_T.backward()
             optimizer_T.step()
 
-            total_loss_S += loss_S.item()
+            total_loss_T += loss_T.item()
 
             # Print accuracy of Generator via Victim's logits
             g_t1 = 100 * accuracy(logits_victim, labels, top_k=1)
@@ -142,7 +142,7 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
             t_t5 = 100 * accuracy(logits_threat, victim_argmax, top_k=5)
             print(f'Threat accuracy. T1: {t_t1}, T5: {t_t5}')
 
-        print(f'Total loss S:', total_loss_S / (i + 1))
+        print(f'Total loss Threat:', total_loss_T / (i + 1))
 
 
 def main():
@@ -191,7 +191,7 @@ def main():
     if args.threat_checkpoint:
         threat_model.module.load_state_dict(torch.load(args.threat_checkpoint))
 
-    optimizer_T = optim.SGD(threat_parameters, lr=args.lr_S,
+    optimizer_T = optim.SGD(threat_parameters, lr=args.lr_T,
                             weight_decay=args.weight_decay, momentum=0.9)
     optimizer_G = optim.Adam(generator.parameters(), lr=args.lr_G)
 
