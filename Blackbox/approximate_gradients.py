@@ -64,8 +64,6 @@ def approximate_gradients(
         args, victim_model, threat_model, x, epsilon=1e-7, m=5,
         device='cpu', device_tf='/device:GPU:0', pre_x=False):
     # x shape: (N, C, L, S, S)
-    print(args.victim_model)
-    print(args.victim_model == 'swin-t')
     if pre_x and args.G_activation is None:
         raise ValueError(args.G_activation)
 
