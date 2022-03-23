@@ -115,21 +115,7 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
                         logits_victim = victim_model(tf_tensor).numpy()
                 logits_victim = torch.tensor(logits_victim).to(device)
 
-            # Correction for the fake logits
-            # if args.loss == "l1" and args.no_logits:
-            #     logits_victim = torch.log(logits_victim)
-            #     if args.logit_correction == 'min':
-            #         logits_victim -= logits_victim.min(dim=1).values.view(-1, 1)
-            #     elif args.logit_correction == 'mean':
-            #         logits_victim -= logits_victim.mean(dim=1).view(-1, 1)
-            #     logits_victim = logits_victim.detach()
-
             logits_threat = torch.nn.Softmax(dim=1)(threat_model(fake))
-            loss_T = threat_loss(args, logits_threat, logits_victim)
-            loss_T.backward()
-            optimizer_T.step()
-
-            total_loss_T += loss_T.item()
 
             # Print accuracy of Generator via Victim's logits
             g_t1 = 100 * accuracy(logits_victim, labels, top_k=1)
@@ -141,6 +127,22 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
             t_t1 = 100 * accuracy(logits_threat, victim_argmax, top_k=1)
             t_t5 = 100 * accuracy(logits_threat, victim_argmax, top_k=5)
             print(f'Threat accuracy. T1: {t_t1}, T5: {t_t5}')
+
+            # Correction for the fake logits
+            if args.loss == "l1" and args.no_logits:
+                logits_victim = torch.log(logits_victim)
+                if args.logit_correction == 'min':
+                    logits_victim -= logits_victim.min(dim=1).values.view(-1, 1)
+                elif args.logit_correction == 'mean':
+                    logits_victim -= logits_victim.mean(dim=1).view(-1, 1)
+                logits_victim = logits_victim.detach()
+
+            # Compute Threat loss and backpropagate
+            loss_T = threat_loss(args, logits_threat, logits_victim)
+            loss_T.backward()
+            optimizer_T.step()
+
+            total_loss_T += loss_T.item()
 
         print(f'Total loss Threat:', total_loss_T / (i + 1))
 
@@ -160,6 +162,7 @@ def main():
 
     if args.victim_model == 'swin-t':
         args.num_classes = 400
+        args.no_logits = 1
         config = args.swin_t_config
         checkpoint = args.swin_t_checkpoint
         cfg = Config.fromfile(config)
@@ -170,6 +173,7 @@ def main():
         victim_model = victim_model.to(device)
     else:
         args.num_classes = 600
+        args.no_logits = 0
         hub_url = 'https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3'
 
         encoder = hub.KerasLayer(hub_url, trainable=False)

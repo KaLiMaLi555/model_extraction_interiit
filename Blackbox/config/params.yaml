@@ -5,7 +5,7 @@ experiment:
   epoch_itrs: 50
   g_iter: 10
   d_iter: 5
-  lr_S: 0.001
+  lr_T: 0.001
   lr_G: 1.0e-4
   nz: 256
   log_interval: 10
@@ -26,7 +26,6 @@ experiment:
   grad_m: 1
   grad_epsilon: 1.0e-3
   forward_differences: 1
-  no_logits: 1
   logit_correction: mean
   rec_grad_norm: 1
   MAZE: 0
