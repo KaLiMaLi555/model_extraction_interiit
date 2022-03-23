@@ -6,7 +6,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
-from pygame import init
 from torch.autograd import Variable
 from torch.utils.data import DataLoader, Dataset
 
@@ -42,14 +41,13 @@ def test(model, test_dataloader, criterion):
             targets = Variable(targets)
             outputs = model(inputs)
             loss = criterion(outputs, targets)
-            print(loss.item())
             acc = calculate_accuracy(outputs, targets)
             losses.update(loss.item(), inputs.size(0))
             accuracies.update(acc, inputs.size(0))
 
             print('Test_Epoch: [{0}][{1}/{2}]\t'
-                  'Loss {loss.test:.4f} ({loss.avg:.4f})\t'
-                  'Acc {acc.test:.3f} ({acc.avg:.3f})'.format(
+                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                  'Acc {acc.val:.3f} ({acc.avg:.3f})'.format(
                 1,
                 i + 1,
                 len(test_dataloader),
@@ -75,9 +73,10 @@ def main():
     print("Creating Dataloaders")
     test_dataset = VideoLabelDataset(cfg.videos_dir, cfg.classes_file, cfg.labels_file, cfg.num_classes)
     test_dataloader = DataLoader(test_dataset, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers, pin_memory=True)
+    print("Dataloaders created")
 
     criterion = nn.CrossEntropyLoss().cuda()
-    test(model, test_dataloader, criterion, 0)
+    test(model, test_dataloader, criterion)
 
 if __name__ == '__main__':
     main()

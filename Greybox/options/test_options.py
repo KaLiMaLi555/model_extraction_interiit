@@ -14,7 +14,7 @@ class TestOptions():
         parser.add_argument("--num-classes", type=int, help="Number of classes")
         parser.add_argument("--batch_size", type=int, help="Batch size")
         parser.add_argument("--num_workers", type=int,  help="Number workers for dataloader")
-        parser.add_argument("--restore-from", type=str, help="restore model parameters from")
+        parser.add_argument("--restore_from", type=str, help="restore model parameters from")
         parser.add_argument("--save", type=str, help="Path to save result.")
 
         args = parser.parse_args()

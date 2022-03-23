@@ -57,7 +57,7 @@
     "num-classes": 400,
     "batch_size": 16,
     "num_workers": 8,
-    "restore-from": " ",
+    "restore_from": " ",
     "save": true
   }
 
