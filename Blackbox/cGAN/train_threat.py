@@ -190,10 +190,6 @@ def main():
     threat_model, threat_parameters = generate_model(args.num_classes)
     threat_model = threat_model.to(device)
 
-    args.generator = generator
-    args.threat_model = threat_model
-    args.victim_model = victim_model
-
     # REVIEW: Decide if we're adding functionality to load a threat_model from checkpoint
     #   probably need this somewhere, at least in some eval script
     # if args.student_load_path :
