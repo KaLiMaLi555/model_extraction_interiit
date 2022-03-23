@@ -1,6 +1,7 @@
 import argparse
 import os
 
+import numpy as np
 import repackage
 import tensorflow as tf
 import tensorflow_hub as hub
@@ -25,7 +26,7 @@ from utils_common import set_seed, swin_transform
 def get_config():
     # Training settings
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default="config/params.yaml")
+    parser.add_argument("--config", type=str, default="config/params_swint.yaml")
 
     cfg = cfg_parser(parser.parse_args().config)
 
@@ -89,7 +90,12 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
 
             total_loss_G += loss_G.item()
 
+        # Print Generator loss
         print(f'Total loss Generator:', total_loss_G / (i + 1))
+
+        # Arrays to accumulate accuracies
+        g_t1_list, g_t5_list = [], []
+        t_t1_list, t_t5_list = [], []
 
         for _ in range(args.d_iter):
             # Generate labels for Conditional Generator
@@ -120,13 +126,15 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
             # Print accuracy of Generator via Victim's logits
             g_t1 = 100 * accuracy(logits_victim, labels, top_k=1)
             g_t5 = 100 * accuracy(logits_victim, labels, top_k=5)
-            print(f'Generator accuracy. T1: {g_t1}, T5: {g_t5}')
+            g_t1_list.append(g_t1)
+            g_t5_list.append(g_t5)
 
             # Print accuracy of Threat Model via Victim's logits
             victim_argmax = logits_victim.argmax(axis=1)
             t_t1 = 100 * accuracy(logits_threat, victim_argmax, top_k=1)
             t_t5 = 100 * accuracy(logits_threat, victim_argmax, top_k=5)
-            print(f'Threat accuracy. T1: {t_t1}, T5: {t_t5}')
+            t_t1_list.append(t_t1)
+            t_t5_list.append(t_t5)
 
             # Correction for the fake logits
             if args.loss == "l1" and args.no_logits:
@@ -144,7 +152,14 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
 
             total_loss_T += loss_T.item()
 
+        # Print Threat model loss
         print(f'Total loss Threat:', total_loss_T / (i + 1))
+
+        # Print inner epoch accuracies
+        g_t1, g_t5 = np.array(g_t1_list).mean(), np.array(g_t5_list).mean()
+        t_t1, t_t5 = np.array(t_t1_list).mean(), np.array(t_t5_list).mean()
+        print(f'Generator accuracy. T1: {g_t1}, T5: {g_t5}')
+        print(f'Threat accuracy. T1: {t_t1}, T5: {t_t5}')
 
 
 def main():
