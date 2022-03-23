@@ -46,7 +46,7 @@ class TrainOptions():
 
         args = parser.parse_args()
 
-        cfg = cfg_parser(osp.join("config", args.version + '.json'))
+        cfg = cfg_parser(osp.join("config", 'params.json'))
 
 
         cfg['experiment'].train_vid_dir = args.train_vid_dir
