@@ -19,6 +19,7 @@
     "momentum": 0.9,
     "dampening": 0.9,
     "weight_decay": 5e-4,
+    "lr_patience": 10,
     "dataset": "k400",
     "num_classes": 400,
     "train_mode": "finetune",

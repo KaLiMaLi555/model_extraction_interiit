@@ -25,7 +25,7 @@ class TrainOptions():
         parser.add_argument("--train_mode", type=str, default="finetune", help="Mode for training: finetuning or pretraining")
         parser.add_argument("--pretrained_ckpt_path", type=str, help="Path to the pretrained checkpoint")
         parser.add_argument("--augmentations", type=list, default=[], help="Augmentation list")
-
+        parser.add_argument("--lr_patience", type=int, default=5, help="Patience for learning rate scheduler")
         parser.add_argument("--epochs", type=int, help="Number of epochs to train")
         parser.add_argument("--batch_size", type=int, help="Batch size")
         parser.add_argument("--lr", type=float, help="Learning rate")
@@ -56,6 +56,7 @@ class TrainOptions():
         if args.epochs:cfg['experiment'].epochs = args.epochs
         if args.batch_size:cfg['experiment'].batch_size = args.batch_size
         if args.lr:cfg['experiment'].lr = args.lr
+        if args.lr_patience:cfg['experiment'].lr_patience = args.lr_patience
         if args.num_workers:cfg['experiment'].num_workers = args.num_workers
         if args.lr_decay:cfg['experiment'].lr_decay = args.lr_decay
         if args.lr_decay_step:cfg['experiment'].lr_decay_step = args.lr_decay_step

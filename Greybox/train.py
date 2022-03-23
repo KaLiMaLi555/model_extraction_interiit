@@ -5,7 +5,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.autograd import Variable
-
+import os 
 from Datasets.datasets import VideoLabelDataset, VideoLogitDataset
 from models.MARS.model import generate_model
 # from vidaug import augmentors as va
