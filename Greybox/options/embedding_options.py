@@ -30,16 +30,16 @@ class EmbeddingOptions():
 
         cfg = cfg_parser(osp.join("config", 'params.json'))
 
-        cfg["embeddings"].batch_size = args.batch_size
-        cfg["embeddings"].logit_dir = args.logit_dir
-        cfg["embeddings"].is_random = args.is_random
-        cfg["embeddings"].num_classes = args.num_classes
-        cfg["embeddings"].seed = args.seed
-        cfg["embeddings"].model_name = args.model_name
-        cfg["embeddings"].video_dir_path = args.video_dir_path
-        cfg["embeddings"].video_names_file = args.video_names_file
-        cfg["embeddings"].classes_file = args.classes_file
-        cfg["embeddings"].labels_file = args.labels_file
+        if args.batch_size:cfg["embeddings"].batch_size = args.batch_size
+        if args.logit_dir:cfg["embeddings"].logit_dir = args.logit_dir
+        if args.is_random:cfg["embeddings"].is_random = args.is_random
+        if args.num_classes:cfg["embeddings"].num_classes = args.num_classes
+        if args.seed:cfg["embeddings"].seed = args.seed
+        if args.model_name:cfg["embeddings"].model_name = args.model_name
+        if args.video_dir_path:cfg["embeddings"].video_dir_path = args.video_dir_path
+        if args.video_names_file:cfg["embeddings"].video_names_file = args.video_names_file
+        if args.classes_file:cfg["embeddings"].classes_file = args.classes_file
+        if args.labels_file:cfg["embeddings"].labels_file = args.labels_file
 
         return cfg
 

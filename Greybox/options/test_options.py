@@ -21,14 +21,22 @@ class TestOptions():
 
         cfg = cfg_parser(osp.join("config", 'params.json'))
 
-        cfg["test"].video_dir = args.videos_dir
-        cfg["test"].classes_file = args.classes_file
-        cfg["test"].labels_file = args.labels_file
-        cfg["test"].num_classes = args.num_classes
-        cfg["test"].batch_size = args.batch_size
-        cfg["test"].num_workers = args.num_workers
-        cfg["test"].restore_from = args.restore_from
-        cfg["test"].save = args.save
+        if args.videos_dir: 
+            cfg["test"].video_dir = args.videos_dir
+        if args.classes_file:
+            cfg["test"].classes_file = args.classes_file
+        if args.labels_file:
+            cfg["test"].labels_file = args.labels_file
+        if args.num_classes:
+            cfg["test"].num_classes = args.num_classes
+        if args.batch_size:
+            cfg["test"].batch_size = args.batch_size
+        if args.num_workers:
+            cfg["test"].num_workers = args.num_workers
+        if args.restore_from:
+            cfg["test"].restore_from = args.restore_from
+        if args.save:
+            cfg["test"].save = args.save
 
         return cfg
 
