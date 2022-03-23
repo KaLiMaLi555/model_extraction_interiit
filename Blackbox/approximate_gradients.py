@@ -62,7 +62,7 @@ def get_grad_estimates(args, loss_vals, dim, epsilon, u, m, C, L, S):
     if args.loss == "kl":
         grad_estimates = grad_estimates.mean(dim=1).view(-1, C, L, S, S)
     else:
-        grad_estimates = grad_estimates.mean(dim = 1).view(-1, C, L, S, S) / (args.num_classes * grad_estimates.size(0)) 
+        grad_estimates = grad_estimates.mean(dim=1).view(-1, C, L, S, S) / (args.num_classes * grad_estimates.size(0))
 
     return grad_estimates.detach()
 
@@ -135,7 +135,7 @@ def approximate_gradients(
             loss_vals = - loss_fn(pred_threat, pred_victim, reduction='none')
             loss_vals = loss_vals.sum(dim=1).view(-1, m + 1)
         else:
-            loss_vals = - loss_fn(pred_threat, pred_victim, reduction='none').mean(dim = 1).view(-1, m + 1) 
+            loss_vals = - loss_fn(pred_threat, pred_victim, reduction='none').mean(dim=1).view(-1, m + 1)
 
         grad_estimates = get_grad_estimates(
             args, loss_vals, dim, epsilon, u, m, C, L, S)
@@ -210,10 +210,10 @@ def approximate_gradients_conditional(
         # Compute loss
         # TODO: Decide if we're keeping l1 or other funcs, add conditionals for it
         if args.loss == "kl":
-            loss_vals = - loss_fn(pred_threat, pred_victim, reduction='none')
+            loss_vals = -loss_fn(pred_threat, pred_victim, reduction='none')
             loss_vals = loss_vals.sum(dim=1).view(-1, m + 1)
         else:
-            loss_vals = - loss_fn(pred_threat, pred_victim, reduction='none').mean(dim = 1).view(-1, m + 1) 
+            loss_vals = -loss_fn(pred_threat, pred_victim, reduction='none').mean(dim=1).view(-1, m + 1)
 
         grad_estimates = get_grad_estimates(
             args, loss_vals, dim, epsilon, u, m, C, L, S)
