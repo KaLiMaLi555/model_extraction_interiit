@@ -1,8 +1,8 @@
 import argparse
-import datetime
 import os
 import os.path as osp
-
+import datetime
+from Greybox.config.cfg_parser import cfg_parser
 
 class EmbeddingOptions():
     def initialize(self):
@@ -10,12 +10,8 @@ class EmbeddingOptions():
         Returns:
             ArgumentParser.parse_args: Params values for training
             Command line arguments:
-            --model [model-key]: Available (dks/micronet), Defaults to micronet
-            --device [device]: cpu/cuda, Defaults to cpu
-            --data-dir-test [path]: Path to test set
-            --num-workers [int]: Number workers for dataloader, Defaults to 43
-            --restore-from [path]: Checkpoint dir to restore training, Defaults to None
-            --save [path]: Path to save the metrics and outputs
+            --batch_size: Batch size
+            --logit_dir: Directory to save the logits
         """
 
         parser = argparse.ArgumentParser(description="test segmentation network")
@@ -28,10 +24,29 @@ class EmbeddingOptions():
         parser.add_argument('--model_name', default="swin_transformer", type=str, choices=["movinet", "swin_transformer"])
         # parser.add_argument('--dataset_type', default="noise", type=str)
         parser.add_argument('--video_dir_path', default="./data/data", type=str)
-        parser.add_argument('--video_names_file', default="/content/video_names_file.txt", type=str)
+        parser.add_argument('--video_names_file', default=" ", type=str)
+        parser.add_argument('--classes_file', default=" ", type=str)
+        parser.add_argument('--labels_file', default=" ", type=str)
         # parser.add_argument('--from_folder', action='store_true')
 
-        return parser.parse_args()
+        args = parser.parse_args()
+
+        cfg = cfg_parser(osp.join("config", args.version + '.json'))
+
+        cfg["embeddings"].batch_size = args.batch_size
+        cfg["embeddings"].logit_dir = args.logit_dir
+        cfg["embeddings"].is_random = args.is_random
+        cfg["embeddings"].num_classes = args.num_classes
+        cfg["embeddings"].seed = args.seed
+        cfg["embeddings"].model_name = args.model_name
+        # cfg["embeddings"].dataset_type = args.dataset_type
+        cfg["embeddings"].video_dir_path = args.video_dir_path
+        cfg["embeddings"].video_names_file = args.video_names_file
+        cfg["embeddings"].classes_file = args.classes_file
+        cfg["embeddings"].labels_file = args.labels_file
+        # cfg["embeddings"].from_folder = args.from_folder
+
+        return cfg
 
     def print_options(self, args):
         """ Function that prints and saves the output
