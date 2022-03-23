@@ -15,7 +15,6 @@ class VideoLogitDataset(Dataset):
     def __init__(self, video_dir_path, video_name_file, logits_file, size: tuple = (224,224), transform=None, va_augments=None):
 
         self.video_dir_path = video_dir_path
-        self.instances = []  # Tensor of image frames
         if logits_file is not None:
             self.logits = pickle.load(open(logits_file, 'rb'))
         else:
@@ -24,7 +23,6 @@ class VideoLogitDataset(Dataset):
         with open(video_name_file) as f:
             self.videos = [os.path.join(video_dir_path, x[:-1]) for x in f.readlines()]
 
-        self.instances = torch.stack(self.instances)
         self.num_instances = len(self.videos)
         self.transform = transform
         self.size = size

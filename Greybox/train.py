@@ -137,24 +137,23 @@ def main():
         finetune_dataset = VideoLogitDataset(cfg.train_vid_dir, cfg.train_vid_names_file, cfg.train_logits_file, size=(224, 224), va_augments=va_aug)
     else:
         finetune_dataset = VideoLogitDataset(cfg.train_vid_dir, cfg.train_vid_names_file, cfg.train_logits_file, size=(224, 224))
-    val_dataset = VideoLabelDataset(cfg.val_vid_dir, cfg.val_classes_file, cfg.val_labeles_file, cfg.n_finetune_classes, size=(224, 224))
+    val_dataset = VideoLabelDataset(cfg.val_vid_dir, cfg.val_classes_file, cfg.val_labels_file, cfg.num_classes, size=(224, 224))
 
     train_data = finetune_dataset
     val_data = val_dataset
 
-    train_dataloader = DataLoader(train_data, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.n_workers,
+    train_dataloader = DataLoader(train_data, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers,
                                   pin_memory=True)
-    val_dataloader = DataLoader(val_data, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.n_workers,
+    val_dataloader = DataLoader(val_data, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers,
                                 pin_memory=True)
 
     print("Creating Training Parameters")
     optimizer = optim.SGD(
         parameters,
-        lr=cfg.learning_rate,
+        lr=cfg.lr,
         momentum=cfg.momentum,
         dampening=cfg.dampening,
-        weight_decay=cfg.weight_decay,
-        nesterov=cfg.nesterov)
+        weight_decay=cfg.weight_decay)
 
     criterion = nn.CrossEntropyLoss().cuda()
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=cfg.lr_patience)

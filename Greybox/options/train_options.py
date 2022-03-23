@@ -34,6 +34,7 @@ class TrainOptions():
         parser.add_argument("--lr_decay_step", type=int, help="Learning rate decay step")
         parser.add_argument("--momentum", type=float, help="Momentum")
         parser.add_argument("--weight_decay", type=float, help="Weight decay")
+        parser.add_argument("--dampening", type=float, help="Data dampening")
 
         parser.add_argument("--dataset", type=str, help="Dataset use")
         parser.add_argument("--num_classes", type=int, help="Number of classes")
@@ -58,6 +59,7 @@ class TrainOptions():
         if args.num_workers:cfg['experiment'].num_workers = args.num_workers
         if args.lr_decay:cfg['experiment'].lr_decay = args.lr_decay
         if args.lr_decay_step:cfg['experiment'].lr_decay_step = args.lr_decay_step
+        if args.dampening:cfg['experiment'].dampening = args.dampening
         if args.momentum:cfg['experiment'].momentum = args.momentum
         if args.weight_decay:cfg['experiment'].weight_decay = args.weight_decay
         if args.dataset:cfg['experiment'].dataset = args.dataset
