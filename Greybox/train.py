@@ -8,7 +8,7 @@ import torch.optim.lr_scheduler as lr_scheduler
 from torch.autograd import Variable
 from torch.utils.data import DataLoader, Dataset
 
-from Datasets.datasets import VideoLabelDataset, VideoLogitDataset
+from Datasets.datasets import VideoLabelDataset, VideoLogitDatasetMovinet, VideoLogitDatasetSwinT
 from models.MARS.model import generate_model
 # from vidaug import augmentors as va
 from options.train_options import *
@@ -134,9 +134,15 @@ def main():
     if cfg.augmentations:
         augs_list = cfg.augmentations
         va_aug = va_augment(augs_list)
-        finetune_dataset = VideoLogitDataset(cfg.train_vid_dir, cfg.train_vid_names_file, cfg.train_logits_file, size=(224, 224), va_augments=va_aug)
+        if cfg.dataset == "k400":
+            finetune_dataset = VideoLogitDatasetMovinet(cfg.train_vid_dir, cfg.train_logits_file, size=(224, 224), va_augments=va_aug)
+        elif cfg.dataset == "k600":
+            finetune_dataset = VideoLogitDatasetSwinT(cfg.train_vid_dir, cfg.train_vid_names_file, cfg.train_logits_file, size=(224, 224), va_augments=va_aug)    
     else:
-        finetune_dataset = VideoLogitDataset(cfg.train_vid_dir, cfg.train_vid_names_file, cfg.train_logits_file, size=(224, 224))
+        if cfg.dataset == "k400":
+            finetune_dataset = VideoLogitDatasetMovinet(cfg.train_vid_dir, cfg.train_logits_file, size=(224, 224))
+        elif cfg.dataset == "k600":
+            finetune_dataset = VideoLogitDatasetSwinT(cfg.train_vid_dir, cfg.train_vid_names_file, cfg.train_logits_file, size=(224, 224))
     val_dataset = VideoLabelDataset(cfg.val_vid_dir, cfg.val_classes_file, cfg.val_labels_file, cfg.num_classes, size=(224, 224))
 
     train_data = finetune_dataset

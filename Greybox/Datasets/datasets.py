@@ -10,7 +10,53 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset
 from PIL import Image
 
-class VideoLogitDataset(Dataset):
+class VideoLogitDatasetMovinet(Dataset):
+
+    def __init__(self, video_dir_path, logits_file, size: tuple = (224,224), transform=None, va_augments=None):
+
+        self.video_dir_path = video_dir_path
+        self.instances = []  # Tensor of image frames
+        self.logits = pickle.load(open(logits_file, 'rb'))
+        self.logits = (self.logits).numpy()
+        self.size = size
+        self.logits = torch.tensor(self.logits)
+        self.va_augments = va_augments
+        self.videos = sorted([str(x.name) for x in Path(self.video_dir_path).iterdir() if x.is_dir()])
+        # self.get_frames()
+
+        self.num_instances = len(self.videos)
+        self.transform = transform
+
+    def get_frames(self, video_path):
+        images = sorted(os.listdir(video_path))
+        image_frames = []
+
+        for image_name in images:
+            image = Image.open(os.path.join(video_path, image_name))
+            newsize = self.size
+            image = image.resize(newsize)
+            image = np.array(image, dtype=np.float32)
+            image = image / 255.0
+            image_frames.append(torch.tensor(image))
+
+        return torch.stack(image_frames)
+
+    def __getitem__(self, idx):
+        video_path = os.path.join(self.video_dir_path, self.videos[idx])
+        vid = self.get_frames(video_path)
+        if self.va_augments is not None:
+            vid = torch.tensor(np.array(self.va_augments(vid.numpy())))
+        if self.transform:
+            vid = vid.permute(0, 3, 1, 2)
+            vid = self.transform(vid)
+            vid = vid.permute(0, 2, 3, 1)
+        vid = vid.swapaxes(0, 3)  # <C3D Transform>
+        return vid, self.logits[idx]
+
+    def __len__(self):
+        return self.num_instances
+
+class VideoLogitDatasetSwinT(Dataset):
 
     def __init__(self, video_dir_path, video_name_file, logits_file, size: tuple = (224,224), transform=None, va_augments=None):
 
