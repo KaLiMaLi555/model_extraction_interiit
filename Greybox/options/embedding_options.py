@@ -26,6 +26,7 @@ class EmbeddingOptions():
         parser.add_argument('--video_names_file', type=str)
         parser.add_argument('--classes_file', type=str)
         parser.add_argument('--labels_file', type=str)
+        parser.add_argument('--model_name', type=str)
         args = parser.parse_args()
 
         cfg = cfg_parser(osp.join("config", 'params.json'))
@@ -40,7 +41,7 @@ class EmbeddingOptions():
         if args.video_names_file:cfg["embeddings"].video_names_file = args.video_names_file
         if args.classes_file:cfg["embeddings"].classes_file = args.classes_file
         if args.labels_file:cfg["embeddings"].labels_file = args.labels_file
-
+        if args.model_name:cfg["embeddings"].model_name = args.model_name
         return cfg
 
     def print_options(self, args):

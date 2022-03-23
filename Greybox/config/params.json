@@ -58,7 +58,8 @@
     "batch_size": 16,
     "num_workers": 8,
     "restore_from": "/content/drive/MyDrive/checkpoints/MARS_Pretrained_UCF/5.pth",
-    "save": true
+    "save": true,
+    "model_name": "movinet"
   }
 
 }
