@@ -2,6 +2,7 @@ import argparse
 import os
 import os.path as osp
 import datetime
+from config.cfg_parser import cfg_parser
 
 
 class TestOptions():
@@ -22,15 +23,25 @@ class TestOptions():
         parser.add_argument("--model", type=str, default='micronet', help="available options : dks/micronet")
         parser.add_argument("--device", type=str, default='cpu', help="which device to use")
 
-        parser.add_argument("--data-dir-test", type=str, default='../dataset/GTSRB/test',
+        parser.add_argument("--data_dir_test", type=str, default='../dataset/GTSRB/test',
                             help="Path to the directory containing the target dataset.")
-        parser.add_argument("--num-classes", type=int, default=19, help="Number of classes for cityscapes.")
+        parser.add_argument("--num_classes", type=int, default=19, help="Number of classes for cityscapes.")
 
-        parser.add_argument("--restore-from", type=str, default=None, help="restore model parameters from")
+        parser.add_argument("--restore_from", type=str, default=None, help="restore model parameters from")
 
         parser.add_argument("--save", type=str, default='results', help="Path to save result.")
 
-        return parser.parse_args()
+        args = parser.parse_args()
+
+        cfg = cfg_parser(osp.join("config", args.version + '.json'))
+
+        cfg["experiment"].model = args.model
+        cfg["experiment"].device = args.device
+        cfg["experiment"].data_dir_test = args.data_dir_test
+        cfg["experiment"].num_classes = args.num_classes
+        cfg["experiment"].restore_from = args.restore_from
+        cfg["experiment"].save = args.save
+
 
     def print_options(self, args):
         """ Function that prints and saves the output
@@ -42,14 +53,3 @@ class TestOptions():
             message += '{:>25}: {:<30}{}\n'.format(str(k), str(v), comment)
         message += '----------------- End -------------------\n'
         print(message)
-
-        # save to the disk
-        if not os.path.exists(args.snapshot_dir):
-            os.makedirs(args.snapshot_dir)
-
-        t = datetime.datetime.now()
-        name = f'opt_{args.model}_{t.year}-{t.month}-{t.day}_{t.hour}-{t.minute}.txt'
-        file_name = osp.join(args.snapshot_dir, name)
-        with open(file_name, 'wt') as args_file:
-            args_file.write(message)
-            args_file.write('\n')

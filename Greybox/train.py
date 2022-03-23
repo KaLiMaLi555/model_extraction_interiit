@@ -119,11 +119,11 @@ def val(model, val_dataloader, criterion, epoch):
 def main():
     opt = TrainOptions()
     cfg = opt.initialize()
-    cfg = cfg["experiment"]
     opt.print_options(cfg)
+    cfg = cfg["experiment"]
 
     print("Creating Model")
-    model, parameters = generate_model(cfg.n_finetune_classes)
+    model, parameters = generate_model(cfg.num_classes)
 
     if cfg.train_mode == "finetune":
         model.load_state_dict(torch.load(cfg.pretrained_ckpt_path))

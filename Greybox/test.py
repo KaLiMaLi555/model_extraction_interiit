@@ -70,7 +70,8 @@ def main():
     opt.print_options(cfg)
 
     print("Creating Model")
-    model, parameters = generate_model(cfg.n_finetune_classes)
+    model, parameters = generate_model(cfg.num_classes)
+    model.load_state_dict(torch.load(cfg.restore_from))
 
     print("Creating Dataloaders")
     test_dataset = VideoLabelDataset(cfg.val_video_path, cfg.val_class_file, cfg.val_label_file, cfg.n_finetune_classes)

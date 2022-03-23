@@ -84,15 +84,3 @@ class TrainOptions():
         message += '----------------- End -------------------\n'
         print(message)
 
-        # save to the disk
-        if not os.path.exists(args['experiment'].snapshot_dir):
-            os.makedirs(args['experiment'].snapshot_dir)
-
-        t = datetime.datetime.now()
-
-        name = f'opt_{args["experiment"].model}_{t.year}-{t.month}-{t.day}_{t.hour}-{t.minute}.txt'
-        file_name = osp.join(args['experiment'].snapshot_dir, name)
-
-        with open(file_name, 'wt') as args_file:
-            args_file.write(message)
-            args_file.write('\n')

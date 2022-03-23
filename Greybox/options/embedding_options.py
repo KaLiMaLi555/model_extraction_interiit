@@ -22,17 +22,11 @@ class EmbeddingOptions():
         parser.add_argument('--num_classes', default=400, type=int)
         parser.add_argument('--seed', default=42, type=int)
         parser.add_argument('--model_name', default="swin_transformer", type=str, choices=["movinet", "swin_transformer"])
-<<<<<<< HEAD
-        parser.add_argument('--video_dir_path', default="/path-to-video-directory/", type=str)
-        parser.add_argument('--video_names_file', default="/path-to-video_names_file.txt", type=str)
-=======
-        # parser.add_argument('--dataset_type', default="noise", type=str)
         parser.add_argument('--video_dir_path', default="./data/data", type=str)
         parser.add_argument('--video_names_file', default=" ", type=str)
         parser.add_argument('--classes_file', default=" ", type=str)
         parser.add_argument('--labels_file', default=" ", type=str)
->>>>>>> 9f477c76317c338213cd4367fcb93588e52f8f0b
-        # parser.add_argument('--from_folder', action='store_true')
+ 
 
         args = parser.parse_args()
 
@@ -44,12 +38,10 @@ class EmbeddingOptions():
         cfg["embeddings"].num_classes = args.num_classes
         cfg["embeddings"].seed = args.seed
         cfg["embeddings"].model_name = args.model_name
-        # cfg["embeddings"].dataset_type = args.dataset_type
         cfg["embeddings"].video_dir_path = args.video_dir_path
         cfg["embeddings"].video_names_file = args.video_names_file
         cfg["embeddings"].classes_file = args.classes_file
         cfg["embeddings"].labels_file = args.labels_file
-        # cfg["embeddings"].from_folder = args.from_folder
 
         return cfg
 
