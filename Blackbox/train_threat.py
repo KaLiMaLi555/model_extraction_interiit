@@ -144,13 +144,13 @@ def train(args, victim_model, threat_model, generator, device, device_tf, optimi
         victim_model.eval()
     threat_model.train()
 
-    optimizer_S, optimizer_G = optimizer
+    optimizer_T, optimizer_G = optimizer
 
     total_loss_S = 0
     total_loss_G = 0
 
+    # Repeat epoch_itrs times per outer epoch
     for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
-        """Repeat epoch_itrs times per epoch"""
         for _ in range(args.g_iter):
             # Sample Random Noise
             labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
@@ -162,7 +162,7 @@ def train(args, victim_model, threat_model, generator, device, device_tf, optimi
             fake = generator(z, label=labels_oh, pre_x=args.approx_grad)  # pre_x returns the output of G before applying the activation
             fake = fake.unsqueeze(dim=2)
 
-            ## APPOX GRADIENT
+            # Approximate gradients
             approx_grad_wrt_x, loss_G = approximate_gradients(
                 args, victim_model, threat_model, fake,
                 epsilon=args.grad_epsilon, m=args.grad_m,
@@ -179,48 +179,48 @@ def train(args, victim_model, threat_model, generator, device, device_tf, optimi
             labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
             labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
             z = torch.randn((args.batch_size, args.nz)).to(device)
+
             fake = generator(z, label=labels_oh).detach()
-            # print(fake)
-            # with open("weird_tens.pkl", "wb+") as f:
-            #   pickle.dump(fake.cpu(), f)
-            # exit(0)
             fake = fake.unsqueeze(dim=2)
-            optimizer_S.zero_grad()
+            N, C, L, S = fake.shape[:4]
+            optimizer_T.zero_grad()
 
             with torch.no_grad():
-                if args.victim_model == "swin-t": 
+                if args.victim_model == 'swin-t':
                     fake_swin = swin_transform(fake.detach())
-                    logits = victim_model(fake_swin, return_loss=False)
-                    logits = torch.Tensor(logits).to(device)
-                    t_argmax = logits.argmax(axis=1)
+                    logits_victim = victim_model(fake_swin, return_loss=False)
                 else:
-                    pass
-                    # TODO: add movinet
-
-                # REVIEW: Are we printing this stuff? This is some of the only
-                #         val we can do as it doesn't involve loading real data
-                # t_t1 = 100 * accuracy(logits, labels, top_k=1)
-                # t_t5 = 100 * accuracy(logits, labels, top_k=5)
+                    fake_tf = fake.reshape(N, L, S, S, C)
+                    with tf.device(device_tf):
+                        tf_tensor = tf.convert_to_tensor(fake_tf.cpu().numpy())
+                        logits_victim = threat_model(tf_tensor).numpy()
+                logits_victim = torch.tensor(logits_victim).to(device)
 
             # Correction for the fake logits
             if args.loss == "l1" and args.no_logits:
-                logits = torch.log(logits).detach()
+                logits_victim = torch.log(logits_victim).detach()
                 if args.logit_correction == 'min':
-                    logits -= logits.min(dim=1).values.view(-1, 1).detach()
+                    logits_victim -= logits_victim.min(dim=1).values.view(-1, 1).detach()
                 elif args.logit_correction == 'mean':
-                    logits -= logits.mean(dim=1).view(-1, 1).detach()
+                    logits_victim -= logits_victim.mean(dim=1).view(-1, 1).detach()
 
-            s_logit = torch.nn.Softmax(dim=1)(threat_model(fake))
-            loss_S = threat_loss(args, s_logit, logits)
+            logits_threat = torch.nn.Softmax(dim=1)(threat_model(fake))
+            loss_S = threat_loss(args, logits_threat, logits_victim)
             loss_S.backward()
-            optimizer_S.step()
+            optimizer_T.step()
 
             total_loss_S += loss_S.item()
 
-            # REVIEW: Are we printing this stuff? This is some of the only
-            #         val we can do as it doesn't involve loading real data
-            t1 = 100 * accuracy(s_logit, t_argmax, top_k=1)
-            t5 = 100 * accuracy(s_logit, t_argmax, top_k=5)
+            # Print accuracy of Generator via Victim's logits
+            g_t1 = 100 * accuracy(logits_victim, labels, top_k=1)
+            g_t5 = 100 * accuracy(logits_victim, labels, top_k=5)
+            print(f'Generator accuracy. T1: {g_t1}, T5: {g_t5}')
+
+            # Print accuracy of Threat Model via Victim's logits
+            victim_argmax = logits_victim.argmax(axis=1)
+            t_t1 = 100 * accuracy(logits_threat, victim_argmax, top_k=1)
+            t_t5 = 100 * accuracy(logits_threat, victim_argmax, top_k=5)
+            print(f'Threat accuracy. T1: {t_t1}, T5: {t_t5}')
 
         print(f'Total loss S:', total_loss_S / (i + 1))
 
@@ -274,7 +274,7 @@ def main():
     args.num_classes = 400
 
     if args.victim_model == 'swin-t':
-        config = args.swin_t_config 
+        config = args.swin_t_config
         checkpoint = args.swin_t_checkpoint
         cfg = Config.fromfile(config)
         victim_model = build_model(cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))
@@ -319,7 +319,7 @@ def main():
     print("Cost per iterations: ", args.cost_per_iteration)
     print("Total number of epochs: ", number_epochs)
 
-    optimizer_S = optim.SGD(threat_parameters, lr=args.lr_S, weight_decay=args.weight_decay, momentum=0.9)
+    optimizer_T = optim.SGD(threat_parameters, lr=args.lr_S, weight_decay=args.weight_decay, momentum=0.9)
     optimizer_G = optim.Adam(generator.parameters(), lr=args.lr_G)
 
     steps = sorted([int(step * number_epochs) for step in args.steps])
@@ -327,10 +327,10 @@ def main():
     print()
 
     if args.scheduler == "multistep":
-        scheduler_S = optim.lr_scheduler.MultiStepLR(optimizer_S, steps, args.scale)
+        scheduler_T = optim.lr_scheduler.MultiStepLR(optimizer_T, steps, args.scale)
         scheduler_G = optim.lr_scheduler.MultiStepLR(optimizer_G, steps, args.scale)
     elif args.scheduler == "cosine":
-        scheduler_S = optim.lr_scheduler.CosineAnnealingLR(optimizer_S, number_epochs)
+        scheduler_T = optim.lr_scheduler.CosineAnnealingLR(optimizer_T, number_epochs)
         scheduler_G = optim.lr_scheduler.CosineAnnealingLR(optimizer_G, number_epochs)
 
     if args.generator_checkpoint:
@@ -343,20 +343,20 @@ def main():
     for epoch in range(1, number_epochs + 1):
         # Train
         if args.scheduler != "none":
-            scheduler_S.step()
+            scheduler_T.step()
             scheduler_G.step()
 
         train(args, victim_model=victim_model, threat_model=threat_model,
               generator=generator, device=device, device_tf=device_tf,
-              optimizer=[optimizer_S, optimizer_G], epoch=epoch)
+              optimizer=[optimizer_T, optimizer_G], epoch=epoch)
 
         checkpoint = {
             'outer_epoch': epoch,
-            'optimizer_S': optimizer_S.state_dict(),
+            'optimizer_T': optimizer_T.state_dict(),
             'optimizer_G': optimizer_G.state_dict(),
             'generator': generator.state_dict(),
-            'student': threat_model.state_dict(),
-            'scheduler_S': scheduler_S.state_dict(),
+            'threat': threat_model.state_dict(),
+            'scheduler_T': scheduler_T.state_dict(),
             'scheduler_G': scheduler_G.state_dict(),
             # 'criterion': criterion.state_dict()
         }
