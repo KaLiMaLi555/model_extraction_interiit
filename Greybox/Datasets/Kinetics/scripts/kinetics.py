@@ -18,7 +18,7 @@ def call_bash(dir_path: str,
     errors = 0
     this_dir_name, _ = os.path.split(os.path.abspath(__file__))
     file_name = f"{set_name}_{part}_{typ}.sh"
-    script_path = os.path.join(this_dir_name, file_name)
+    script_path = os.path.join(this_dir_name, set_name, file_name)
     script_path = script_path + " %s %s "
     try:
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
