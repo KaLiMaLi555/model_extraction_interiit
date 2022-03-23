@@ -10,22 +10,20 @@ import tensorflow_hub as hub
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-import torchvision
-# from approximate_gradients import *
 from mmaction.models import build_model
 from mmcv import Config
 from mmcv.runner import load_checkpoint
-from config.cfg_parser import cfg_parser
 from torchmetrics.functional import accuracy
 from tqdm.notebook import tqdm
 
-from approximate_gradients import approximate_gradients
-from utils_common import swin_transform
-from cGAN.models import ConditionalGenerator
-
 from MARS.model import generate_model
-# from utils_common import
+from approximate_gradients import approximate_gradients
+from cGAN.models import ConditionalGenerator
+from config.cfg_parser import cfg_parser
+from utils_common import swin_transform
 
+
+# from utils_common import
 
 
 def get_config():
@@ -278,7 +276,6 @@ def main():
             'scheduler_G': scheduler_G.state_dict(),
             # 'criterion': criterion.state_dict()
         }
-
 
         # TODO: Add checkpoint saving stuff, possibly check wandb_utils
         # TODO: Get rid of all validation/dataloader stuff as not allowed

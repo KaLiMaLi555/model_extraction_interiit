@@ -123,9 +123,6 @@ def pretrain(args, victim_model, generator, device, device_tf, optimizer):
         fake.backward(approx_grad_wrt_x)
         optimizer.step()
 
-            # REVIEW: Can probably print a T1/T5 Generator accuracy via Victim,
-            #         should we? Look at train_threat for code.
-
 
 def main():
     args = get_config()["experiment"]
