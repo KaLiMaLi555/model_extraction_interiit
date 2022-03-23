@@ -1,47 +1,37 @@
+# PyTorch
+from Datasets.datasets import VideoOnlyDataset
+from Datasets.transforms import MovinetTransform, SwinTransform
+from mmaction.models import build_model
+from mmcv import Config
+from mmcv.runner import load_checkpoint
+from options.embedding_options import *
+from pathlib import Path
+from PIL import Image
+from torch.utils.data import DataLoader
+from torch.utils.data import Dataset
+from tqdm import tqdm
+from tqdm.notebook import tqdm
 import argparse
+import cv2
+import numpy as np
 import os
+import pandas as pd
 import pickle
 import random
-import warnings
-from pathlib import Path
-
-import numpy as np
-import pandas as pd
+import shutil
 import tensorflow as tf
 import tensorflow_hub as hub
 import torch
 import torch.functional as F
 import torch.nn as nn
+import torch.nn.functional as F
+import warnings
 import wget
-from mmaction.models import build_model
-from mmcv import Config
-from mmcv.runner import load_checkpoint
-from PIL import Image
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-
-from Datasets.datasets import VideoOnlyDataset
-from Datasets.transforms import MovinetTransform, SwinTransform
-from options.embedding_options import *
-
-warnings.filterwarnings("ignore")
-
-"""
-    Function to generate data for movinet
-
-    Args:
-        video_dir_path: Path to the directory containing the videos
-        video_names_file: Path to the file containing the video names
-        transforms: List of transforms to be applied to the video
-        batch_size: Batch size for the dataloader
-        num_workers: Number of workers for the dataloader
-        num_classes: Number of classes in the dataset
-        
-"""
 
 
-class TensorflowDataGenerator(tf.keras.utils.Sequence):
-    def __init__(self, video_dir_path, classes_file, labels_file, num_classes, transform=None, shuffle=False):
+#### tensorflow data generator
+class TensorflowDataGenerator(tf.keras.utils.Sequence): #
+    def __init__(self, video_dir_path, classes_file, labels_file, num_classes, transform=None,shuffle=False):
         self.shuffle = shuffle
         self.video_dir_path = video_dir_path
         self.classes_file = classes_file
@@ -93,7 +83,7 @@ class TensorflowDataGenerator(tf.keras.utils.Sequence):
 
         for image_name in images:
             image = Image.open(os.path.join(video_path, image_name))
-            newsize = (224, 224)
+            newsize = (224,224)
             image = image.resize(newsize)
             image = np.array(image, dtype=np.float32)
             image = image / 255.0
@@ -107,13 +97,13 @@ class TensorflowDataGenerator(tf.keras.utils.Sequence):
         if self.transform:
             vid = vid.permute(0, 3, 1, 2)
             vid = self.transform(vid)
-            vid = vid.permute(0, 2, 3, 1)
+            vid = vid.permute(0,2, 3, 1)
         vid = vid.swapaxes(0, 3)  # <C3D Transform>
-        vid = torch.permute(vid, (3, 1, 2, 0))
+        vid = torch.permute(vid,(3,1,2,0))
         # b= self.get_label(idx)
-        vid = vid.numpy()
+        vid=vid.numpy()
         # b=b.numpy()
-        vid = tf.convert_to_tensor(vid)
+        vid= tf.convert_to_tensor(vid)
         # b= tf.convert_to_tensor(b)
         return vid
 
@@ -126,43 +116,25 @@ class TensorflowDataGenerator(tf.keras.utils.Sequence):
 
 
 def make_gen_callable(_gen):
-    def gen():
-        for x, y in _gen:
-            yield x, y
-
-    return gen
-
+        def gen():
+            for x,y in _gen:
+                 yield x,y
+        return gen
 
 def get_logits_movinet(model, model_name, dataloader, device='/device:GPU:0'):
     
     logits = []
-    labels = []
 
     for idx, video_frames in tqdm(enumerate(dataloader), position=0, leave=True):
         with tf.device(device):
             outputs = tf.stop_gradient(model(video_frames))
         del video_frames
         logits.extend(outputs)
-        # labels.extend(label)
 
     logits = tf.stack(logits)
-    # labels = tf.stack(labels)
-
     return logits
 
-"""
-    Function to get embeddings from a model
 
-    Args:
-        model: Model to be used for embedding extraction
-        model_name: Name of the model
-        dataloader: Dataloader to be used for embedding extraction
-        device: Computational Device to be used for embedding extraction
-
-    Returns:
-        logits: Embeddings extracted from the model
-        
-"""
 def get_logits_swint(model, model_name, dataloader, device):
     logits = []
 
@@ -193,17 +165,20 @@ def main():
 
     if args.model_name == "movinet":
         train_gen = TensorflowDataGenerator(args.video_dir_path, args.classes_file, args.labels_file, args.num_classes)
-        train_ = make_gen_callable(train_gen)
-        ot = (tf.float32, tf.int64)
-        ds = tf.data.Dataset.from_generator(train_, ot)
-        batched_dataset = ds.batch(args.batch_size)
-
+        
         hub_url = "https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3"
         encoder = hub.KerasLayer(hub_url, trainable=False)
         inputs = tf.keras.layers.Input(shape=[None, None, None, 3], dtype=tf.float32, name='image')
         outputs = encoder(dict(image=inputs))
+
         model = tf.keras.Model(inputs, outputs, name='movinet')
-        logits = get_logits_movinet(model, args.model_name, batched_dataset, device)
+        train_ = make_gen_callable(train_gen)
+        ot = (tf.float32, tf.int64)
+        ds = tf.data.Dataset.from_generator(train_,ot)
+        batched_dataset = ds.batch(args.batch_size)
+        logits = get_logits_movinet(model, args.model_name, batched_dataset)
+        # combined = zip(logits, labels)
+        pickle.dump(logits, open(os.path.join(args.logit_dir, args.model_name + "_tf_" + args.dataset_type + ".pkl"), "wb"))
 
     elif args.model_name == "swin_transformer":
         print("\n")

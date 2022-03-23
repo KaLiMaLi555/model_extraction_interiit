@@ -115,36 +115,26 @@ class TensorflowDataGenerator(tf.keras.utils.Sequence): #
             random.shuffle(self.train_imgs)
 
 
+def make_gen_callable(_gen):
+        def gen():
+            for x,y in _gen:
+                 yield x,y
+        return gen
+
 def get_logits_movinet(model, model_name, dataloader, device='/device:GPU:0'):
     
     logits = []
-    labels = []
 
     for idx, video_frames in tqdm(enumerate(dataloader), position=0, leave=True):
         with tf.device(device):
             outputs = tf.stop_gradient(model(video_frames))
         del video_frames
         logits.extend(outputs)
-        # labels.extend(label)
 
     logits = tf.stack(logits)
-    # labels = tf.stack(labels)
-
     return logits
 
-"""
-    Function to get embeddings from a model
 
-    Args:
-        model: Model to be used for embedding extraction
-        model_name: Name of the model
-        dataloader: Dataloader to be used for embedding extraction
-        device: Computational Device to be used for embedding extraction
-
-    Returns:
-        logits: Embeddings extracted from the model
-        
-"""
 def get_logits_swint(model, model_name, dataloader, device):
     logits = []
 
@@ -175,17 +165,20 @@ def main():
 
     if args.model_name == "movinet":
         train_gen = TensorflowDataGenerator(args.video_dir_path, args.classes_file, args.labels_file, args.num_classes)
-        train_ = make_gen_callable(train_gen)
-        ot = (tf.float32, tf.int64)
-        ds = tf.data.Dataset.from_generator(train_, ot)
-        batched_dataset = ds.batch(args.batch_size)
-
+        
         hub_url = "https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3"
         encoder = hub.KerasLayer(hub_url, trainable=False)
         inputs = tf.keras.layers.Input(shape=[None, None, None, 3], dtype=tf.float32, name='image')
         outputs = encoder(dict(image=inputs))
+
         model = tf.keras.Model(inputs, outputs, name='movinet')
-        logits = get_logits_movinet(model, args.model_name, batched_dataset, device)
+        train_ = make_gen_callable(train_gen)
+        ot = (tf.float32, tf.int64)
+        ds = tf.data.Dataset.from_generator(train_,ot)
+        batched_dataset = ds.batch(args.batch_size)
+        logits = get_logits_movinet(model, args.model_name, batched_dataset)
+        # combined = zip(logits, labels)
+        pickle.dump(logits, open(os.path.join(args.logit_dir, args.model_name + "_tf_" + args.dataset_type + ".pkl"), "wb"))
 
     elif args.model_name == "swin_transformer":
         print("\n")
