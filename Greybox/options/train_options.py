@@ -15,8 +15,11 @@ class TrainOptions():
 
         parser.add_argument("--train_vid_dir", type=str, default="", help="Path to the training videos")
         parser.add_argument("--train_logits_file", type=str, default="", help="Path to the training logits file")
+        parser.add_argument("--train_vid_names_file", type=str, default="", help="Path to the training video names file")
         parser.add_argument("--val_vid_dir", type=str, default="", help="Path to the training videos")
         parser.add_argument("--val_logits_file", type=str, default="", help="Path to the training logits file")
+        parser.add_argument("--val_classes_file", type=str, default="", help="Path to the training classes file")
+        parser.add_argument("--val_labels_file", type=str, default="", help="Path to the training labels file")
         parser.add_argument("--test_vid_dir", type=str, default="", help="Path to the testing videos")
         parser.add_argument("--ckpts_dir", type=str, default="", help="Path to save the checkpoints") 
         parser.add_argument("--train_mode", type=str, default="finetune", help="Mode for training: finetuning or pretraining")
@@ -42,8 +45,11 @@ class TrainOptions():
 
         cfg['experiment'].train_vid_dir = args.train_vid_dir
         cfg['experiment'].train_logits_file = args.train_logits_file
+        cfg['experiment'].train_vid_names_file = args.train_vid_names_file
         cfg['experiment'].val_vid_dir = args.val_vid_dir
         cfg['experiment'].val_logits_file = args.val_logits_file
+        cfg['experiment'].val_classes_file = args.val_classes_file
+        cfg['experiment'].val_labels_file = args.val_labels_file
         cfg['experiment'].test_vid_dir = args.test_vid_dir
         cfg['experiment'].ckpts_dir = args.ckpts_dir
         cfg['experiment'].epochs = args.epochs

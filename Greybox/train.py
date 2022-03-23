@@ -128,14 +128,16 @@ def main():
     if cfg.train_mode == "finetune":
         model.load_state_dict(torch.load(cfg.pretrained_ckpt_path))
 
+    print("Model Created")
+
     print("Creating Dataloaders")
     if cfg.augmentation:
         augs_list = cfg.augmentation
         va_aug = va_augment(augs_list)
-        finetune_dataset = VideoLabelDataset(cfg.train_path, cfg.train_label_path, cfg.train_video_path, va_aug)
+        finetune_dataset = VideoLogitDataset(cfg.train_vid_dir, cfg.train_vid_names_file, cfg.train_logits_file, va_aug)
     else:
-        finetune_dataset = VideoLogitDataset(cfg.train_video_path, cfg.train_video_name_path, cfg.train_logit_path)
-    val_dataset = VideoLabelDataset(cfg.val_video_path, cfg.val_class_file, cfg.val_label_file, cfg.n_finetune_classes)
+        finetune_dataset = VideoLogitDataset(cfg.train_vid_dir, cfg.train_vid_names_file, cfg.train_logits_file)
+    val_dataset = VideoLabelDataset(cfg.val_vid_dir, cfg.val_classes_file, cfg.val_labeles_file, cfg.n_finetune_classes)
 
     train_data = finetune_dataset
     val_data = val_dataset

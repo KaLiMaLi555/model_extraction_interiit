@@ -10,12 +10,8 @@ import tensorflow_hub as hub
 from PIL import Image
 import pandas as pd
 from tqdm import tqdm
-<<<<<<< HEAD
 import torch.functional as F
 import torch.nn as nn
-=======
->>>>>>> 9f477c76317c338213cd4367fcb93588e52f8f0b
-
 from Datasets.transforms import MovinetTransform, SwinTransform
 from Datasets.datasets import VideoOnlyDataset
 from torch.utils.data import DataLoader
