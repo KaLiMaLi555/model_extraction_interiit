@@ -12,7 +12,6 @@ def call_bash(dir_path: str,
               typ: str = "downloader",
               part: str = "full",
               max_workers: int = 8):
-
     vid_path = os.path.join(dir_path, set_name)
     targz_path = os.path.join(dir_path, f"{set_name}_targz")
     errors = 0
@@ -86,10 +85,15 @@ if __name__ == "__main__":
     parser.add_argument('--max_workers', type=int, default=8)
     parser.add_argument('--extract_frames', type=bool, default=True)
     parser.add_argument('--extend', type=int, default=0)
+
     args = parser.parse_args()
 
-    call_bash(args.dir_path, args.set_name, "downloader", args.part, args.max_workers)
-    call_bash(args.dir_path, args.set_name, "extractor", args.part, args.max_workers)
+    if not (args.set_name == 'k600' and args.part == 'replacement'):
+        call_bash(args.dir_path, args.set_name, "downloader", args.part, args.max_workers)
+    else:
+        print("K600 does not have a replacement dataset")
+    if args.part != "annotations":
+        call_bash(args.dir_path, args.set_name, "extractor", args.part, args.max_workers)
 
     if args.extract_frames:
         for folder in os.listdir(os.path.join(args.dir_path, args.set_name)):

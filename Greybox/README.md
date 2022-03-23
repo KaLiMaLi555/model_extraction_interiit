@@ -8,13 +8,13 @@ The code is developed and tested using `Python >= 3.6`. To install the requireme
 pip install -r requirements.txt
 ```
 
-### To setup the dataset:
+## Dataset Setup:
 
-Kinetics-400/Kinetics-600
+### Kinetics-400/Kinetics-600
 
 ```bash
-python Datasets/Kinetics/scripts/kinetics.py [--dir_path SAVE_DIRECTORY]
-    [--set_name k400] [--part full] [--max_workers 8] 
+python Datasets/Kinetics/scripts/kinetics.py [--dir_path SAVE_DIRECTORY_PATH]
+    [--set_name k400/k600] [--part full/train/test/val/replacement/annotations] [--max_workers 8] 
     [--extract_frames true] [--extend 16]
 ```
 
