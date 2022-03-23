@@ -71,7 +71,8 @@ def approximate_gradients(
         args, victim_model, threat_model, x, epsilon=1e-7, m=5,
         device='cpu', device_tf='/device:GPU:0', pre_x=False):
     # x shape: (N, C, L, S, S)
-
+    print(args.victim_model)
+    print(args.victim_model == 'swin-t')
     if pre_x and args.G_activation is None:
         raise ValueError(args.G_activation)
 
@@ -92,7 +93,6 @@ def approximate_gradients(
         for i in (range(N * m // max_points + 1)):
             pts = evaluation_points[i * max_points:(i + 1) * max_points]
 
-            # TODO: Update this to work with cfg parser
             if args.victim_model == 'swin-t':
                 pred_victim_pts = get_swint_pts(victim_model, pts)
             else:
@@ -110,7 +110,6 @@ def approximate_gradients(
 
         u = u.to(device)
 
-        # TODO: Remove this if we're not adding l1 below
         if args.loss == "l1":
             loss_fn = F.l1_loss
             if args.no_logits:
@@ -182,37 +181,11 @@ def approximate_gradients_conditional(
 
         u = u.to(device)
 
-        # TODO: Remove this if we're not adding l1 below
-        # if args.loss == "l1":
-        #     loss_fn = F.l1_loss
-        #     if args.no_logits:
-        #         pred_victim = torch.log(pred_victim)
-        #         if args.logit_correction == 'min':
-        #             pred_victim -= pred_victim.min(dim=1).values.view(-1, 1)
-        #         elif args.logit_correction == 'mean':
-        #             pred_victim -= pred_victim.mean(dim=1).view(-1, 1)
-        #         pred_victim = pred_victim.detach()
-
-        # # TODO: Verify that KL Div doesn't have an issue with values being 0.
-        # #       labels is a one-hot vector, can't use this if
-        # #       log_softmax/kldiv/anything has an issue with it
-        # elif args.loss == "kl":
-        #     loss_fn = F.kl_div
-        #     pred_threat = F.log_softmax(labels, dim=1)
-        #     pred_victim = pred_victim.detach()
-
         if args.loss == "cross-entropy":
             loss_fn = F.cross_entropy
+            loss_vals = loss_fn(pred_victim, labels, reduction='none').view(-1, m + 1)
         else:
             raise ValueError(args.loss)
-
-        # Compute loss
-        # TODO: Decide if we're keeping l1 or other funcs, add conditionals for it
-        if args.loss == "kl":
-            loss_vals = loss_fn(pred_victim, labels, reduction='none')
-            loss_vals = loss_vals.sum(dim=1).view(-1, m + 1)
-        else:
-            loss_vals = loss_fn(pred_victim, labels, reduction='none').view(-1, m + 1)
 
         grad_estimates = get_grad_estimates(
             args, loss_vals, dim, epsilon, u, m, C, L, S)
