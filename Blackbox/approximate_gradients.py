@@ -40,7 +40,7 @@ def get_swint_pts(victim_model, pts):
 
 def get_movinet_pts(victim_model, pts, N, C, L, S, device, device_tf):
     # Movinet expects: b, f, h, w, c = N, L, S, S, C
-    pts_tf = pts.reshape(N, L, S, S, C).detach().cpu().numpy()
+    pts_tf = pts.reshape(-1, L, S, S, C).detach().cpu().numpy()
     with tf.device(device_tf):
         tf_tensor = tf.convert_to_tensor(pts_tf)
         pred_victim_pts = victim_model(tf_tensor).numpy()
@@ -94,7 +94,7 @@ def approximate_gradients(
             pts = evaluation_points[i * max_points:(i + 1) * max_points]
 
             # TODO: Update this to work with cfg parser
-            if args.model == 'swin-t':
+            if args.victim_model == 'swin-t':
                 pred_victim_pts = get_swint_pts(victim_model, pts)
             else:
                 pred_victim_pts = get_movinet_pts(
@@ -173,7 +173,7 @@ def approximate_gradients_conditional(
             pts = evaluation_points[i * max_points:(i + 1) * max_points]
 
             # TODO: Update this to work with cfg parser
-            if args.model == 'swin-t':
+            if args.victim_model == 'swin-t':
                 pred_victim_pts = get_swint_pts(victim_model, pts)
             else:
                 pred_victim_pts = get_movinet_pts(
