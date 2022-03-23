@@ -50,7 +50,8 @@ class ResCNNEncoder(nn.Module):
 
 # LSTM Decoder
 class LSTMDecoder(nn.Module):
-    def __init__(self, CNN_embed_dim=300, h_RNN_layers=3, h_RNN=256, h_FC_dim=128, drop_p=0.3, num_classes=400):
+    def __init__(self, CNN_embed_dim=300, h_RNN_layers=3, h_RNN=256,
+                 h_FC_dim=128, drop_p=0.3, num_classes=400):
         super(LSTMDecoder, self).__init__()
 
         self.RNN_input_size = CNN_embed_dim
@@ -64,7 +65,9 @@ class LSTMDecoder(nn.Module):
             input_size=self.RNN_input_size,
             hidden_size=self.h_RNN,
             num_layers=h_RNN_layers,
-            batch_first=True,  # input & output will have batch size as 1st dimension. Eg: (batch, time_step, input_size)
+            # input & output will have batch size as 1st dimension.
+            # Eg: (batch, time_step, input_size)
+            batch_first=True,
         )
 
         self.fc1 = nn.Linear(self.h_RNN, self.h_FC_dim)
@@ -72,12 +75,13 @@ class LSTMDecoder(nn.Module):
 
     def forward(self, x_RNN):
         self.LSTM.flatten_parameters()
-        # h_n shape (n_layers, batch, hidden_size), h_c shape (n_layers, batch, hidden_size)
-        # None represents zero initial hidden state. RNN_out has shape (batch, time_step, output_size)
+        # RNN_out has shape (batch, time_step, output_size),
+        # h_n shape and h_c shape (n_layers, batch, hidden_size).
+        # None represents zero initial hidden state.
         RNN_out, (h_n, h_c) = self.LSTM(x_RNN, None)
 
         # FC layers
-        x = self.fc1(RNN_out[:, -1, :])  # choose RNN_out at the last time step
+        x = self.fc1(RNN_out[:, -1, :])  # Choose RNN_out at the last time step
         x = F.relu(x)
         x = F.dropout(x, p=self.drop_p, training=self.training)
         x = self.fc2(x)
@@ -87,11 +91,18 @@ class LSTMDecoder(nn.Module):
 
 # ResCNN-LSTM model for video classification
 class ResCNNLSTM(nn.Module):
-    def __init__(self, fc_hidden1=512, fc_hidden2=512, drop_p=0.3, CNN_embed_dim=300, h_RNN_layers=3, h_RNN=256, h_FC_dim=128, num_classes=400):
+    def __init__(self, fc_hidden1=512, fc_hidden2=512, drop_p=0.3,
+                 CNN_embed_dim=300, h_RNN_layers=3, h_RNN=256, h_FC_dim=128,
+                 num_classes=400):
         super(ResCNNLSTM, self).__init__()
 
-        self.encoder = ResCNNEncoder(fc_hidden1=fc_hidden1, fc_hidden2=fc_hidden2, drop_p=drop_p, CNN_embed_dim=CNN_embed_dim)
-        self.decoder = LSTMDecoder(CNN_embed_dim=CNN_embed_dim, h_RNN_layers=h_RNN_layers, h_RNN=h_RNN, h_FC_dim=h_FC_dim, drop_p=drop_p, num_classes=num_classes)
+        self.encoder = ResCNNEncoder(
+            fc_hidden1=fc_hidden1, fc_hidden2=fc_hidden2,
+            drop_p=drop_p, CNN_embed_dim=CNN_embed_dim)
+
+        self.decoder = LSTMDecoder(
+            CNN_embed_dim=CNN_embed_dim, h_RNN_layers=h_RNN_layers, h_RNN=h_RNN,
+            h_FC_dim=h_FC_dim, drop_p=drop_p, num_classes=num_classes)
 
     def forward(self, x_3d):
         return self.decoder(self.encoder(x_3d))

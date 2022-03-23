@@ -1,10 +1,6 @@
 import torch.nn as nn
 
 
-# REVIEW: Use DCGAN instead? Would it be easier to defend?
-#   Will be able to give a sense of the size of the model through name only,
-#   can be a good thing or a bad thing.
-# ImageGenerator
 class ImageGenerator(nn.Module):
     def __init__(self, ngpu, nc=3, nz=100, ngf=64):
         super(ImageGenerator, self).__init__()

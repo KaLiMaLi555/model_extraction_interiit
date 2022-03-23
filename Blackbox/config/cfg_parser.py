@@ -1,7 +1,7 @@
 import yaml
-import os
 
 root_dir = "./"
+
 
 class Config(object):
     """

@@ -11,16 +11,15 @@ class Flatten(nn.Module):
 
 
 class ConditionalGenerator(nn.Module):
-    """
-    Conditional Generator
-    """
 
-    def __init__(self, nz=100, num_classes=10, ngf=64, nc=1, img_size=32, activation=None):
+    def __init__(self, nz=100, num_classes=10, ngf=64, nc=1, img_size=32,
+                 activation=None):
         super(ConditionalGenerator, self).__init__()
         self.activation = activation
 
         self.init_size = img_size // 4
-        self.l1 = nn.Sequential(nn.Linear(nz + num_classes, ngf * 2 * self.init_size ** 2))
+        self.l1 = nn.Sequential(
+            nn.Linear(nz + num_classes, ngf * 2 * self.init_size ** 2))
 
         self.conv_blocks0 = nn.Sequential(
             nn.BatchNorm2d(ngf * 2),
