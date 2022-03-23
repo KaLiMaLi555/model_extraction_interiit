@@ -1,10 +1,6 @@
 import argparse
-import json
 import os
-import random
-from pprint import pprint
 
-import numpy as np
 import tensorflow as tf
 import tensorflow_hub as hub
 import torch
@@ -14,10 +10,11 @@ from mmcv import Config
 from mmcv.runner import load_checkpoint
 from tqdm.notebook import tqdm
 
-from config.cfg_parser import cfg_parser
 # TODO: Fix import in the final code
-from approximate_gradients import approximate_gradients_conditional
-from cGAN.models import ConditionalGenerator
+from models import ConditionalGenerator
+from ..approximate_gradients import approximate_gradients_conditional
+from ..config.cfg_parser import cfg_parser
+from ..utils_common import set_seed
 
 
 def get_config():
@@ -35,11 +32,13 @@ def pretrain(args, victim_model, generator, device, device_tf, optimizer):
     if args.model == 'swin-t':
         victim_model.eval()
 
-    for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
         # Repeat epoch_itrs times per epoch
-        # Sample Random Noise
-        labels = torch.argmax(torch.randn((args.batch_size, args.num_classes)), dim=1).to(device)
+    for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
+        # Generate labels for Conditional Generator
+        labels = torch.randn((args.batch_size, args.num_classes)).to(device)
+        labels = torch.argmax(labels, dim=1)
         labels_onehot = torch.nn.functional.one_hot(labels, args.num_classes)
+        # Sample Random Noise
         z = torch.randn((args.batch_size, args.nz)).to(device)
         optimizer.zero_grad()
         generator.train()
@@ -60,41 +59,35 @@ def pretrain(args, victim_model, generator, device, device_tf, optimizer):
 
 
 def main():
-    args = get_config()["experiment"]
-
     # Prepare the environment
-    torch.manual_seed(args.seed)
-    torch.cuda.manual_seed(args.seed)
-    np.random.seed(args.seed)
-    random.seed(args.seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    args = get_config()["experiment"]
+    set_seed(args.seed)
 
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     device = torch.device('cuda:%d' % args.device if use_cuda else 'cpu')
     device_tf = '/device:GPU:%d' % args.device if use_cuda else '/device:CPU'
     args.device, args.device_tf = device, device_tf
 
-    # TODO: cfg parser stuff
     args.normalization_coefs = None
     args.G_activation = torch.sigmoid
-    args.num_classes = 400
-
-    pprint(args, width=80)
 
     if args.victim_model == 'swin-t':
+        args.num_classes = 400
         config = args.swin_t_config
         checkpoint = args.swin_t_checkpoint
         cfg = Config.fromfile(config)
-        victim_model = build_model(cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))
+        victim_model = build_model(cfg.model, train_cfg=None,
+                                   test_cfg=cfg.get('test_cfg'))
         load_checkpoint(victim_model, checkpoint, map_location=device)
         victim_model.eval()
         victim_model = victim_model.to(device)
     else:
+        args.num_classes = 600
         hub_url = 'https://tfhub.dev/tensorflow/movinet/a2/base/kinetics-600/classification/3'
 
         encoder = hub.KerasLayer(hub_url, trainable=False)
-        inputs = tf.keras.layers.Input(shape=[None, None, None, 3], dtype=tf.float32, name='image')
+        inputs = tf.keras.layers.Input(shape=[None, None, None, 3],
+                                       dtype=tf.float32, name='image')
 
         # [batch_size, 600]
         outputs = encoder(dict(image=inputs))

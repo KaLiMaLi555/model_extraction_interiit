@@ -18,7 +18,7 @@ from MARS.model import generate_model
 from approximate_gradients import approximate_gradients
 from cGAN.models import ConditionalGenerator
 from config.cfg_parser import cfg_parser
-from utils_common import swin_transform
+from utils_common import set_seed, swin_transform
 
 
 def get_config():
@@ -64,16 +64,17 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
     # Repeat epoch_itrs times per outer epoch
     for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
         for _ in range(args.g_iter):
-            # Sample Random Noise
+            # Generate labels for Conditional Generator
             labels = torch.randn((args.batch_size, args.num_classes)).to(device)
             labels = torch.argmax(labels, dim=1)
-            labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
+            labels_onehot = torch.nn.functional.one_hot(labels, args.num_classes)
+            # Sample Random Noise
             z = torch.randn((args.batch_size, args.nz)).to(device)
             optimizer_G.zero_grad()
             generator.train()
             # Get fake image from generator
             # pre_x returns the output of G before applying the activation
-            fake = generator(z, label=labels_oh, pre_x=args.approx_grad)
+            fake = generator(z, label=labels_onehot, pre_x=args.approx_grad)
             fake = fake.unsqueeze(dim=2)
 
             # Approximate gradients
@@ -90,13 +91,14 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
         print(f'Total loss G:', total_loss_G / (i + 1))
 
         for _ in range(args.d_iter):
-            # Sample Random Noise
+            # Generate labels for Conditional Generator
             labels = torch.randn((args.batch_size, args.num_classes)).to(device)
             labels = torch.argmax(labels, dim=1)
-            labels_oh = torch.nn.functional.one_hot(labels, args.num_classes)
+            labels_onehot = torch.nn.functional.one_hot(labels, args.num_classes)
+            # Sample Random Noise
             z = torch.randn((args.batch_size, args.nz)).to(device)
 
-            fake = generator(z, label=labels_oh).detach()
+            fake = generator(z, label=labels_onehot).detach()
             fake = fake.unsqueeze(dim=2)
             N, C, L, S = fake.shape[:4]
             optimizer_T.zero_grad()
@@ -143,15 +145,9 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
 
 
 def main():
-    args = get_config()["experiment"]
-
     # Prepare the environment
-    torch.manual_seed(args.seed)
-    torch.cuda.manual_seed(args.seed)
-    np.random.seed(args.seed)
-    random.seed(args.seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    args = get_config()["experiment"]
+    set_seed(args.seed)
 
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     device = torch.device('cuda:%d' % args.device if use_cuda else 'cpu')
@@ -183,13 +179,13 @@ def main():
         outputs = encoder(dict(image=inputs))
         victim_model = tf.keras.Model(inputs, outputs, name='movinet')
 
-    threat_model, threat_parameters = generate_model(args.num_classes)
-    threat_model = threat_model.to(device)
-
     generator = ConditionalGenerator(
         nz=args.nz, nc=3, img_size=224, num_classes=args.num_classes,
         activation=args.G_activation)
     generator = generator.to(device)
+
+    threat_model, threat_parameters = generate_model(args.num_classes)
+    threat_model = threat_model.to(device)
 
     args.generator = generator
     args.threat_model = threat_model

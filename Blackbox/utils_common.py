@@ -5,10 +5,20 @@
 # TODO: Refactor this stuff
 import csv
 import os
+import random
 
 import numpy as np
 import torch
 import torchvision.transforms.functional as TF
+
+
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 
 def swin_transform(fake):  # N, C, L, S, S
