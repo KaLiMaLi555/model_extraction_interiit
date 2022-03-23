@@ -43,7 +43,7 @@ class VideoLogitDataset(Dataset):
     def __getitem__(self, idx):
         vid = self.get_frames(self.videos[idx])
         if self.va_augments is not None:
-            vid = self.va_augments(vid)
+            vid = torch.tensor(np.array(self.va_augments(vid.numpy())))
         if self.transform:
             vid = vid.permute(0, 3, 1, 2)
             vid = self.transform(vid)
@@ -119,9 +119,9 @@ class VideoLabelDataset(Dataset):
 
     def __getitem__(self, idx):
         video_path = os.path.join(self.video_dir_path, self.videos[idx])
-        vid = self.get_frames(video_path)
+        vid = torch.tensor(np.array(self.va_augments(vid.numpy())))
         if self.va_augments is not None:
-            vid = self.va_augments(vid)
+            vid = torch.tensor(self.va_augments(vid.numpy()))
         if self.transform:
             vid = vid.permute(0, 3, 1, 2)
             vid = self.transform(vid)

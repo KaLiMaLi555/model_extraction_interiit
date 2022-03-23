@@ -1,17 +1,19 @@
-from torch.utils.data import DataLoader, Dataset
+import os
+
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
+import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.autograd import Variable
-import os 
+from torch.utils.data import DataLoader, Dataset
+
 from Datasets.datasets import VideoLabelDataset, VideoLogitDataset
 from models.MARS.model import generate_model
 # from vidaug import augmentors as va
 from options.train_options import *
-from utils.mars_utils import *
 from utils.augment import va_augment
+from utils.mars_utils import *
 
 """
     Function to train the model

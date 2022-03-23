@@ -37,27 +37,27 @@
   "embeddings": {
 
     "batch_size": 16,
-    "logit_dir": null,
+    "logit_dir": "/content/",
     "is_random": true,
     "num_classes": 5,
     "seed": 42,
     "model_name": null,
-    "video_dir_path": " ",
-    "video_names_file": " ",
-    "classes_file": " ",
-    "labels_file": " "
+    "video_dir_path": "/content/k400_16_frames_uniform",
+    "video_names_file": "name.txt",
+    "classes_file": "/content/k400_16_frames_uniform/classes.csv",
+    "labels_file": "/content/k400_labels.csv"
   },
 
   "test": {
 
     "num_classes": 400,
-    "videos_dir": " ",
-    "classes_file": " ",
-    "labels_file": " ",
+    "videos_dir": "/content/k400_16_frames_uniform",
+    "classes_file": "/content/k400_16_frames_uniform/classes.csv",
+    "labels_file": "/content/k400_labels.csv",
     "num-classes": 400,
     "batch_size": 16,
     "num_workers": 8,
-    "restore_from": " ",
+    "restore_from": "/content/drive/MyDrive/checkpoints/MARS_Pretrained_UCF/5.pth",
     "save": true
   }
 

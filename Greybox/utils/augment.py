@@ -3,9 +3,9 @@ from vidaug import augmentors as va
 def va_augment(aug_list):
     augment_list = []
     if "VerticalFlip" in aug_list:
-        augment_list.append(va.VerticalFlip(p=0.5))
+        augment_list.append(va.VerticalFlip())
     if "HorizontalFlip" in aug_list:
-        augment_list.append(va.HorizontalFlip(p=0.5))
+        augment_list.append(va.HorizontalFlip())
     if "GaussianBlur" in aug_list:
         augment_list.append(va.GaussianBlur(2))
     if "Add" in aug_list:
@@ -21,5 +21,5 @@ def va_augment(aug_list):
     if "RandomShear" in aug_list:
         augment_list.append(va.RandomShear(10,10))
 
-    va_augmentation = va.Compose(augment_list)
+    va_augmentation = va.Sequential(augment_list)
     return va_augmentation
