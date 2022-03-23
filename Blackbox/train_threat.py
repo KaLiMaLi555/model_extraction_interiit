@@ -24,7 +24,7 @@ from utils_common import swin_transform
 from cGAN.models import ConditionalGenerator
 
 from MARS.model import generate_model
-# from utils_common import 
+# from utils_common import
 
 
 # TODO: Get MARS working once added
@@ -140,7 +140,8 @@ def threat_loss(args, s_logit, t_logit, return_t_logits=False):
 
 def train(args, victim_model, threat_model, generator, device, device_tf, optimizer, epoch):
     """Main Loop for one epoch of Training Generator and Threat Models"""
-    victim_model.eval()
+    if args.model == 'swin-t':
+        victim_model.eval()
     threat_model.train()
 
     optimizer_S, optimizer_G = optimizer

@@ -89,7 +89,6 @@ def pretrain(args, victim_model, generator, device, device_tf, optimizer):
     """Main Loop for one epoch of Pretraining Generator"""
     if args.model == 'swin-t':
         victim_model.eval()
-    victim_model.eval()
 
     for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
         """Repeat epoch_itrs times per epoch"""
