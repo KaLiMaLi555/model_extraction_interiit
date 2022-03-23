@@ -19,7 +19,6 @@ experiment:
   scale: 0.3
   dataset: k400
   data_root: data
-  model: swin-t
   student_model: mars
   device: 0
   approx_grad: 1
@@ -43,5 +42,7 @@ experiment:
   log_dir: /content/logs
   no_cuda: 0
   model_id: mars
-  victim_model: swin-t
+  victim_model: movinet
   weight_decay: 5.0e-4
+  swin_t_config: "./Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py"
+  swin_t_checkpoint: "/content/swin_tiny_patch244_window877_kinetics400_1k.pth"

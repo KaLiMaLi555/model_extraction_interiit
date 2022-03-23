@@ -217,10 +217,8 @@ def train(args, victim_model, threat_model, generator, device, device_tf, optimi
 
 
 def main():
-    # TODO: Replace with cfg parser stuff
     args = config()["experiment"]
 
-    # TODO: Use common set_env util
     # Prepare the environment
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed(args.seed)
@@ -229,19 +227,13 @@ def main():
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    # REVIEW: Decide if we're keeping this query budget stuff
     args.query_budget *= 10 ** 6
     args.query_budget = int(args.query_budget)
 
     threat_options = ['rescnnlstm', 'mars', 'mobilenet']
     victim_options = ['swin-t', 'movinet']
     mode_options = ['image', 'video']
-    # TODO: Add asserts that cfg options are from this list
-    # if args.student_model not in classifiers:
-    #     if "wrn" not in args.student_model:
-    #         raise ValueError("Unknown model")
 
-    # REVIEW: Decide if we're keeping or throwing this logging dir stuff
     pprint(args, width=80)
     print(args.log_dir)
     os.makedirs(args.log_dir, exist_ok=True)
@@ -256,9 +248,6 @@ def main():
     with open(args.log_dir + "/loss.csv", "w") as f:
         f.write("epoch,loss_G,loss_S\n")
 
-    # with open(args.log_dir + "/accuracy.csv", "w") as f:
-    #     f.write("epoch,accuracy\n")
-
     if args.rec_grad_norm:
         with open(args.log_dir + "/norm_grad.csv", "w") as f:
             f.write("epoch,G_grad_norm,S_grad_norm,grad_wrt_X\n")
@@ -266,14 +255,12 @@ def main():
     with open("latest_experiments.txt", "a") as f:
         f.write(args.log_dir + "\n")
 
-    # REVIEW: Decide if we're keeping or throwing logging dir stuff above
 
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     device = torch.device('cuda:%d' % args.device if use_cuda else 'cpu')
     device_tf = '/device:GPU:%d' % args.device if use_cuda else '/device:CPU'
     args.device, args.device_tf = device, device_tf
 
-    # REVIEW: Decide if we're keeping or throwing this stuff
     # Preparing checkpoints for the best Student
     global file
     model_dir = f"checkpoint/student_{args.model_id}";
@@ -288,16 +275,14 @@ def main():
     # Eigen values and vectors of the covariance matrix
     # _, test_loader = get_dataloader(args)
 
-    # TODO: cfg parser stuff
     args.normalization_coefs = None
     args.G_activation = torch.sigmoid
     args.num_classes = 400
 
-    # TODO: Convert this to cfg parser
     if args.victim_model == 'swin-t':
         # TODO: cfg parser for VST file paths
-        config = "./Video-Swin-Transformer/configs/recognition/swin/swin_tiny_patch244_window877_kinetics400_1k.py"
-        checkpoint = "/content/swin_tiny_patch244_window877_kinetics400_1k.pth"
+        config = args.swin_t_config 
+        checkpoint = args.swin_t_checkpoint
         cfg = Config.fromfile(config)
         victim_model = build_model(cfg.model, train_cfg=None, test_cfg=cfg.get('test_cfg'))
         load_checkpoint(victim_model, checkpoint, map_location=device)
