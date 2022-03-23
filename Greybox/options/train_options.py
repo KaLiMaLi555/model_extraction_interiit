@@ -42,8 +42,8 @@ class TrainOptions():
         parser.add_argument("--momentum", type=float, default=0.9, help="Momentum")
         parser.add_argument("--weight_decay", type=float, default=10, help="Weight decay")
 
-        parser.add_argument("dataset", type=str, default="k400", help="Dataset use")
-        parser.add_argument("num_classes", type=int, default=400, help="Number of classes")
+        parser.add_argument("--dataset", type=str, default="k400", help="Dataset use")
+        parser.add_argument("--num_classes", type=int, default=400, help="Number of classes")
 
         args = parser.parse_args()
 

@@ -38,7 +38,9 @@
       "seed": 42,
       "model_name": null,
       "video_dir_path": " ",
-      "video_names_file": " "
+      "video_names_file": " ",
+      "classes_file": " ",
+      "labels_file": " "
     }
 
 }
