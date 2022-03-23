@@ -1,0 +1,65 @@
+{
+  "experiment": {
+
+    "train_vid_dir": "/content/Videos",
+    "train_logits_file": "/content/drive/MyDrive/logits/swin_transformer_k400_train5precent_2.pkl",
+    "train_vid_names_file": "/content/drive/MyDrive/annotations/train_k400_5_percent_list.txt",
+    "val_vid_dir": "/content/k400_16_frames_uniform",
+    "val_logits_file": " ",
+    "val_classes_file": "/content/k400_train_classes.csv",
+    "val_labels_file": "/content/k400_labels.csv",
+    "test_vid_dir": " ",
+    "ckpts_dir": " ",
+    "device": "cuda",
+    "epochs": 50,
+    "batch_size": 8,
+    "num_workers": 4,
+    "lr": 0.1,
+    "lr_decay": 0.5,
+    "momentum": 0.9,
+    "dampening": 0.9,
+    "weight_decay": 5e-4,
+    "lr_patience": 10,
+    "dataset": "k400",
+    "num_classes": 400,
+    "train_mode": "finetune",
+    "pretrained_ckpt_path": "/content/drive/MyDrive/checkpoints/MARS_Pretrained_UCF/5.pth",
+
+    "save_pred_every": 5,
+    "print_freq": 5,
+
+    "lr_decay_step": 5,
+    "seed": 42,
+  
+    "augmentations": []
+  },
+
+  "embeddings": {
+
+    "batch_size": 16,
+    "logit_dir": "/content/",
+    "is_random": true,
+    "num_classes": 5,
+    "seed": 42,
+    "model_name": null,
+    "video_dir_path": "/content/k400_16_frames_uniform",
+    "video_names_file": "name.txt",
+    "classes_file": "/content/k400_16_frames_uniform/classes.csv",
+    "labels_file": "/content/k400_labels.csv"
+  },
+
+  "test": {
+
+    "num_classes": 400,
+    "videos_dir": "/content/k400_16_frames_uniform",
+    "classes_file": "/content/k400_16_frames_uniform/classes.csv",
+    "labels_file": "/content/k400_labels.csv",
+    "num-classes": 400,
+    "batch_size": 16,
+    "num_workers": 8,
+    "restore_from": "/content/drive/MyDrive/checkpoints/MARS_Pretrained_UCF/5.pth",
+    "save": true,
+    "model_name": "movinet"
+  }
+
+}
