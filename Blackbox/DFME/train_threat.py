@@ -14,7 +14,7 @@ from mmcv.runner import load_checkpoint
 from torchmetrics.functional import accuracy
 from tqdm.notebook import tqdm
 
-from models import ConditionalGenerator
+from models import VideoGAN
 
 repackage.up()
 from MARS.model import generate_model
@@ -66,10 +66,6 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
     # Repeat epoch_itrs times per outer epoch
     for i in tqdm(range(args.epoch_itrs), position=0, leave=True):
         for _ in range(args.g_iter):
-            # Generate labels for Conditional Generator
-            # labels = torch.randn((args.batch_size, args.num_classes)).to(device)
-            # labels = torch.argmax(labels, dim=1)
-            # labels_onehot = torch.nn.functional.one_hot(labels, args.num_classes)
             # Sample Random Noise
             z = torch.randn((args.batch_size, args.nz)).to(device)
             optimizer_G.zero_grad()
@@ -77,7 +73,7 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
             # Get fake image from generator
             # pre_x returns the output of G before applying the activation
             fake = generator(z, pre_x=args.approx_grad)
-            fake = fake.unsqueeze(dim=2)
+            # fake = fake.unsqueeze(dim=2)
 
             # Approximate gradients
             approx_grad_wrt_x, loss_G = approximate_gradients(
@@ -98,14 +94,10 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
         t_t1_list, t_t5_list = [], []
 
         for _ in range(args.d_iter):
-            # Generate labels for Conditional Generator
-            # labels = torch.randn((args.batch_size, args.num_classes)).to(device)
-            # labels = torch.argmax(labels, dim=1)
-            # labels_onehot = torch.nn.functional.one_hot(labels, args.num_classes)
             # Sample Random Noise
             z = torch.randn((args.batch_size, args.nz)).to(device)
 
-            fake = generator(z, label=labels_onehot).detach()
+            fake = generator(z).detach()
             N, C, L, S = fake.shape[:4]
             optimizer_T.zero_grad()
 
@@ -121,12 +113,6 @@ def train(args, victim_model, threat_model, generator, device, device_tf,
                 logits_victim = torch.tensor(logits_victim).to(device)
 
             logits_threat = torch.nn.Softmax(dim=1)(threat_model(fake))
-
-            # Print accuracy of Generator via Victim's logits
-            g_t1 = 100 * accuracy(logits_victim, labels, top_k=1)
-            g_t5 = 100 * accuracy(logits_victim, labels, top_k=5)
-            g_t1_list.append(g_t1.detach().cpu().numpy())
-            g_t5_list.append(g_t5.detach().cpu().numpy())
 
             # Print accuracy of Threat Model via Victim's logits
             victim_argmax = logits_victim.argmax(axis=1)
@@ -198,9 +184,7 @@ def main():
         outputs = encoder(dict(image=inputs))
         victim_model = tf.keras.Model(inputs, outputs, name='movinet')
 
-    generator = ConditionalGenerator(
-        nz=args.nz, nc=3, img_size=224, num_classes=args.num_classes,
-        activation=args.G_activation)
+    generator = VideoGAN(zdim=args.nz)
     generator = generator.to(device)
 
     threat_model, threat_parameters = generate_model(args.num_classes)
