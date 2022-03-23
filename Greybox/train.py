@@ -37,7 +37,6 @@ def train(cfg, model, train_loader, optimizer, criterion, epoch, scheduler=None)
 
     for i, (inputs, targets) in enumerate(train_loader):
         inputs = torch.permute(inputs, (0, 1, 4, 2, 3))
-        print(inputs.shape)
         targets = targets.to(torch.float32).argmax(dim=1)
         targets = targets.cuda(non_blocking=True)
         inputs = Variable(inputs)
@@ -95,7 +94,6 @@ def val(model, val_dataloader, criterion, epoch):
             targets = Variable(targets)
             outputs = model(inputs)
             loss = criterion(outputs, targets)
-            print(loss.item())
             acc = calculate_accuracy(outputs, targets)
             losses.update(loss.item(), inputs.size(0))
             accuracies.update(acc, inputs.size(0))
@@ -159,8 +157,8 @@ def main():
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=cfg.lr_patience)
 
     best_val_acc = 0
-    for epoch in range(1, cfg.n_epochs + 1):
-        train_acc = train(model, train_dataloader, optimizer, criterion, epoch, scheduler)
+    for epoch in range(1, cfg.epochs + 1):
+        train_acc = train(cfg, model, train_dataloader, optimizer, criterion, epoch, scheduler)
         val_acc = val(model, val_dataloader, criterion, epoch)
         scheduler.step(epoch)
         save_path = os.path.join(cfg.save_path, "model_epoch_" + str(epoch) + ".pth")
