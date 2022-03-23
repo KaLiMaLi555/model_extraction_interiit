@@ -3,6 +3,7 @@ matplotlib
 numpy
 pillow
 pytorch_lightning
+repackage
 scikit-learn
 torch>=1.2
 torchmetrics
