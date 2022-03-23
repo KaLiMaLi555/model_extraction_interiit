@@ -66,14 +66,14 @@ def test(model, test_dataloader, criterion):
 def main():
     opt = TestOptions()
     cfg = opt.initialize()
-    cfg = cfg["experiment"]
+    cfg = cfg["test"]
     opt.print_options(cfg)
 
     print("Creating Model")
-    model, parameters = generate_model(cfg.n_finetune_classes)
+    model, parameters = generate_model(cfg.num_classes)
 
     print("Creating Dataloaders")
-    test_dataset = VideoLabelDataset(cfg.val_video_path, cfg.val_class_file, cfg.val_label_file, cfg.n_finetune_classes)
+    test_dataset = VideoLabelDataset(cfg.videos_dir, cfg.classes_file, cfg.labels_file, cfg.num_classes)
     test_dataloader = DataLoader(test_dataset, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers, pin_memory=True)
 
     criterion = nn.CrossEntropyLoss().cuda()

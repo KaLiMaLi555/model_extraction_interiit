@@ -41,6 +41,19 @@
       "video_names_file": " ",
       "classes_file": " ",
       "labels_file": " "
+    },
+
+    "test": {
+
+      "num_classes": 400,
+      "videos_dir": " ",
+      "classes_file": " ",
+      "labels_file": " ",
+      "num-classes": 400,
+      "batch_size": 16,
+      "num_workers": 8,
+      "restore-from": " ",
+      "save": true
     }
 
 }
