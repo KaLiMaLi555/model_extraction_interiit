@@ -16,7 +16,6 @@ pip install -r requirements.txt
 
 * #### Kinetics-400/Kinetics-600
 
-### Kinetics-400/Kinetics-600
 
 
 ```bash
