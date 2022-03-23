@@ -38,7 +38,7 @@ class VideoGAN(nn.Module):
                 nn.init.normal_(m.weight, mean=1, std=0.02)
                 nn.init.constant_(m.bias, 0)
 
-    def forward(self, z):
+    def forward(self, z, pre_x):
         # Foreground
         z_unsqueezed = z.unsqueeze(2).unsqueeze(3).unsqueeze(4)
         f = F.leaky_relu(self.bn1(self.conv1(z_unsqueezed)))
@@ -48,4 +48,7 @@ class VideoGAN(nn.Module):
         f = F.leaky_relu(self.bn5(self.conv5(f)))
 
         out = self.conv6(f)  # b, 3, 32, 64, 64
-        return out
+        if pre_x:
+            return out
+        else:
+            return torch.sigmoid(out)
