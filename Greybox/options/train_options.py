@@ -2,8 +2,7 @@ import argparse
 import os
 import os.path as osp
 import datetime
-from Greybox.config.cfg_parser import cfg_parser
-
+from config.cfg_parser import cfg_parser
 
 class TrainOptions():
     """
