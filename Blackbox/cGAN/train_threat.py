@@ -1,6 +1,7 @@
 import argparse
 import os
 
+import repackage
 import tensorflow as tf
 import tensorflow_hub as hub
 import torch
@@ -12,12 +13,13 @@ from mmcv.runner import load_checkpoint
 from torchmetrics.functional import accuracy
 from tqdm.notebook import tqdm
 
-# TODO: Fix import in the final code
 from models import ConditionalGenerator
-from ..MARS.model import generate_model
-from ..approximate_gradients import approximate_gradients
-from ..config.cfg_parser import cfg_parser
-from ..utils_common import set_seed, swin_transform
+
+repackage.up()
+from MARS.model import generate_model
+from approximate_gradients import approximate_gradients
+from config.cfg_parser import cfg_parser
+from utils_common import set_seed, swin_transform
 
 
 def get_config():

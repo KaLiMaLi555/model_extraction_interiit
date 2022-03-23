@@ -1,6 +1,4 @@
-# TODO: Add set_seed util
 # TODO: Maybe add some logging stuff since we're removing wandb
-
 # TODO: Keep only stuff actually being used
 # TODO: Refactor this stuff
 import csv

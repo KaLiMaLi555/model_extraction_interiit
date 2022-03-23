@@ -1,6 +1,7 @@
 import argparse
 import os
 
+import repackage
 import tensorflow as tf
 import tensorflow_hub as hub
 import torch
@@ -10,17 +11,18 @@ from mmcv import Config
 from mmcv.runner import load_checkpoint
 from tqdm.notebook import tqdm
 
-# TODO: Fix import in the final code
 from models import ConditionalGenerator
-from ..approximate_gradients import approximate_gradients_conditional
-from ..config.cfg_parser import cfg_parser
-from ..utils_common import set_seed
+
+repackage.up()
+from approximate_gradients import approximate_gradients_conditional
+from config.cfg_parser import cfg_parser
+from utils_common import set_seed
 
 
 def get_config():
     # Training settings
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default="config/params.yaml")
+    parser.add_argument("--config", type=str, default="config/pretrain_params.yaml")
 
     cfg = cfg_parser(parser.parse_args().config)
 
@@ -29,7 +31,7 @@ def get_config():
 
 def pretrain(args, victim_model, generator, device, device_tf, optimizer):
     """Main Loop for one epoch of Pretraining Generator"""
-    if args.model == 'swin-t':
+    if args.victim_model == 'swin-t':
         victim_model.eval()
 
         # Repeat epoch_itrs times per epoch
