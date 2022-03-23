@@ -8,14 +8,14 @@ class TestOptions():
     def initialize(self):
 
         parser = argparse.ArgumentParser(description="test segmentation network")
-        parser.add_argument("--videos_dir", type=str, default=None, help="Path to the videos")
-        parser.add_argument("--classes_file", type=str, default=None, help="Path to the classes file")
-        parser.add_argument("--labels_file", type=str, default=None, help="Path to the labels file")
-        parser.add_argument("--num-classes", type=int, default=400, help="Number of classes")
-        parser.add_argument("--batch_size", type=int, default=16, help="Batch size")
-        parser.add_argument("--num_workers", type=int, default=8, help="Number workers for dataloader")
-        parser.add_argument("--restore-from", type=str, default=None, help="restore model parameters from")
-        parser.add_argument("--save", type=str, default='results', help="Path to save result.")
+        parser.add_argument("--videos_dir", type=str, help="Path to the videos")
+        parser.add_argument("--classes_file", type=str, help="Path to the classes file")
+        parser.add_argument("--labels_file", type=str, help="Path to the labels file")
+        parser.add_argument("--num-classes", type=int, help="Number of classes")
+        parser.add_argument("--batch_size", type=int, help="Batch size")
+        parser.add_argument("--num_workers", type=int,  help="Number workers for dataloader")
+        parser.add_argument("--restore-from", type=str, help="restore model parameters from")
+        parser.add_argument("--save", type=str, help="Path to save result.")
 
         args = parser.parse_args()
 
