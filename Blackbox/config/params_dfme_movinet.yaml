@@ -1,0 +1,32 @@
+experiment:
+  victim_model: movinet
+  seed: 42
+  batch_size: 4
+  max_points: 8
+  epoch_itrs: 50
+  g_iter: 10
+  d_iter: 5
+  lr_T: 0.001
+  lr_G: 1.0e-4
+  nz: 100
+  generator_checkpoint:
+  threat_checkpoint:
+  loss: l1
+  scheduler: multistep
+  steps:
+    - 0.1
+    - 0.3
+    - 0.5
+  scale: 0.3
+  threat_model: mars
+  device: 0
+  approx_grad: 1
+  grad_m: 1
+  grad_epsilon: 1.0e-3
+  forward_differences: 1
+  logit_correction: mean
+  rec_grad_norm: 1
+  store_checkpoints: 1
+  no_cuda: 0
+  weight_decay: 5.0e-4
+  epochs: 70

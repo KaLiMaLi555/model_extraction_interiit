@@ -1,0 +1,26 @@
+{
+  "cfg_file": "config/params.yaml",
+  "seed": 42,
+  "batch_size": 16,
+  "query_budget": 20000000,
+  "epoch_itrs": 50,
+  "g_iter": 10,
+  "d_iter": 5,
+  "lr_S": 0.001,
+  "lr_G": "1e-4",
+  "nz": 256,
+  "log_interval": 10,
+  "generator_checkpoint": null,
+  "loss": "l1",
+  "scheduler": "multistep",
+  "steps": [
+    0.1,
+    0.3,
+    0.5
+  ],
+  "scale": "3e-1",
+  "dataset": "k400",
+  "data_root": "data",
+  "model": "swin-t",
+  "student_model": "mars",
+  "device": 
