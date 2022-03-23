@@ -84,7 +84,7 @@ if __name__ == "__main__":
     parser.add_argument('--set_name', type=str, default='k400')
     parser.add_argument('--part', type=str, default='full')
     parser.add_argument('--max_workers', type=int, default=8)
-    parser.add_argument('--extract_frames', type=bool, action='store_true')
+    parser.add_argument('--extract_frames', type=bool, default=True)
     parser.add_argument('--extend, type=int, default=0')
     args = parser.parse_args()
 
