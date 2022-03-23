@@ -95,7 +95,7 @@ if __name__ == "__main__":
         for folder in os.path.join(args.dir_path, args.set_name):
             input_dir_path = os.path.join(args.dir_path, args.set_name, folder)
             input_dir_list = os.listdir(input_dir_path)
-            output_dir_path = os.path.join(args.dir_path, f"{args.set_name}_{args.part}_frames_extracted")
+            output_dir_path = os.path.join(args.dir_path, f"{args.set_name}_{folder}_frames_extracted")
             os.mkdir(output_dir_path)
 
             this_dir_name, _ = os.path.split(os.path.abspath(__file__))
@@ -114,7 +114,7 @@ if __name__ == "__main__":
                 print(f'Failed to extract {errors} videos!!!!')
 
             if args.extend > 0:
-                output_dir_path = os.path.join(args.dir_path, f"{args.set_name}_{args.part}_{args.extend}_frames_extended")
+                output_dir_path = os.path.join(args.dir_path, f"{args.set_name}_{folder}_{args.extend}_frames_extended")
                 os.mkdir(output_dir_path)
-                extrapolate(os.path.join(args.dir_path, f"{args.set_name}_{args.part}_frames_extracted"), output_dir_path,
+                extrapolate(os.path.join(args.dir_path, f"{args.set_name}_{folder}_frames_extracted"), output_dir_path,
                             args.extend)
