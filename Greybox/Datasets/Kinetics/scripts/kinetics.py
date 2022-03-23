@@ -29,8 +29,8 @@ def call_bash(dir_path: str,
 
 
 def extrapolate(input_dir, output_dir, out_frames: int = 16):
-    input_dir = Path(input_dir)
-    output_dir = Path(output_dir)
+    input_dir = Path.Path(input_dir)
+    output_dir = Path.Path(output_dir)
     error_count = 0
     videos = sorted(os.listdir(input_dir))
 
