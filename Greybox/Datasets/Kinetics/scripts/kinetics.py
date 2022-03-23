@@ -92,6 +92,7 @@ if __name__ == "__main__":
         call_bash(args.dir_path, args.set_name, "downloader", args.part, args.max_workers)
     else:
         print("K600 does not have a replacement dataset")
+        exit(0)
     if args.part != "annotations":
         call_bash(args.dir_path, args.set_name, "extractor", args.part, args.max_workers)
 
